@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Platform } from "react-native";
+import { Redirect } from "expo-router";
 
 const Home = () => {
     console.log('hello')
@@ -7,12 +8,7 @@ const Home = () => {
         console.log('ios console here')
     }
     return (
-        <View style={styles.container}>
-            <Text>
-                Welcome back, Rodri
-                hahahah
-            </Text>
-        </View>
+        <Redirect href="/(auth)/onboarding" />
     ) 
 }
 
