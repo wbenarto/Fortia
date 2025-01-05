@@ -1,5 +1,10 @@
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { Redirect } from "expo-router";
+import { NativeWindStyleSheet } from "nativewind";
+
+NativeWindStyleSheet.setOutput({
+  default: "native",
+});
 
 const Home = () => {
     console.log('hello')
