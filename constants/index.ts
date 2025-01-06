@@ -1,10 +1,14 @@
 import Icon from '@/assets/images/icon.png'
+import SignUp from '@/assets/images/signup.jpg'
+import Person from '@/assets/icons/person.png'
 export const images = {
-    Icon
+    Icon,
+    SignUp
 }
 
 export const icons = {
-    Icon
+    Icon,
+    Person
 }
 
 export const onboardingPages = [

@@ -9,6 +9,7 @@ import CustomButton from '@/components/CustomButton'
 const Onboarding = () => {
     const swiperRef = useRef<Swiper>(null)
     const [activeIndex, setActiveIndex] = useState(0) 
+    const isLastSlide = activeIndex === onboardingPages.length-1
     return (
         <SafeAreaView className='bg-[#262135] h-full items-center justify-between'>
             <TouchableOpacity 
@@ -20,12 +21,12 @@ const Onboarding = () => {
             </TouchableOpacity>
 
             <Swiper ref={swiperRef} loop={false} 
-            dot={<View className='w-[32px] h-[4px] mx-1 bg-[#E2E8F0]' />}
-            activeDot={<View className='w-[32px] h-[4px] mx-1 bg-[#0286FF] rounded-full' />} 
+            dot={<View className='w-[32px] h-[4px] mx-1 bg-[#FFFFFF]' />}
+            activeDot={<View className='w-[32px] h-[4px] mx-1 bg-[#F6F3BA] rounded-full' />} 
             onIndexChanged={(index) => setActiveIndex(index)}
             >
                 {onboardingPages.map((e) => (
-                    <View key={e.id} className='flex items-center justify-center p-5 mt-[20%]'>
+                    <View key={e.id} className='flex items-center justify-center p-5 mt-[10%]'>
                         <Image source={e.image}
                             className='w-full h-[300px]'
                             resizeMode='contain'
@@ -40,8 +41,9 @@ const Onboarding = () => {
             </Swiper>
 
             <CustomButton 
-            title='Next'
-            className='w-11/12 mt-10'
+                title={isLastSlide ? "Get Started" : "Next"}
+                className='w-11/12 mt-10'
+                onPress={()=> isLastSlide ? router.replace('/(auth)/sign-up') : swiperRef.current?.scrollBy(1)}
             />
             
         </SafeAreaView>
