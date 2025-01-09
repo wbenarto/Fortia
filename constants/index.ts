@@ -4,10 +4,12 @@ import Person from '@/assets/icons/person.png'
 import Lock from '@/assets/icons/lock.png'
 import Email from '@/assets/icons/email.png'
 import Google from '@/assets/icons/google.png'
+import Check from '@/assets/images/check.png'
 
 export const images = {
     Icon,
-    SignUp
+    SignUp,
+    Check
 }
 
 export const icons = {
@@ -15,7 +17,7 @@ export const icons = {
     Person,
     Lock,
     Email,
-    Google
+    Google,
 }
 
 export const onboardingPages = [

@@ -53,3 +53,4 @@ Join our community of developers creating universal apps.
 Fortia App
 
 - Expo Router
+- Authentication with Clerk

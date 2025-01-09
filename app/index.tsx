@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { Redirect } from "expo-router";
 import { NativeWindStyleSheet } from "nativewind";
+import { useAuth } from '@clerk/clerk-expo';
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -8,10 +9,16 @@ NativeWindStyleSheet.setOutput({
 
 const Home = () => {
     console.log('hello')
+    const { isSignedIn } = useAuth()
 
     if (Platform.OS === 'ios') {
         console.log('ios console here')
     }
+
+    if (isSignedIn) {
+        return <Redirect href={'/(root)/(tabs)/home'} />
+    }
+
     return (
         <Redirect href="/(auth)/onboarding" />
     ) 
