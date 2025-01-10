@@ -77,7 +77,6 @@ const SignIn = () => {
                     </Link>
                 </View>
 
-                {/* Verification Modal */}
             </View>
         </ScrollView>
     )

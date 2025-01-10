@@ -5,6 +5,8 @@ import Lock from '@/assets/icons/lock.png'
 import Email from '@/assets/icons/email.png'
 import Google from '@/assets/icons/google.png'
 import Check from '@/assets/images/check.png'
+import Home from '@/assets/icons/home.png'
+import Profile from '@/assets/icons/profile.png'
 
 export const images = {
     Icon,
@@ -18,6 +20,8 @@ export const icons = {
     Lock,
     Email,
     Google,
+    Home,
+    Profile
 }
 
 export const onboardingPages = [
