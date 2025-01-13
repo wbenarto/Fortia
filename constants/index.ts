@@ -7,11 +7,16 @@ import Google from '@/assets/icons/google.png'
 import Check from '@/assets/images/check.png'
 import Home from '@/assets/icons/home.png'
 import Profile from '@/assets/icons/profile.png'
+import Chart from '@/assets/images/dummy-chart.png'
+import Calendar from'@/assets/icons/calendar.png'
 
 export const images = {
     Icon,
     SignUp,
-    Check
+    Check,
+    Chart,
+
+
 }
 
 export const icons = {
@@ -21,7 +26,8 @@ export const icons = {
     Email,
     Google,
     Home,
-    Profile
+    Profile,
+    Calendar
 }
 
 export const onboardingPages = [
