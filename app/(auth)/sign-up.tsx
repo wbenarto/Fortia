@@ -7,6 +7,7 @@ import InputField from '@/components/InputField';
 import OAuth from '@/components/OAuth'
 import CustomButton from '@/components/CustomButton';
 import ReactNativeModal from 'react-native-modal';
+import { fetchAPI } from '@/lib/fetch';
 
 const SignUp = () => {
     const [form, setForm] = useState({
@@ -61,6 +62,14 @@ const SignUp = () => {
           // and redirect the user
           if (signUpAttempt.status === 'complete') {
             // Create database user
+            await fetchAPI('/(api)/user', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: form.name,
+                    email: form.email,
+                    clerkId: signUpAttempt.createdUserId
+                })
+            })
             await setActive({ session: signUpAttempt.createdSessionId })
             setVerification({
                 ...verification,
@@ -87,24 +96,6 @@ const SignUp = () => {
             })
         }
       }
-    
-    //   if (verification.state) {
-    //     return (
-    //       <>
-    //         <Text>Verify your email</Text>
-    //         <TextInput
-    //           value={verification.code}
-    //           placeholder="Enter your verification code"
-    //           onChangeText={(code)=> setVerification({
-    //             ...verification,
-    //             code: code
-    //           })}
-    //         />
-    //         <Button title="Verify" onPress={onVerifyPress} />
-    //       </>
-    //     )
-    //   }
-
     return (
         <ScrollView className='flex-1 bg-[#262135]'>
             <View className='flex-1'>

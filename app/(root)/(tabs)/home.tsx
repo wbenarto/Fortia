@@ -10,7 +10,7 @@ export default function Page() {
     <View>
       <SignedIn>
         <ScrollView className='bg-[#262135] w-full h-full  '>
-            <View className=' w-full  pt-20 px-8'>
+            <View className=' w-full  pt-14 px-8'>
                 <Text className='text-white text-4xl font-JakartaSemiBold'>
                     Hi,{'\n'}
                     Will
@@ -19,7 +19,7 @@ export default function Page() {
                     <Image source={images.Chart} className='object-contain w-full h-full' resizeMode='contain' />
                 </View>
             </View>
-            <View className='w-full  px-8'>
+            <View className='w-full  px-8 pb-40'>
                 <Text className='text-white text-3xl font-JakartaSemiBold mt-8'>
                     Your {'\n'}
                     Schedule

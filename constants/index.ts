@@ -15,8 +15,6 @@ export const images = {
     SignUp,
     Check,
     Chart,
-
-
 }
 
 export const icons = {
