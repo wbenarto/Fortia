@@ -31,7 +31,10 @@
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
-      "expo-router"
+      ["expo-router",
+      {
+        "origin": "https://fortia.com/"
+      }]
     ],
     "experiments": {
       "typedRoutes": true
