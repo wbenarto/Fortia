@@ -4,17 +4,17 @@ import { tokenCache } from '@/lib/auth';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 import { useFonts } from "expo-font";
+import { LogBox } from 'react-native';
 
 import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo'
 import { Slot } from 'expo-router'
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
 
-
-
-
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-// SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync();
+LogBox.ignoreLogs(["Clerk:"])
+
 
 export default function RootLayout() {
   const [loaded] = useFonts({

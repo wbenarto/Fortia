@@ -53,4 +53,5 @@ Join our community of developers creating universal apps.
 Fortia App
 
 - Expo Router
-- Authentication with Clerk
+- Authentication and OAuth with Clerk
+- Zustand State management 
