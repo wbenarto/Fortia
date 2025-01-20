@@ -5,13 +5,17 @@ import InputField from '@/components/InputField';
 import { FontAwesome } from '@expo/vector-icons'
 import { images } from '@/constants/index'
 import ReactNativeModal from 'react-native-modal';
-import { useState } from 'react'
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useState } from 'react';
+import CustomButton from '@/components/CustomButton';
+import { fetchAPI } from '@/lib/fetch';
 
 export default function Page() {
     const [addWeightModal, setAddWeightModal] = useState(false)
+    const [ showDatePicker, setShowDatePicker ] = useState(false)
     const [ weightForm, setWeightForm ] = useState({
         weight: '',
-        date: ''
+        date: new Date()
     })
 
     const { user } = useUser()
@@ -21,6 +25,34 @@ export default function Page() {
         setAddWeightModal(!addWeightModal)
     )
 
+    const onChange = (event, selectedDate: any) => {
+        console.log('selectedDate; ', selectedDate)
+        console.log('weightform date state', weightForm.date)
+        setShowDatePicker(false);
+      
+        if (selectedDate) {
+          setWeightForm({...weightForm, date: selectedDate});
+        }
+    };
+
+    const handleWeightSubmission = async () => {
+        console.log('ello', weightForm, user)
+
+        try {
+            await fetchAPI('/(api)/weight', {
+                method: 'POST',
+                body: JSON.stringify({
+                    weight: weightForm.weight,
+                    date: weightForm.date,
+                    clerkId: user?.id
+                })
+            })
+
+        } catch (error) {
+            console.error(error)
+        }
+
+    }
     return (
         <View>
         <SignedIn>
@@ -119,19 +151,31 @@ export default function Page() {
                     onBackdropPress={()=> setAddWeightModal(false)}
                     
                 >
-                    <View className='bg-white p-[20%]'>
-                        <Text>Add Weight</Text>
-                        <View className='flex flex-row items-center  w-full bg-red-100'>
+                    <View className='bg-white p-10 mx-10 rounded-md'>
+                        <View className='pb-10 '>
+                            <Text className='text-xl text-center font-JakartaSemiBold'>
+                                Log your weight 
+                            </Text>
+                        </View>
+                      
+                        <View className='flex mx-auto'>
+                       
+                            <DateTimePicker value={weightForm.date} mode="date" display="default" onChange={onChange} />
+                            
                             <InputField 
-                                label='Weight'
+                                label=''
                                 placeholder='Enter your weight'
                                 keyboardType='numeric'
                                 value={weightForm.weight}
-                                className='bg-blue-100 '
+                                className='text-center flex p-4'
                                 onChangeText={(value)=> setWeightForm({...weightForm, weight: value})}
                             />
-                            <Text>lbs</Text>
+                            
                         </View>
+                        <View className=''><Text className='text-lg text-center font-JakartaSemiBold'>lbs</Text></View>
+
+                        <CustomButton onPress={handleWeightSubmission} title='Save'  />
+                        
                         
 
                     </View>
