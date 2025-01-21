@@ -1,5 +1,12 @@
 import { TextInputProps, TouchableOpacityProps } from "react-native";
 
+declare interface Weights {
+  id: number;
+  clerk_id: string;
+  weight: string;
+  date: string;
+}
+
 declare interface Driver {
   id: number;
   first_name: string;

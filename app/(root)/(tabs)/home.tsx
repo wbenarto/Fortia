@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, useUser } from '@clerk/clerk-expo'
+import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo'
 import { Link } from 'expo-router'
 import { View, Text , Image , ScrollView, TouchableOpacity } from 'react-native';
 import InputField from '@/components/InputField';
@@ -6,20 +6,52 @@ import { FontAwesome } from '@expo/vector-icons'
 import { images } from '@/constants/index'
 import ReactNativeModal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CustomButton from '@/components/CustomButton';
-import { fetchAPI } from '@/lib/fetch';
+import { fetchAPI, useFetch } from '@/lib/fetch';
+import { Weights } from '@/types/type';
 
 export default function Page() {
     const [addWeightModal, setAddWeightModal] = useState(false)
+    const [ userWeights, setUserWeights ] = useState([])
     const [ showDatePicker, setShowDatePicker ] = useState(false)
+    const { getToken } = useAuth()
     const [ weightForm, setWeightForm ] = useState({
         weight: '',
         date: new Date()
     })
 
+    
     const { user } = useUser()
-    console.log(user)
+    
+
+    // const { 
+    //     data,
+    //     loading, 
+    //     error
+    // } = useFetch<Weights[]>(`/(api)/weight`)
+    // console.log('weights data: ', data, loading,)
+
+    useEffect(()=>{
+        const fetchData = async () => {
+            const token = await getToken()
+            const response = await fetchAPI(`/(api)/weight?userId=${user?.id}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": 'application/json'
+                }
+            })
+            console.log('wow')
+
+            const data = response.data
+            console.log("fetchAPI in useeffect data: ", data)
+            setUserWeights(data)
+        }
+
+        fetchData()
+    }, [])
+
 
     const handleAddWeightModal = () => (
         setAddWeightModal(!addWeightModal)
@@ -35,6 +67,7 @@ export default function Page() {
         }
     };
 
+
     const handleWeightSubmission = async () => {
         console.log('ello', weightForm, user)
 
@@ -47,10 +80,12 @@ export default function Page() {
                     clerkId: user?.id
                 })
             })
+            
 
         } catch (error) {
             console.error(error)
         }
+        setAddWeightModal(false)
 
     }
     return (
@@ -62,12 +97,24 @@ export default function Page() {
                         Hi,{'\n'}
                         {user?.firstName}
                     </Text>
-                    <View className='w-full h-60  mt-4 relative'>
+                    <View className='w-full h-60  my-6 relative'>
                         <TouchableOpacity onPress={handleAddWeightModal}>
                             <FontAwesome name='plus' size={40} color='white' className='flex-end flex bg-red-100'/>
                         </TouchableOpacity>
+
+                        <View className='bg-white p-4 rounded-xl w-60 h-60'>
+                            <Text>{user?.firstName} let's see  </Text>
+                            {userWeights.map((e,i) => {
+                                return (
+                                    <View className='flex flex-row gap-4'>
+                                        <Text >{e.date.split('T')[0]}</Text>
+                                        <Text className='text-black'>{e.weight}</Text>
+                                    </View>
+                                )
+                            })}
+                        </View>
                         
-                        <Image source={images.Chart} className='object-contain w-full h-full' resizeMode='contain' />
+                        {/* <Image source={images.Chart} className='object-contain w-full h-full' resizeMode='contain' /> */}
 
                     </View>
                 </View>

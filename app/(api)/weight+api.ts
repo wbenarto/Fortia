@@ -31,5 +31,25 @@ export async function POST(request: Request) {
     }
 }
 
+export async function GET(request: Request) {
+    const sql = neon(`${process.env.DATABASE_URL}`);
+    console.log('GET request' , request)
+
+    try {
+        const weights = []
+
+        const response = await sql`
+        SELECT * FROM weights 
+        `
+        console.log('YESS ', response)
+        return Response.json({data: response})
+    
+
+    } catch (err) {
+        console.log(err)
+        return Response.json({error: err}, {status: 400})
+    }
+}
+
 // See https://neon.tech/docs/serverless/serverless-driver
 // for more information
