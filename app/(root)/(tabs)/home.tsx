@@ -1,4 +1,5 @@
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo'
+import { CartesianChart, Line } from "victory-native";
 import { Link } from 'expo-router'
 import { View, Text , Image , ScrollView, TouchableOpacity } from 'react-native';
 import InputField from '@/components/InputField';
@@ -10,6 +11,7 @@ import { useState, useEffect } from 'react';
 import CustomButton from '@/components/CustomButton';
 import { fetchAPI, useFetch } from '@/lib/fetch';
 import { Weights } from '@/types/type';
+import { DATA } from '@/lib/data'
 
 export default function Page() {
     const [addWeightModal, setAddWeightModal] = useState(false)
@@ -46,7 +48,9 @@ export default function Page() {
 
             const data = response.data
             console.log("fetchAPI in useeffect data: ", data)
-            setUserWeights(data)
+            setUserWeights(data.map(({date, weight})=>({
+                x: date.split('T')[0], y: +weight
+            })))
         }
 
         fetchData()
@@ -67,6 +71,7 @@ export default function Page() {
         }
     };
 
+    console.log("user weights: ", userWeights)
 
     const handleWeightSubmission = async () => {
         console.log('ello', weightForm, user)
@@ -88,6 +93,7 @@ export default function Page() {
         setAddWeightModal(false)
 
     }
+    
     return (
         <View>
         <SignedIn>
@@ -104,14 +110,23 @@ export default function Page() {
 
                         <View className='bg-white p-4 rounded-xl w-60 h-60'>
                             <Text>{user?.firstName} let's see  </Text>
-                            {userWeights.map((e,i) => {
+                            {/* <CartesianChart data={DATA} xKey="day" yKeys={["highTmp"]}>
+                                {({points}) => (
+                                    <Line 
+                                        points={points.highTmp}
+                                        color='blue'
+                                        strokeWidth={3}
+                                    />
+                                )}
+                            </CartesianChart> */}
+                            {/* {userWeights.map((e,i) => {
                                 return (
-                                    <View className='flex flex-row gap-4'>
+                                    <View key={i} className='flex flex-row gap-4'>
                                         <Text >{e.date.split('T')[0]}</Text>
                                         <Text className='text-black'>{e.weight}</Text>
                                     </View>
                                 )
-                            })}
+                            })} */}
                         </View>
                         
                         {/* <Image source={images.Chart} className='object-contain w-full h-full' resizeMode='contain' /> */}
