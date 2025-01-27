@@ -11,7 +11,8 @@ import { useState, useEffect } from 'react';
 import CustomButton from '@/components/CustomButton';
 import { fetchAPI, useFetch } from '@/lib/fetch';
 import { Weights } from '@/types/type';
-import { DATA } from '@/lib/data'
+import { LineChart } from 'react-native-gifted-charts';
+// import { DATA } from '@/lib/data'
 
 export default function Page() {
     const [addWeightModal, setAddWeightModal] = useState(false)
@@ -23,16 +24,22 @@ export default function Page() {
         date: new Date()
     })
 
+    const DATA =[ {value:150}, {value:150}, {value:150}, {value:150},{value:150},{value:150},{value:150} ]
     
     const { user } = useUser()
+    // const DATA = Array.from({ length: 31 }, (_, i) => ({
+    //     day: i,
+    //     lowTmp: 20 + 10 * Math.random(),
+    //     highTmp: 40 + 30 * Math.random(),
+    //   }));
     
 
-    // const { 
-    //     data,
-    //     loading, 
-    //     error
-    // } = useFetch<Weights[]>(`/(api)/weight`)
-    // console.log('weights data: ', data, loading,)
+    const { 
+        data,
+        loading, 
+        error
+    } = useFetch<Weights[]>(`/(api)/weight`)
+    console.log('weights data: ', data, loading,)
 
     useEffect(()=>{
         const fetchData = async () => {
@@ -47,9 +54,13 @@ export default function Page() {
             console.log('wow')
 
             const data = response.data
-            console.log("fetchAPI in useeffect data: ", data)
-            setUserWeights(data.map(({date, weight})=>({
-                x: date.split('T')[0], y: +weight
+
+            console.log("fetchAPI in useeffect data: ", data.sort((a,b)=> a.date - b.date))
+            // setUserWeights(data)
+            setUserWeights(data.sort((a: any,b: any) => new Date(a.date)  - new Date(b.date)  ).map(({date, weight})=>({
+                label: date.split('T')[0].slice(5), 
+                value: +weight,
+                dataPointText: `${weight}`
             })))
         }
 
@@ -99,26 +110,37 @@ export default function Page() {
         <SignedIn>
             <ScrollView className='bg-[#262135] w-full h-full  '>
                 <View className=' w-full  pt-14 px-8'>
-                    <Text className='text-white text-4xl font-JakartaSemiBold'>
+                    <Text className='text-white text-4xl mb-4 font-JakartaSemiBold'>
                         Hi,{'\n'}
                         {user?.firstName}
                     </Text>
-                    <View className='w-full h-60  my-6 relative'>
+                    <View className='w-full relative'>
                         <TouchableOpacity onPress={handleAddWeightModal}>
                             <FontAwesome name='plus' size={40} color='white' className='flex-end flex bg-red-100'/>
                         </TouchableOpacity>
 
-                        <View className='bg-white p-4 rounded-xl w-60 h-60'>
-                            <Text>{user?.firstName} let's see  </Text>
-                            {/* <CartesianChart data={DATA} xKey="day" yKeys={["highTmp"]}>
-                                {({points}) => (
-                                    <Line 
-                                        points={points.highTmp}
-                                        color='blue'
-                                        strokeWidth={3}
-                                    />
-                                )}
-                            </CartesianChart> */}
+                        <View className='w-full overflow-hidden p-2 rounded-xl '>
+                   
+                            <View className=' '>
+                                <LineChart 
+                                    color={'#ffffff'}
+                                    data={userWeights}
+                                    spacing={80}
+                                    curved
+                                    endSpacing={30}
+                                    hideRules={true}
+                                    yAxisOffset={130}
+                                    dataPointsColor={'white'}
+                                    data2={DATA}
+                                    maxValue={50}
+                                    yAxisColor="white"
+                                    xAxisColor='white'
+                                    xAxisLabelTextStyle={{ color: "white", fontSize: 12 }}
+                                    yAxisTextStyle={{ color: "white", fontSize: 12 }}
+                                    
+                                />
+                            </View>
+                 
                             {/* {userWeights.map((e,i) => {
                                 return (
                                     <View key={i} className='flex flex-row gap-4'>
