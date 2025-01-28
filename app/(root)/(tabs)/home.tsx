@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo'
 import { CartesianChart, Line } from "victory-native";
 import { Link } from 'expo-router'
-import { View, Text , Image , ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text , Image , ScrollView, TouchableOpacity, Button } from 'react-native';
 import InputField from '@/components/InputField';
 import { FontAwesome } from '@expo/vector-icons'
 import { images } from '@/constants/index'
@@ -24,7 +24,7 @@ export default function Page() {
         date: new Date()
     })
 
-    const DATA =[ {value:150}, {value:150}, {value:150}, {value:150},{value:150},{value:150},{value:150} ]
+    const DATA =[ {value:150}, {value:150}, {value:150}, {value:150},{value:150},{value:150},{value:150} ,{value:150} ]
     
     const { user } = useUser()
     // const DATA = Array.from({ length: 31 }, (_, i) => ({
@@ -96,12 +96,13 @@ export default function Page() {
                     clerkId: user?.id
                 })
             })
+            setAddWeightModal(false)
             
 
         } catch (error) {
             console.error(error)
         }
-        setAddWeightModal(false)
+       
 
     }
     
@@ -125,7 +126,6 @@ export default function Page() {
                                 <LineChart 
                                     color={'#ffffff'}
                                     data={userWeights}
-                                    spacing={80}
                                     curved
                                     endSpacing={30}
                                     hideRules={true}
@@ -235,23 +235,24 @@ export default function Page() {
                     onBackdropPress={()=> setAddWeightModal(false)}
                     
                 >
-                    <View className='bg-white p-10 mx-10 rounded-md'>
+                    <View className='bg-white py-10 px-4 mx-10 rounded-md'>
                         <View className='pb-10 '>
                             <Text className='text-xl text-center font-JakartaSemiBold'>
                                 Log your weight 
                             </Text>
                         </View>
                       
-                        <View className='flex mx-auto'>
-                       
-                            <DateTimePicker value={weightForm.date} mode="date" display="default" onChange={onChange} />
+                        <View className='flex mx-auto w-full justify-center' >
+                            
+                            <DateTimePicker value={weightForm.date} mode="date" display="default" className='mx-auto ' style={{margin: 'auto'}} onChange={onChange} />
+ 
                             
                             <InputField 
                                 label=''
                                 placeholder='Enter your weight'
                                 keyboardType='numeric'
                                 value={weightForm.weight}
-                                className='text-center flex p-4'
+                                className='text-center flex p-4 '
                                 onChangeText={(value)=> setWeightForm({...weightForm, weight: value})}
                             />
                             
