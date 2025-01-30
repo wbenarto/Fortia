@@ -1,13 +1,13 @@
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo'
 import { CartesianChart, Line } from "victory-native";
-import { Link } from 'expo-router'
+import { Link, useFocusEffect } from 'expo-router'
 import { View, Text , Image , ScrollView, TouchableOpacity, Button } from 'react-native';
 import InputField from '@/components/InputField';
 import { FontAwesome } from '@expo/vector-icons'
 import { images } from '@/constants/index'
 import ReactNativeModal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import CustomButton from '@/components/CustomButton';
 import { fetchAPI, useFetch } from '@/lib/fetch';
 import { Weights } from '@/types/type';
@@ -16,7 +16,7 @@ import { LineChart } from 'react-native-gifted-charts';
 
 export default function Page() {
     const [addWeightModal, setAddWeightModal] = useState(false)
-    const [ userWeights, setUserWeights ] = useState([])
+    const [ userWeights, setUserWeights ] = useState<any[]>([])
     const [ showDatePicker, setShowDatePicker ] = useState(false)
     const { getToken } = useAuth()
     const [ weightForm, setWeightForm ] = useState({
@@ -24,7 +24,7 @@ export default function Page() {
         date: new Date()
     })
 
-    const DATA =[ {value:150}, {value:150}, {value:150}, {value:150},{value:150},{value:150},{value:150} ,{value:150} ]
+    const DATA =[ {value:150}, {value:150}, {value:150}, {value:150}, {value:150}, {value:150},{value:150},{value:150},{value:150} ,{value:150} ]
     
     const { user } = useUser()
     // const DATA = Array.from({ length: 31 }, (_, i) => ({
@@ -41,7 +41,8 @@ export default function Page() {
     } = useFetch<Weights[]>(`/(api)/weight`)
     console.log('weights data: ', data, loading,)
 
-    useEffect(()=>{
+    useFocusEffect(
+        useCallback(()=>{
         const fetchData = async () => {
             const token = await getToken()
             const response = await fetchAPI(`/(api)/weight?userId=${user?.id}`, {
@@ -54,10 +55,8 @@ export default function Page() {
             console.log('wow')
 
             const data = response.data
-
-            console.log("fetchAPI in useeffect data: ", data.sort((a,b)=> a.date - b.date))
             // setUserWeights(data)
-            setUserWeights(data.sort((a: any,b: any) => new Date(a.date)  - new Date(b.date)  ).map(({date, weight})=>({
+            setUserWeights(data.sort((a: any,b: any) => +new Date(a.date)  - +new Date(b.date)  ).map(({date, weight})=>({
                 label: date.split('T')[0].slice(5), 
                 value: +weight,
                 dataPointText: `${weight}`
@@ -65,7 +64,8 @@ export default function Page() {
         }
 
         fetchData()
-    }, [])
+        },[])
+    )
 
 
     const handleAddWeightModal = () => (
@@ -96,6 +96,29 @@ export default function Page() {
                     clerkId: user?.id
                 })
             })
+            const fetchData = async () => {
+                const token = await getToken()
+                const response = await fetchAPI(`/(api)/weight?userId=${user?.id}`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": 'application/json'
+                    }
+                })
+                console.log('wow')
+    
+                const data = response.data
+    
+                // setUserWeights(data)
+                setUserWeights(data.sort((a: any,b: any) => +new Date(a.date)  - +new Date(b.date)  ).map(({date, weight})=>({
+                    label: date.split('T')[0].slice(5), 
+                    value: +weight,
+                    dataPointText: `${weight}`
+                })))
+            }
+    
+            fetchData()
+            DATA.push({value:150})
             setAddWeightModal(false)
             
 
@@ -113,24 +136,33 @@ export default function Page() {
                 <View className=' w-full  pt-14 px-8'>
                     <Text className='text-white text-4xl mb-4 font-JakartaSemiBold'>
                         Hi,{'\n'}
-                        {user?.firstName}
+                        {user?.firstName}!
                     </Text>
                     <View className='w-full relative'>
                         <TouchableOpacity onPress={handleAddWeightModal}>
-                            <FontAwesome name='plus' size={40} color='white' className='flex-end flex bg-red-100'/>
+                            <FontAwesome name='plus' size={40} color='white' className='flex-end flex '/>
                         </TouchableOpacity>
 
-                        <View className='w-full overflow-hidden p-2 rounded-xl '>
+                        <View className='w-full overflow-hidden py-2 rounded-xl '>
+                            {/* <View className=' w-20 h-20  justify-center items-center'>
+                                <Text className='font-JakartaBold text-center text-2xl mb-2'>Lose  </Text>
+                                <Text className='font-JakartaSemiBold'>
+                                    {(userWeights[userWeights.length-1]?.value - DATA[0].value).toFixed(2)}
+                                </Text>
+                            </View> */}
                    
-                            <View className=' '>
+                            <View className=' overflow-hidden  w-[98%] right-0'>
                                 <LineChart 
-                                    color={'#ffffff'}
+                                    color={'#FEF9C3'}
                                     data={userWeights}
                                     curved
+                                    textColor={"white"}
+                                    textColor2={'white'}
+                                    textShiftY={-6}
                                     endSpacing={30}
                                     hideRules={true}
                                     yAxisOffset={130}
-                                    dataPointsColor={'white'}
+                                    dataPointsColor={'black'}
                                     data2={DATA}
                                     maxValue={50}
                                     yAxisColor="white"
