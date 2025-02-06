@@ -48,6 +48,15 @@ const Layout = () => {
           }}
         />
         <Tabs.Screen
+          name="meal"
+          options={{
+            title: 'Meal',
+            headerShown: false,
+            tabBarIcon: ({focused})=> <TabIcon focused={focused} source={icons.Home} />
+
+          }}
+        />
+        <Tabs.Screen
           name="calendar"
           options={{
             title: 'Calendar',

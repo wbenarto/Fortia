@@ -24,7 +24,7 @@ export default function Page() {
         date: new Date()
     })
 
-    const DATA =[ {value:150}, {value:150}, {value:150}, {value:150}, {value:150}, {value:150},{value:150},{value:150},{value:150} ,{value:150} ]
+    const DATA =[ {value:150}, {value:150},{value:150},{value:150},{value:150} ,{value:150} ]
     
     const { user } = useUser()
     // const DATA = Array.from({ length: 31 }, (_, i) => ({
@@ -34,15 +34,10 @@ export default function Page() {
     //   }));
     
 
-    const { 
-        data,
-        loading, 
-        error
-    } = useFetch<Weights[]>(`/(api)/weight`)
-    console.log('weights data: ', data, loading,)
 
     useFocusEffect(
         useCallback(()=>{
+            
         const fetchData = async () => {
             const token = await getToken()
             const response = await fetchAPI(`/(api)/weight?userId=${user?.id}`, {
@@ -52,15 +47,16 @@ export default function Page() {
                     "Content-Type": 'application/json'
                 }
             })
-            console.log('wow')
+            console.log('useFocusEffect')
 
             const data = response.data
             // setUserWeights(data)
-            setUserWeights(data.sort((a: any,b: any) => +new Date(a.date)  - +new Date(b.date)  ).map(({date, weight})=>({
+            setUserWeights(data.sort((a: any,b: any) => +new Date(a.date)  - +new Date(b.date)  ).slice(-6).map(({date, weight})=>({
                 label: date.split('T')[0].slice(5), 
                 value: +weight,
                 dataPointText: `${weight}`
             })))
+            
         }
 
         fetchData()
@@ -82,7 +78,6 @@ export default function Page() {
         }
     };
 
-    console.log("user weights: ", userWeights)
 
     const handleWeightSubmission = async () => {
         console.log('ello', weightForm, user)
@@ -105,12 +100,11 @@ export default function Page() {
                         "Content-Type": 'application/json'
                     }
                 })
-                console.log('wow')
     
                 const data = response.data
     
                 // setUserWeights(data)
-                setUserWeights(data.sort((a: any,b: any) => +new Date(a.date)  - +new Date(b.date)  ).map(({date, weight})=>({
+                setUserWeights(data.sort((a: any,b: any) => +new Date(a.date)  - +new Date(b.date)  ).slice(-6).map(({date, weight})=>({
                     label: date.split('T')[0].slice(5), 
                     value: +weight,
                     dataPointText: `${weight}`
