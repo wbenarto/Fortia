@@ -181,6 +181,37 @@ export default function Page() {
 
                     </View>
                 </View>
+                <View  className='w-full  px-8 '>
+                    <Text className='text-white text-3xl font-JakartaSemiBold mt-8'>
+                        Macros
+                    </Text>
+                    <View className='w-full h-40 rounded-md flex items-center flex-row justify-between'>
+                        <View className='w-[30%] py-8 bg-blue-100 rounded-full'>
+                            <Text className='text-center'>
+                                216/245g
+                            </Text>
+                            <Text className='text-center font-JakartaSemiBold text-xl'> 
+                                Carbs
+                            </Text>
+                        </View>
+                        <View className='w-[30%] py-8 bg-yellow-100 rounded-full'>
+                            <Text className='text-center'>
+                                216/245g
+                            </Text>
+                            <Text className='text-center font-JakartaSemiBold text-xl'> 
+                                Fat
+                            </Text>
+                        </View>
+                        <View className='w-[30%] py-8 bg-green-100 rounded-full'>
+                            <Text className='text-center'>
+                                216/245g
+                            </Text>
+                            <Text className='text-center font-JakartaSemiBold text-xl'> 
+                                Protein
+                            </Text>
+                        </View>
+                    </View>
+                </View>
                 <View className='w-full  px-8 pb-40'>
                     <Text className='text-white text-3xl font-JakartaSemiBold mt-8'>
                         Your {'\n'}
