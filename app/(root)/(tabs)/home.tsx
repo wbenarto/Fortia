@@ -12,6 +12,7 @@ import CustomButton from '@/components/CustomButton';
 import { fetchAPI, useFetch } from '@/lib/fetch';
 import { Weights } from '@/types/type';
 import { LineChart } from 'react-native-gifted-charts';
+import WeeklyTracking  from '@/components/WeeklyTracking';
 // import { DATA } from '@/lib/data'
 
 export default function Page() {
@@ -133,6 +134,8 @@ export default function Page() {
                         {user?.firstName}!
                     </Text>
                     <View className='w-full relative'>
+                        <WeeklyTracking />
+                        
                         <TouchableOpacity onPress={handleAddWeightModal}>
                             <FontAwesome name='plus' size={40} color='white' className='flex-end flex '/>
                         </TouchableOpacity>
