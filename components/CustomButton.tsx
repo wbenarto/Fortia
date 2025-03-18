@@ -30,11 +30,23 @@ const getTextVariantStyle = (variant: ButtonProps['textVariant']) => {
     }
 }
 
+interface ButtonProps {
+    onPress: () => void;
+    title: string;
+    bgVariant?: 'primary' | 'secondary' | 'danger' | 'success' | 'outline';
+    textVariant?: 'default' | 'primary' | 'secondary' | 'success' | 'danger';
+    IconLeft?: React.FC;
+    IconRight?: React.FC;
+    className?: string;
+    width?: string | number;
+    testID?: string;
+}
 
-
-const CustomButton = ({onPress, title, bgVariant='primary', textVariant='default', IconLeft, IconRight, className, width, ...props}: ButtonProps) => (
-    <TouchableOpacity onPress={onPress}
+const CustomButton = ({onPress, title, bgVariant='primary', textVariant='default', IconLeft, IconRight, className, width, testID, ...props}: ButtonProps) => (
+    <TouchableOpacity 
+        onPress={onPress}
         className={`w-${width} p-3 mt-4 rounded-full flex flex-row justify-center items-center shadow-md shadow-neutral-400/70 ${getBgVariantStyle(bgVariant)} ${className}`}
+        testID={testID}
         {...props}
     >
         {IconLeft && <IconLeft />}
