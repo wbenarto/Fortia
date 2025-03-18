@@ -13,6 +13,7 @@ import { fetchAPI, useFetch } from '@/lib/fetch';
 import { Weights } from '@/types/type';
 import { LineChart } from 'react-native-gifted-charts';
 import WeeklyTracking  from '@/components/WeeklyTracking';
+import MacrosTracking from '@/components/MacrosTracking';
 // import { DATA } from '@/lib/data'
 
 export default function Page() {
@@ -133,6 +134,27 @@ export default function Page() {
                         Hi,{'\n'}
                         {user?.firstName}!
                     </Text>
+                    <MacrosTracking 
+                        dailyGoal={{
+                            protein: 245,
+                            carbs: 245,
+                            fats: 70
+                        }}
+                        currentIntake={{
+                            protein: 216,
+                            carbs: 216,
+                            fats: 85
+                        }}
+                        weeklyData={[
+                            { date: 'Mon', protein: 220, carbs: 210, fats: 75 },
+                            { date: 'Tue', protein: 215, carbs: 200, fats: 80 },
+                            { date: 'Wed', protein: 225, carbs: 220, fats: 85 },
+                            { date: 'Thu', protein: 210, carbs: 215, fats: 78 },
+                            { date: 'Fri', protein: 230, carbs: 225, fats: 82 },
+                            { date: 'Sat', protein: 216, carbs: 216, fats: 85 }
+                        ]}
+                        onAddMeal={handleAddWeightModal}
+                    />
                     <View className='w-full relative'>
                         <WeeklyTracking />
                         
