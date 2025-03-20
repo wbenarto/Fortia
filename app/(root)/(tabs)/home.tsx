@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo'
 import { CartesianChart, Line } from "victory-native";
 import { Link, useFocusEffect } from 'expo-router'
-import { View, Text , Image , ScrollView, TouchableOpacity, Button } from 'react-native';
+import { View, Text , Image , ScrollView, TouchableOpacity, Button, Platform } from 'react-native';
 import InputField from '@/components/InputField';
 import { FontAwesome } from '@expo/vector-icons'
 import { images } from '@/constants/index'
@@ -14,6 +14,7 @@ import { Weights } from '@/types/type';
 import { LineChart } from 'react-native-gifted-charts';
 import WeeklyTracking  from '@/components/WeeklyTracking';
 import MacrosTracking from '@/components/MacrosTracking';
+import { Ionicons } from '@expo/vector-icons';
 // import { DATA } from '@/lib/data'
 
 export default function Page() {
@@ -25,7 +26,6 @@ export default function Page() {
         weight: '',
         date: new Date()
     })
-
     const DATA =[ {value:150}, {value:150},{value:150},{value:150},{value:150} ,{value:150} ]
     
     const { user } = useUser()
@@ -130,6 +130,7 @@ export default function Page() {
         <SignedIn>
             <ScrollView className='bg-[#262135] w-full h-full  '>
                 <View className=' w-full  pt-14 px-8'>
+                    
                     <Text className='text-white text-4xl mb-4 font-JakartaSemiBold'>
                         Hi,{'\n'}
                         {user?.firstName}!
@@ -158,7 +159,7 @@ export default function Page() {
                     <View className='w-full relative'>
                         {/* <WeeklyTracking /> */}
 
-                        <View className="flex-row justify-between items-center mb-6">
+                        <View className="flex-row justify-between items-center">
                             <Text className="text-2xl font-JakartaBold text-white">Weight Tracking</Text>
                             <TouchableOpacity 
                                 onPress={handleAddWeightModal}
@@ -168,18 +169,15 @@ export default function Page() {
                             </TouchableOpacity>
                         </View>
 
-                        
-                        <TouchableOpacity onPress={handleAddWeightModal}>
-                            <FontAwesome name='plus' size={40} color='white' className='flex-end flex '/>
-                        </TouchableOpacity>
-
-                        <View className='w-full overflow-hidden py-2 rounded-xl '>
-                            {/* <View className=' w-20 h-20  justify-center items-center'>
-                                <Text className='font-JakartaBold text-center text-2xl mb-2'>Lose  </Text>
-                                <Text className='font-JakartaSemiBold'>
-                                    {(userWeights[userWeights.length-1]?.value - DATA[0].value).toFixed(2)}
-                                </Text>
-                            </View> */}
+                        <View className='w-full overflow-hidden rounded-xl '>
+                            <View className='bg-sky-200 rounded-3xl w-[50%] h-40 items-center flex justify-between my-4'>
+                                <Text className='text-gray-600 font-JakartaSemiBold text-lg pt-4'>Weight</Text>
+                                <Text className='text-black font-JakartaBold text-3xl mb-2'>165.2 lbs</Text>
+                    
+                                <Text className='pb-4'>{(userWeights[userWeights.length-1]?.value - DATA[0].value).toFixed(2)} lbs from goal</Text>
+                            </View>
+                            
+                    
                    
                             <View className=' overflow-hidden  w-[98%] right-0'>
                                 <LineChart 

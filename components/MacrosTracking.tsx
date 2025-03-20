@@ -62,17 +62,22 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({
         {/* Header */}
         <View className="flex-row justify-between items-center mb-6">
           <Text className="text-2xl font-JakartaBold text-white">Macros Tracking</Text>
-          <TouchableOpacity 
-            onPress={onAddMeal}
-            className="bg-cyan-600 px-4 py-2 rounded-full"
-          >
-            <Text className="text-white font-JakartaSemiBold">Add Meal</Text>
-          </TouchableOpacity>
+          
         </View>
 
         {/* Daily Progress */}
         <View className="bg-gray-600 p-4 rounded-2xl mb-6">
-          <Text className="text-xl font-JakartaBold text-white mb-4">Today's Progress</Text>
+
+          <View className="flex-row justify-between items-center mb-6">
+            <Text className="text-xl font-JakartaBold text-white mb-4">Today's Progress</Text>
+            <TouchableOpacity 
+              onPress={onAddMeal}
+              className="bg-cyan-600 px-4 py-2 rounded-full"
+            >
+              <Text className="text-white font-JakartaSemiBold">Add Meal</Text>
+            </TouchableOpacity>
+          </View>
+          
           
           <MacroProgressBar
             current={currentIntake.protein}

@@ -1,10 +1,15 @@
 import { View, Text } from 'react-native'
 
 const Calendar = () => {
+    const today = new Date().toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric' 
+    });
     return (
         <View className='bg-[#262135] w-full h-full text-white py-20 px-4 '>
             <Text className='text-white text-xl'>TODAY IS</Text>
-            <Text className='text-white text-4xl font-JakartaSemiBold'>Feb 4, 2025</Text>
+            <Text className='text-white text-4xl font-JakartaSemiBold'>{today}</Text>
 
             <View className='mt-80 bg-white h-full rounded-[40px]'>
                 <Text className='text-center mt-10 font-JakartaBold text-2xl my-8'>
