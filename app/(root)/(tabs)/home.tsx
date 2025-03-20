@@ -156,7 +156,18 @@ export default function Page() {
                         onAddMeal={handleAddWeightModal}
                     />
                     <View className='w-full relative'>
-                        <WeeklyTracking />
+                        {/* <WeeklyTracking /> */}
+
+                        <View className="flex-row justify-between items-center mb-6">
+                            <Text className="text-2xl font-JakartaBold text-white">Weight Tracking</Text>
+                            <TouchableOpacity 
+                                onPress={handleAddWeightModal}
+                                className="bg-cyan-600 px-4 py-2 rounded-full"
+                            >
+                                <Text className="text-white font-JakartaSemiBold">Log Weight</Text>
+                            </TouchableOpacity>
+                        </View>
+
                         
                         <TouchableOpacity onPress={handleAddWeightModal}>
                             <FontAwesome name='plus' size={40} color='white' className='flex-end flex '/>

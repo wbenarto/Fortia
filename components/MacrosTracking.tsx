@@ -57,21 +57,21 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({
   }));
 
   return (
-    <ScrollView className="flex-1 bg-[#1A1A1A]">
-      <View className="p-4">
+    <ScrollView className="flex-1 ">
+      <View className="">
         {/* Header */}
         <View className="flex-row justify-between items-center mb-6">
           <Text className="text-2xl font-JakartaBold text-white">Macros Tracking</Text>
           <TouchableOpacity 
             onPress={onAddMeal}
-            className="bg-primary-500 px-4 py-2 rounded-full"
+            className="bg-cyan-600 px-4 py-2 rounded-full"
           >
             <Text className="text-white font-JakartaSemiBold">Add Meal</Text>
           </TouchableOpacity>
         </View>
 
         {/* Daily Progress */}
-        <View className="bg-neutral-800 p-4 rounded-2xl mb-6">
+        <View className="bg-gray-600 p-4 rounded-2xl mb-6">
           <Text className="text-xl font-JakartaBold text-white mb-4">Today's Progress</Text>
           
           <MacroProgressBar
@@ -113,7 +113,7 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({
         </View>
 
         {/* Weekly Chart */}
-        <View className="bg-neutral-800 p-4 rounded-2xl">
+        {/* <View className="bg-neutral-800 p-4 rounded-2xl">
           <Text className="text-xl font-JakartaBold text-white mb-4">Weekly Overview</Text>
           <LineChart
             data={chartData}
@@ -144,7 +144,7 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({
             stripColor="#494358"
             stripWidth={2}
           />
-        </View>
+        </View> */}
       </View>
     </ScrollView>
   );

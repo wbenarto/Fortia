@@ -1,14 +1,20 @@
 import { Stack, Tabs } from 'expo-router';
-import { View, Image } from 'react-native';
+import { View, Image, ImageSourcePropType } from 'react-native';
 import { icons } from '@/constants/index';
+import { Ionicons } from '@expo/vector-icons';
 
-const TabIcon = ({ source, focused}:  
-  {source: ImageSourcePropType; 
-  focused: Boolean; 
+const TabIcon = ({ iconName, source, focused}:  
+  {iconName?: string; 
+  source?: ImageSourcePropType;
+  focused: boolean; 
 }) => (
   <View className={`flex flex-row justify-center w-14 h-14 items-center rounded-full ${focused ? 'bg-general-300' : 'bg-gray-400'}`}>
     <View className={`rounded-full w-14 h-14 items-center justify-center ${focused ? "bg-general-300" : "bg-gray-[#2C263A]"}`}>
-      <Image source={source} tintColor='#5A556B' resizeMode='contain' className='w-7 h-7'/>
+      {iconName ? (
+        <Ionicons name={iconName as any} size={28} color="#5A556B" />
+      ) : (
+        <Image source={source!} tintColor='#5A556B' resizeMode='contain' className='w-7 h-7'/>
+      )}
     </View>
   </View>
 )
@@ -43,7 +49,7 @@ const Layout = () => {
           options={{
             title: 'Home',
             headerShown: false,
-            tabBarIcon: ({focused})=> <TabIcon focused={focused} source={icons.Home} />
+            tabBarIcon: ({focused})=> <TabIcon focused={focused} iconName='stats-chart' />
 
           }}
         />
@@ -52,8 +58,7 @@ const Layout = () => {
           options={{
             title: 'Meal',
             headerShown: false,
-            tabBarIcon: ({focused})=> <TabIcon focused={focused} source={icons.Home} />
-
+            tabBarIcon: ({focused}) => <TabIcon focused={focused} iconName='fast-food'/>
           }}
         />
         <Tabs.Screen
@@ -61,7 +66,7 @@ const Layout = () => {
           options={{
             title: 'Calendar',
             headerShown: false,
-            tabBarIcon: ({focused})=> <TabIcon focused={focused} source={icons.Calendar} />
+            tabBarIcon: ({focused})=> <TabIcon focused={focused} iconName='barbell' />
 
           }}
         />
@@ -70,7 +75,7 @@ const Layout = () => {
           options={{
             title: 'Profile',
             headerShown: false,
-            tabBarIcon: ({focused})=> <TabIcon focused={focused} source={icons.Profile} />
+            tabBarIcon: ({focused})=> <TabIcon focused={focused} iconName='person-circle' />
 
           }}
         />
