@@ -31,8 +31,8 @@ const MacroProgressBar = ({ current, goal, color, label }: { current: number; go
   return (
     <View className="mb-4">
       <View className="flex-row justify-between mb-1">
-        <Text className="text-white font-JakartaSemiBold">{label}</Text>
-        <Text className="text-white font-JakartaSemiBold">{current}g / {goal}g</Text>
+        <Text className="text-black font-JakartaSemiBold">{label}</Text>
+        <Text className="text-black font-JakartaSemiBold">{current}g / {goal}g</Text>
       </View>
       <View className="h-2 bg-neutral-700 rounded-full overflow-hidden">
         <View 
@@ -57,59 +57,63 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({
   }));
 
   return (
-    <ScrollView className="flex-1 ">
+    <ScrollView className="flex-1 px-8 ">
       <View className="">
         {/* Header */}
-        <View className="flex-row justify-between items-center mb-6">
-          <Text className="text-2xl font-JakartaBold text-white">Macros Tracking</Text>
-          
-        </View>
+    
 
         {/* Daily Progress */}
-        <View className="bg-gray-600 p-4 rounded-2xl mb-6">
+        <View className="bg-white p-4 rounded-2xl mb-6">
 
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-xl font-JakartaBold text-white mb-4">Today's Progress</Text>
-            <TouchableOpacity 
-              onPress={onAddMeal}
-              className="bg-cyan-600 px-4 py-2 rounded-full"
-            >
-              <Text className="text-white font-JakartaSemiBold">Add Meal</Text>
-            </TouchableOpacity>
+            <Text className="text-xl font-JakartaBold text-black ">Today's Nutrition</Text>
+            
           </View>
-          
           
           <MacroProgressBar
             current={currentIntake.protein}
             goal={dailyGoal.protein}
-            color="bg-blue-500"
+            color="bg-[#C4E1E6]"
+            label="Calories"
+          />
+
+          <MacroProgressBar
+            current={currentIntake.protein}
+            goal={dailyGoal.protein}
+            color="bg-[#F9DBBA]"
             label="Protein"
           />
           
           <MacroProgressBar
             current={currentIntake.carbs}
             goal={dailyGoal.carbs}
-            color="bg-green-500"
+            color="bg-[#FFDCDC]"
             label="Carbs"
           />
           
           <MacroProgressBar
             current={currentIntake.fats}
             goal={dailyGoal.fats}
-            color="bg-yellow-500"
+            color="bg-[#D4A5A5]"
             label="Fats"
           />
+          <TouchableOpacity 
+              onPress={onAddMeal}
+              className="bg-[#3BAEA0] mt-4 px-4 py-2 justify-center items-center rounded-full"
+            >
+              <Text className="text-white font-JakartaSemiBold">Add Meal</Text>
+            </TouchableOpacity>
 
           <View className="mt-4 flex-row justify-between">
             <View className="items-center">
-              <Text className="text-white font-JakartaSemiBold">
+              <Text className="text-black font-JakartaSemiBold">
                 {Math.round((currentIntake.protein + currentIntake.carbs + currentIntake.fats) / 
                 (dailyGoal.protein + dailyGoal.carbs + dailyGoal.fats) * 100)}%
               </Text>
-              <Text className="text-neutral-400 text-sm">Daily Goal</Text>
+              <Text className="text-neutral-400 text-sm">Daily Protein Goal</Text>
             </View>
             <View className="items-center">
-              <Text className="text-white font-JakartaSemiBold">
+              <Text className="text-black font-JakartaSemiBold">
                 {currentIntake.protein + currentIntake.carbs + currentIntake.fats}g
               </Text>
               <Text className="text-neutral-400 text-sm">Total Intake</Text>

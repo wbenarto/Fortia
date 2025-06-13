@@ -128,10 +128,10 @@ export default function Page() {
     return (
         <View>
         <SignedIn>
-            <ScrollView className='bg-[#262135] w-full h-full  '>
-                <View className=' w-full  pt-14 px-8'>
+            <ScrollView className='bg-[#e8e5dc] w-full h-full  '>
+                <View className=' w-full  pt-14 '>
                     
-                    <Text className='text-white text-4xl mb-4 font-JakartaSemiBold'>
+                    <Text className='text-black text-2xl mb-10 px-8 font-JakartaSemiBold'>
                         Hi,{'\n'}
                         {user?.firstName}!
                     </Text>
@@ -156,11 +156,11 @@ export default function Page() {
                         ]}
                         onAddMeal={handleAddWeightModal}
                     />
-                    <View className='w-full relative'>
+                    <View className='relative bg-[#A6D0E4] p-4 mx-1 rounded-2xl'>
                         {/* <WeeklyTracking /> */}
 
                         <View className="flex-row justify-between items-center">
-                            <Text className="text-2xl font-JakartaBold text-white">Weight Tracking</Text>
+                            <Text className="text-2xl font-JakartaBold text-black">Weight Tracking</Text>
                             <TouchableOpacity 
                                 onPress={handleAddWeightModal}
                                 className="bg-cyan-600 px-4 py-2 rounded-full"
