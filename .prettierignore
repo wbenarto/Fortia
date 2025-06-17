@@ -1,0 +1,30 @@
+# Build output
+build/
+dist/
+.expo/
+
+# Dependencies
+node_modules/
+
+# Cache
+.cache/
+.npm/
+
+# Environment files
+.env
+.env.*
+
+# Generated files
+*.generated.*
+*.min.js
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Test coverage
+coverage/
+
+# Misc
+.DS_Store
+*.log 

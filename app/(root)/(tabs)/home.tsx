@@ -5,6 +5,7 @@ import { View, Text , Image , ScrollView, TouchableOpacity, Button, Platform } f
 import InputField from '@/components/InputField';
 import { FontAwesome } from '@expo/vector-icons'
 import Navbar  from '@/components/Navbar'
+import WeeklyCalendar from '@/components/WeeklyCalendar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
@@ -141,6 +142,7 @@ export default function Page() {
                 className='w-full h-full '>
                     <Navbar />
                     <View className='w-full '>
+                        <WeeklyCalendar />
 
                         
                         <MacrosTracking 
