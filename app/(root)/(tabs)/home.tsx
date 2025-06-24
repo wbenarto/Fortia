@@ -6,6 +6,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import Navbar from '@/components/Navbar';
 import WeightTracking from '@/components/WeightTracking';
 import WeeklyCalendar from '@/components/WeeklyCalendar';
+import ActivityTracking from '@/components/ActivityTracking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { images } from '@/constants/index';
@@ -28,30 +29,30 @@ export default function Page() {
 					<View className="w-full ">
 						<WeeklyCalendar />
 						<WeightTracking />
-
-						{/* <MacrosTracking 
-                            dailyGoal={{
-                                protein: 245,
-                                carbs: 245,
-                                fats: 70
-                            }}
-                            currentIntake={{
-                                protein: 216,
-                                carbs: 216,
-                                fats: 85
-                            }}
-                            weeklyData={[
-                                { date: 'Mon', protein: 220, carbs: 210, fats: 75 },
-                                { date: 'Tue', protein: 215, carbs: 200, fats: 80 },
-                                { date: 'Wed', protein: 225, carbs: 220, fats: 85 },
-                                { date: 'Thu', protein: 210, carbs: 215, fats: 78 },
-                                { date: 'Fri', protein: 230, carbs: 225, fats: 82 },
-                                { date: 'Sat', protein: 216, carbs: 216, fats: 85 }
-                            ]}
-                            onAddMeal={handleAddWeightModal}
-                        /> */}
+						<MacrosTracking
+							dailyGoal={{
+								protein: 245,
+								carbs: 245,
+								fats: 70,
+							}}
+							currentIntake={{
+								protein: 216,
+								carbs: 216,
+								fats: 85,
+							}}
+							weeklyData={[
+								{ date: 'Mon', protein: 220, carbs: 210, fats: 75 },
+								{ date: 'Tue', protein: 215, carbs: 200, fats: 80 },
+								{ date: 'Wed', protein: 225, carbs: 220, fats: 85 },
+								{ date: 'Thu', protein: 210, carbs: 215, fats: 78 },
+								{ date: 'Fri', protein: 230, carbs: 225, fats: 82 },
+								{ date: 'Sat', protein: 216, carbs: 216, fats: 85 },
+							]}
+							// onAddMeal={handleAddWeightModal}
+						/>
+						<ActivityTracking />
 					</View>
-					<View className="w-full  px-8 ">
+					{/* <View className="w-full  px-8 ">
 						<Text className="text-white text-3xl font-JakartaSemiBold mt-8">Macros</Text>
 						<View className="w-full h-40 rounded-md flex items-center flex-row justify-between">
 							<View className="w-[30%] py-8 bg-blue-100 rounded-full">
@@ -67,15 +68,15 @@ export default function Page() {
 								<Text className="text-center font-JakartaSemiBold text-xl">Protein</Text>
 							</View>
 						</View>
-					</View>
-					<View className="w-full  px-8 pb-40">
+					</View> */}
+					{/* <View className="w-full  px-8 pb-40">
 						<Text className="text-white text-3xl font-JakartaSemiBold mt-8">
 							Your {'\n'}
 							Schedule
 						</Text>
 						<Text className="text-white mt-4">Today's Activity</Text>
 						<View className="w-full ">
-							{/* Activity Component */}
+							
 							<View className="h-20 my-2 w-full rounded-[20px] items-center justify-between flex-row">
 								<View className="w-14 h-14 rounded-full bg-yellow-100 flex justify-center items-center">
 									<View className="w-4 h-4 rounded-full bg-black"></View>
@@ -125,7 +126,7 @@ export default function Page() {
 								</View>
 							</View>
 						</View>
-					</View>
+					</View> */}
 				</ScrollView>
 			</SignedIn>
 			<SignedOut>

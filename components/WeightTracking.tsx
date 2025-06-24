@@ -121,13 +121,13 @@ const WeightTracking = () => {
 	return (
 		<View className="w-full">
 			<View className="flex flex-row justify-between px-4">
-				<Text className="font-JakartaSemibold ">Weight Progress</Text>
-				<Text className="text-[#E3BBA1] text-xs font-JakartaSemibold">-2.2 lbs this week</Text>
+				<Text className="font-JakartaSemiBold text-lg ">Weight Progress</Text>
+				<Text className="text-[#E3BBA1] text-xs font-JakartaSemiBold">-2.2 lbs this week</Text>
 			</View>
 			<View className=" pb-6 px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
 				<View className="py-6 flex flex-row justify-between items-end ">
 					<Text>
-						<Text className="font-JakartaBold text-2xl">157.0</Text>{' '}
+						<Text className="font-JakartaBold text-3xl">157.0</Text>{' '}
 						<Text className="text-[#64748B]">lbs</Text>
 					</Text>
 					<Text className="text-xs text-[#64748B]">Target: 150 lbs</Text>
@@ -136,7 +136,7 @@ const WeightTracking = () => {
 					<LineChart
 						color={'#E3BBA1'}
 						data={userWeights}
-						height={120}
+						height={90}
 						initialSpacing={0}
 						curved
 						textColor={'white'}
@@ -163,7 +163,7 @@ const WeightTracking = () => {
 					</View>
 					<View className="flex justify-center items-center gap-1 ">
 						<Text className="text-xs text-[#64748B]">Target</Text>
-						<Text className="text-sm">168.8 lbs</Text>
+						<Text className="text-sm">150.0 lbs</Text>
 					</View>
 				</View>
 				<CustomButton onPress={handleWeightSubmission} title="Log Today's Weight" />
