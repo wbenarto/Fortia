@@ -13,13 +13,17 @@ const TabIcon = ({
 	focused: boolean;
 }) => (
 	<View
-		className={`flex flex-row justify-center w-14 h-14 items-center rounded-full ${focused ? 'bg-general-300' : 'bg-gray-400'}`}
+		className={`flex flex-row justify-centeritems-center rounded-full ${focused ? 'bg-general-300 w-12 h-12' : 'bg-white w-10 h-10'}`}
 	>
 		<View
-			className={`rounded-full w-14 h-14 items-center justify-center ${focused ? 'bg-general-300' : 'bg-gray-[#2C263A]'}`}
+			className={`rounded-full  items-center justify-center ${focused ? 'bg-white w-12 h-12' : 'bg-general-300 w-10 h-10'}`}
 		>
 			{iconName ? (
-				<Ionicons name={iconName as any} size={28} color="#5A556B" />
+				<Ionicons
+					name={iconName as any}
+					size={focused ? 24 : 20}
+					color={focused ? '#E3BBA1' : 'gray'}
+				/>
 			) : (
 				<Image source={source!} tintColor="#5A556B" resizeMode="contain" className="w-7 h-7" />
 			)}
@@ -36,14 +40,16 @@ const Layout = () => {
 				tabBarInactiveTintColor: 'white',
 				tabBarShowLabel: false,
 				tabBarStyle: {
-					backgroundColor: '#5A556B',
-					display: 'none',
+					backgroundColor: '#E3BBA1',
+					display: 'flex',
 					borderRadius: 50,
-					marginHorizontal: 40,
+					marginHorizontal: 20,
+					marginRight: 120,
+					paddingTop: 5,
 					overflow: 'hidden',
 					padding: 0,
 					marginBottom: 20,
-					height: 80,
+					height: 60,
 					flexDirection: 'row',
 					justifyContent: 'space-between',
 					alignItems: 'center',

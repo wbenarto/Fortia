@@ -26,7 +26,7 @@ export default function Page() {
 			<SignedIn>
 				<ScrollView stickyHeaderIndices={[0]} className="w-full h-full ">
 					<Navbar />
-					<View className="w-full ">
+					<View className="w-full pb-10">
 						<WeeklyCalendar />
 						<WeightTracking />
 						<MacrosTracking
