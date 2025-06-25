@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import CustomButton from './CustomButton';
 import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
@@ -6,7 +6,7 @@ import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
 const ActivityTracking = () => {
 	return (
 		<View className="w-full">
-			<View className="flex flex-row justify-between px-4">
+			<View className="flex flex-row justify-between items-center px-4">
 				<Text className="font-JakartaSemiBold text-lg">Activity Summary</Text>
 				<Text className="text-[#E3BBA1] text-xs font-JakartaSemiBold">5 Day Streak</Text>
 			</View>
@@ -30,7 +30,7 @@ const ActivityTracking = () => {
 							<Text className="text-[#64748B]"> /600</Text>
 						</View>
 					</View>
-					<View className="w-16 h-16 rounded-xl flex justify-center items-center bg-[#E3BBA1]">
+					<View className="w-16 h-16 rounded-xl flex justify-center items-center bg-[#9ED5A0]">
 						{true ? (
 							<Ionicons name="checkmark-sharp" size={30} color="white" />
 						) : (

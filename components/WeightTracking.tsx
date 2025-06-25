@@ -9,14 +9,26 @@ import CustomButton from '@/components/CustomButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LineChart } from 'react-native-gifted-charts';
 
+interface WeightEntry {
+	date: string;
+	weight: string;
+}
+
+interface ChartDataPoint {
+	label: string;
+	value: number;
+	dataPointText: string;
+}
+
 const WeightTracking = () => {
-	const [userWeights, setUserWeights] = useState<any[]>([]);
+	const [userWeights, setUserWeights] = useState<ChartDataPoint[]>([]);
 	const [addWeightModal, setAddWeightModal] = useState(false);
 	const [weightForm, setWeightForm] = useState({
 		weight: '',
 		date: new Date(),
 	});
 	const [showDatePicker, setShowDatePicker] = useState(false);
+	const [focusedPoint, setFocusedPoint] = useState(null);
 
 	const { user } = useUser();
 
@@ -30,6 +42,13 @@ const WeightTracking = () => {
 	];
 
 	const { getToken } = useAuth();
+
+	// Get the last weight entry for display
+	const lastWeightEntry = userWeights.length > 0 ? userWeights[userWeights.length - 1] : null;
+	const todayDate = new Date().toISOString().split('T')[0].slice(5);
+
+	console.log(lastWeightEntry?.label, todayDate);
+	console.log(lastWeightEntry?.label === todayDate);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -48,9 +67,9 @@ const WeightTracking = () => {
 				// setUserWeights(data)
 				setUserWeights(
 					data
-						.sort((a: any, b: any) => +new Date(a.date) - +new Date(b.date))
+						.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
 						.slice(-6)
-						.map(({ date, weight }) => ({
+						.map(({ date, weight }: WeightEntry) => ({
 							label: date.split('T')[0].slice(5),
 							value: +weight,
 							dataPointText: `${weight}`,
@@ -63,16 +82,6 @@ const WeightTracking = () => {
 	);
 
 	const handleAddWeightModal = () => setAddWeightModal(!addWeightModal);
-
-	const onChange = (event, selectedDate: any) => {
-		console.log('selectedDate; ', selectedDate);
-		console.log('weightform date state', weightForm.date);
-		setShowDatePicker(false);
-
-		if (selectedDate) {
-			setWeightForm({ ...weightForm, date: selectedDate });
-		}
-	};
 
 	const handleWeightSubmission = async () => {
 		console.log('ello', weightForm, user);
@@ -101,9 +110,9 @@ const WeightTracking = () => {
 				// setUserWeights(data)
 				setUserWeights(
 					data
-						.sort((a: any, b: any) => +new Date(a.date) - +new Date(b.date))
+						.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
 						.slice(-6)
-						.map(({ date, weight }) => ({
+						.map(({ date, weight }: WeightEntry) => ({
 							label: date.split('T')[0].slice(5),
 							value: +weight,
 							dataPointText: `${weight}`,
@@ -120,14 +129,16 @@ const WeightTracking = () => {
 	};
 	return (
 		<View className="w-full">
-			<View className="flex flex-row justify-between px-4">
+			<View className="flex flex-row justify-between items-center px-4">
 				<Text className="font-JakartaSemiBold text-lg ">Weight Progress</Text>
 				<Text className="text-[#E3BBA1] text-xs font-JakartaSemiBold">-2.2 lbs this week</Text>
 			</View>
-			<View className=" pb-6 px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
+			<View className=" px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
 				<View className="py-6 flex flex-row justify-between items-end ">
 					<Text>
-						<Text className="font-JakartaBold text-3xl">157.0</Text>{' '}
+						<Text className="font-JakartaBold text-3xl">
+							{lastWeightEntry ? lastWeightEntry.value.toFixed(1) : '--'}
+						</Text>{' '}
 						<Text className="text-[#64748B]">lbs</Text>
 					</Text>
 					<Text className="text-xs text-[#64748B]">Target: 150 lbs</Text>
@@ -146,7 +157,39 @@ const WeightTracking = () => {
 						yAxisTextStyle={{ color: 'white', fontSize: 12 }}
 						hideYAxisText
 						isAnimated
+						animationDuration={2500} // Duration of the animation in milliseconds (1.5 seconds)
+						animateOnDataChange={false} // Set to true if you want animation when data updates later
+						// Optional: Customize animation type (easeOutQuad, linear, etc.)
+						// animationEasing="easeOutQuad"
 						hideAxesAndRules
+						focusEnabled // Enables the focus functionality
+						showDataPointOnFocus // Shows a visual indicator on the focused data point
+						showDataPointLabelOnFocus // Shows a label/value on the focused data point
+						// Optional: Customize the appearance of the focused data point
+						focusedDataPointShape="circle"
+						focusedDataPointWidth={15}
+						focusedDataPointHeight={15}
+						focusedDataPointColor="red" // Color of the focused data point indicator
+						focusedDataPointRadius={6}
+						// Optional: Customize the label that appears on focus
+						pointerConfig={{
+							pointerLabelComponent: (item: any) => {
+								return (
+									<View className=" w-10 absolute top-0 h-8 flex jusitfy-center items-center mt-4">
+										<Text className="text-xs color-[#64748B] font-JakartaSemiBold">
+											{item[0].value}
+										</Text>
+									</View>
+								);
+							},
+							pointerStripColor: 'transparent',
+							pointerColor: '#64748B',
+						}}
+						onFocus={(item: any) => {
+							setFocusedPoint(item);
+						}}
+						dataPointLabelShiftY={-25} // Adjust position of the label above the point
+						dataPointLabelShiftX={-5}
 						yAxisOffset={160}
 						hideDataPoints
 						data2={DATA}
@@ -159,14 +202,46 @@ const WeightTracking = () => {
 					</View>
 					<View className="flex justify-center items-center gap-1 ">
 						<Text className="text-xs text-[#64748B]">Change</Text>
-						<Text className="text-sm text-[#E3BBA1]">-2.2 lbs</Text>
+						<Text className="text-sm text-[#E3BBA1]">
+							{lastWeightEntry ? (168.8 - lastWeightEntry.value).toFixed(1) : '--'} lbs
+						</Text>
 					</View>
 					<View className="flex justify-center items-center gap-1 ">
 						<Text className="text-xs text-[#64748B]">Target</Text>
 						<Text className="text-sm">150.0 lbs</Text>
 					</View>
 				</View>
-				<CustomButton onPress={handleWeightSubmission} title="Log Today's Weight" />
+
+				{lastWeightEntry?.label === todayDate ? null : (
+					<CustomButton onPress={handleAddWeightModal} title="Log Today's Weight" />
+				)}
+
+				<ReactNativeModal
+					isVisible={addWeightModal}
+					onBackdropPress={() => setAddWeightModal(false)}
+				>
+					<View className="bg-white py-10 px-4 mx-10 rounded-md">
+						<View className="pb-4 ">
+							<Text className="text-xl text-center font-JakartaSemiBold">Log your weight</Text>
+						</View>
+
+						<View className="flex mx-auto w-full justify-center">
+							<InputField
+								label=""
+								placeholder="Enter your weight"
+								keyboardType="numeric"
+								value={weightForm.weight}
+								className="text-center flex p-4 "
+								onChangeText={value => setWeightForm({ ...weightForm, weight: value })}
+							/>
+						</View>
+						<View className="mb-6">
+							<Text className="text-lg text-center font-JakartaSemiBold">lbs</Text>
+						</View>
+
+						<CustomButton onPress={handleWeightSubmission} title="Save" />
+					</View>
+				</ReactNativeModal>
 			</View>
 		</View>
 		// <View className="relative bg-[#A6D0E4] p-4 mx-1 rounded-2xl">
