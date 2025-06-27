@@ -1,5 +1,6 @@
 import { Stack, Tabs } from 'expo-router';
 import { View, Image, ImageSourcePropType } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { icons } from '@/constants/index';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -13,10 +14,10 @@ const TabIcon = ({
 	focused: boolean;
 }) => (
 	<View
-		className={`flex flex-row justify-centeritems-center rounded-full ${focused ? 'bg-general-300 w-12 h-12' : 'bg-white w-10 h-10'}`}
+		className={`flex flex-row justify-center overflow-hidden items-center rounded-full ${focused ? 'bg-general-300 w-12 h-12' : 'w-10 h-10'}`}
 	>
 		<View
-			className={`rounded-full  items-center justify-center ${focused ? 'bg-white w-12 h-12' : 'bg-general-300 w-10 h-10'}`}
+			className={`rounded-full items-center justify-center ${focused ? 'bg-white w-12 h-12' : 'w-10 h-10'}`}
 		>
 			{iconName ? (
 				<Ionicons
@@ -28,6 +29,18 @@ const TabIcon = ({
 				<Image source={source!} tintColor="#5A556B" resizeMode="contain" className="w-7 h-7" />
 			)}
 		</View>
+		{!focused && (
+			<BlurView
+				intensity={40}
+				tint="dark"
+				style={{
+					position: 'absolute',
+					width: '100%',
+					height: '100%',
+					opacity: 0.3,
+				}}
+			/>
+		)}
 	</View>
 );
 
@@ -40,7 +53,7 @@ const Layout = () => {
 				tabBarInactiveTintColor: 'white',
 				tabBarShowLabel: false,
 				tabBarStyle: {
-					backgroundColor: '#E3BBA1',
+					backgroundColor: 'transparent',
 					display: 'flex',
 					borderRadius: 50,
 					marginHorizontal: 20,
@@ -54,7 +67,13 @@ const Layout = () => {
 					justifyContent: 'space-between',
 					alignItems: 'center',
 					position: 'absolute',
+					elevation: 0,
+					shadowOpacity: 0,
+					borderTopWidth: 0,
 				},
+				tabBarBackground: () => (
+					<BlurView intensity={20} tint="light" style={{ flex: 1, borderRadius: 50 }} />
+				),
 			}}
 		>
 			<Tabs.Screen
@@ -74,9 +93,9 @@ const Layout = () => {
 				}}
 			/>
 			<Tabs.Screen
-				name="calendar"
+				name="workout"
 				options={{
-					title: 'Calendar',
+					title: 'Workout',
 					headerShown: false,
 					tabBarIcon: ({ focused }) => <TabIcon focused={focused} iconName="barbell" />,
 				}}

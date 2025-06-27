@@ -69,7 +69,12 @@ const ActivityTracking = () => {
 					</View>
 				</View>
 
-				<CustomButton onPress={() => console.log('im here')} title="Start Workout" />
+				<CustomButton
+					IconLeft={() => <Ionicons name="barbell-outline" size={24} color="white" />}
+					onPress={() => console.log('im here')}
+					textProp="text-lg ml-4"
+					title="Start Workout"
+				/>
 			</View>
 		</View>
 	);

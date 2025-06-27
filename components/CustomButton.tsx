@@ -2,6 +2,8 @@ import { TouchableOpacity, Text } from 'react-native';
 
 const getBgVariantStyle = (variant: ButtonProps['bgVariant']) => {
 	switch (variant) {
+		case 'primary':
+			return 'bg-[#E3BBA1]';
 		case 'secondary':
 			return 'bg-gray-500';
 		case 'danger':
@@ -18,7 +20,7 @@ const getBgVariantStyle = (variant: ButtonProps['bgVariant']) => {
 const getTextVariantStyle = (variant: ButtonProps['textVariant']) => {
 	switch (variant) {
 		case 'primary':
-			return 'text-black';
+			return 'text-[#E3BBA1]';
 		case 'secondary':
 			return 'text-gray-100';
 		case 'success':
@@ -35,8 +37,9 @@ interface ButtonProps {
 	title: string;
 	bgVariant?: 'primary' | 'secondary' | 'danger' | 'success' | 'outline';
 	textVariant?: 'default' | 'primary' | 'secondary' | 'success' | 'danger';
-	IconLeft?: React.FC;
-	IconRight?: React.FC;
+	IconLeft?: React.FC<IconProps>;
+	IconRight?: React.FC<IconProps>;
+	textProp?: string;
 	className?: string;
 	width?: string | number;
 	testID?: string;
@@ -50,18 +53,21 @@ const CustomButton = ({
 	IconLeft,
 	IconRight,
 	className,
+	textProp,
 	width,
 	testID,
 	...props
 }: ButtonProps) => (
 	<TouchableOpacity
 		onPress={onPress}
-		className={`w-${width} p-4 my-4 rounded-lg flex flex-row justify-center items-center shadow-md shadow-neutral-400/70 ${getBgVariantStyle(bgVariant)} ${className}`}
+		className={`w-${width} p-4 my-2 rounded-lg flex flex-row justify-center items-center shadow-sm shadow-neutral-400/70 ${getBgVariantStyle(bgVariant)} ${className}`}
 		testID={testID}
 		{...props}
 	>
 		{IconLeft && <IconLeft />}
-		<Text className={`font-JakartaSemiBold ${getTextVariantStyle(textVariant)}`}>{title}</Text>
+		<Text className={`mx-1 font-JakartaBold ${textProp} ${getTextVariantStyle(textVariant)}`}>
+			{title}
+		</Text>
 		{IconRight && <IconRight />}
 	</TouchableOpacity>
 );

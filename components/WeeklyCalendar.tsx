@@ -14,7 +14,7 @@ const WeeklyCalendar = () => {
 	});
 
 	return (
-		<View className="flex flex-row  justify-between px-4 py-4">
+		<View className="flex flex-row justify-between px-4 py-2">
 			{days.map((day, index) => (
 				<View key={index} className="items-center mx-3">
 					<Text
