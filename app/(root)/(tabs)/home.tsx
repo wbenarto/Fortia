@@ -29,27 +29,7 @@ export default function Page() {
 					<View className="w-full pb-10">
 						<WeeklyCalendar />
 						<WeightTracking />
-						<MacrosTracking
-							dailyGoal={{
-								protein: 245,
-								carbs: 245,
-								fats: 70,
-							}}
-							currentIntake={{
-								protein: 216,
-								carbs: 216,
-								fats: 85,
-							}}
-							weeklyData={[
-								{ date: 'Mon', protein: 220, carbs: 210, fats: 75 },
-								{ date: 'Tue', protein: 215, carbs: 200, fats: 80 },
-								{ date: 'Wed', protein: 225, carbs: 220, fats: 85 },
-								{ date: 'Thu', protein: 210, carbs: 215, fats: 78 },
-								{ date: 'Fri', protein: 230, carbs: 225, fats: 82 },
-								{ date: 'Sat', protein: 216, carbs: 216, fats: 85 },
-							]}
-							// onAddMeal={handleAddWeightModal}
-						/>
+						<MacrosTracking />
 						<ActivityTracking />
 					</View>
 					{/* <View className="w-full  px-8 ">

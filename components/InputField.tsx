@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 interface InputFieldProps {
-	label: string;
+	label?: string;
 	labelStyle?: string;
 	icon?: any;
 	secureTextEntry?: boolean;
@@ -38,9 +38,11 @@ const InputField = ({
 	<KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 		<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 			<View className="my-2 w-full">
-				<Text className={`text-md font-JakartaSemiBold mb-3 text-black ${labelStyle}`}>
-					{label}
-				</Text>
+				{label && (
+					<Text className={`text-md font-JakartaSemiBold mb-3 text-black ${labelStyle}`}>
+						{label}
+					</Text>
+				)}
 				<View
 					className={`flex flex-row justify-start items-center relative bg-neutral-100 rounded-md border border-neutral-100
                     focus:border-primary-500 ${containerStyle}

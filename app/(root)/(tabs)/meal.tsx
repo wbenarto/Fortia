@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo';
 import ReactNativeModal from 'react-native-modal';
 import Navbar from '@/components/Navbar';
@@ -7,83 +7,135 @@ import MacrosTracking from '@/components/MacrosTracking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Food from '@/components/Food';
 import SuggestedMeals from '@/components/SuggestedMeals';
+import { fetchAPI } from '@/lib/fetch';
+
+interface Meal {
+	id: string;
+	user_id: string;
+	food_name: string;
+	portion_size: string;
+	calories: number;
+	protein: number;
+	carbs: number;
+	fats: number;
+	fiber: number;
+	sugar: number;
+	sodium: number;
+	confidence_score: number;
+	meal_type: string;
+	created_at: string;
+	updated_at: string;
+}
+
+interface FoodItem {
+	name: string;
+	weight: string;
+	calories: number;
+	protein: number;
+	carbs: number;
+	fats: number;
+}
 
 const Meal = () => {
 	const [addMealModal, setAddMealModal] = useState(false);
+	const [meals, setMeals] = useState<Meal[]>([]);
+	const [isLoadingMeals, setIsLoadingMeals] = useState(false);
+	const [error, setError] = useState('');
 	const insets = useSafeAreaInsets();
+	const { user } = useUser();
 
-	const dummyFood = [
-		{
-			name: 'Chicken Breast',
-			weight: 100,
-			calories: 120,
-			protein: 24,
-			carbs: 0,
-			fats: 3,
-			time: '8:30am',
-		},
-		{
-			name: 'Salad',
-			weight: 40,
-			calories: 112,
-			protein: 24,
-			carbs: 0,
-			fats: 0,
-			time: '12:00pm',
-		},
-		{
-			name: 'Brown Rice',
-			weight: 80,
-			calories: 112,
-			protein: 24,
-			carbs: 0,
-			fats: 0,
-			time: '4:00pm',
-		},
-		{
-			name: 'Banana',
-			weight: 30,
-			calories: 100,
-			protein: 1,
-			carbs: 24,
-			fats: 0.5,
-			time: '8:00pm',
-		},
-	];
+	// Fetch meals on component mount
+	useEffect(() => {
+		if (user?.id) {
+			fetchMeals();
+		}
+	}, [user?.id]);
+
+	const fetchMeals = async () => {
+		if (!user?.id) return;
+
+		setIsLoadingMeals(true);
+		setError('');
+
+		try {
+			const today = new Date().toISOString().split('T')[0];
+			const response = await fetchAPI(`/(api)/meals?userId=${user.id}&date=${today}`, {
+				method: 'GET',
+			});
+
+			if (response.success) {
+				setMeals(response.data || []);
+			} else {
+				setError('Failed to fetch meals');
+				setMeals([]);
+			}
+		} catch (error) {
+			console.error('Failed to fetch meals:', error);
+			setError('Failed to fetch meals');
+			setMeals([]);
+		} finally {
+			setIsLoadingMeals(false);
+		}
+	};
+
+	// Transform database meals to Food component format
+	const transformMealsToFoodItems = (meals: Meal[]): FoodItem[] => {
+		return meals.map(meal => {
+			return {
+				name: meal.food_name,
+				weight: meal.portion_size,
+				calories: meal.calories,
+				protein: meal.protein,
+				carbs: meal.carbs,
+				fats: meal.fats,
+			};
+		});
+	};
+
+	const foodItems = transformMealsToFoodItems(meals);
+
+	// Callback to refresh meals when a new meal is logged
+	const handleMealLogged = () => {
+		fetchMeals();
+	};
+
 	return (
 		<View className="flex-1 bg-[#ffffff]" style={{ paddingTop: insets.top }}>
 			<SignedIn>
-				<ScrollView stickyHeaderIndices={[0]} className="w-full h-full ">
+				<ScrollView stickyHeaderIndices={[0]} className="w-full h-full">
 					<Navbar />
 					<View className="w-full pb-20 mt-4">
-						<MacrosTracking
-							dailyGoal={{
-								protein: 245,
-								carbs: 245,
-								fats: 70,
-							}}
-							currentIntake={{
-								protein: 216,
-								carbs: 216,
-								fats: 85,
-							}}
-							weeklyData={[
-								{ date: 'Mon', protein: 220, carbs: 210, fats: 75 },
-								{ date: 'Tue', protein: 215, carbs: 200, fats: 80 },
-								{ date: 'Wed', protein: 225, carbs: 220, fats: 85 },
-								{ date: 'Thu', protein: 210, carbs: 215, fats: 78 },
-								{ date: 'Fri', protein: 230, carbs: 225, fats: 82 },
-								{ date: 'Sat', protein: 216, carbs: 216, fats: 85 },
-							]}
-						/>
+						<MacrosTracking onMealLogged={handleMealLogged} />
 						<View className="w-full ">
 							<View className="flex flex-row justify-between items-center px-4">
 								<Text className="font-JakartaSemiBold text-lg">Today's Food Log</Text>
 							</View>
 							<View className="px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
-								{dummyFood.map((food, index) => (
-									<Food key={index} food={food} />
-								))}
+								{isLoadingMeals ? (
+									<View className="py-8 flex items-center justify-center">
+										<ActivityIndicator size="large" color="#E3BBA1" />
+										<Text className="text-gray-500 mt-2">Loading meals...</Text>
+									</View>
+								) : error ? (
+									<View className="py-8 flex items-center justify-center">
+										<Text className="text-red-500 text-center">{error}</Text>
+										<TouchableOpacity
+											onPress={fetchMeals}
+											className="mt-2 px-4 py-2 bg-[#E3BBA1] rounded-lg"
+										>
+											<Text className="text-white font-JakartaSemiBold">Retry</Text>
+										</TouchableOpacity>
+									</View>
+								) : foodItems.length === 0 ? (
+									<View className="py-8 flex items-center justify-center">
+										<Text className="text-gray-500 text-center">No meals logged today</Text>
+										<Text className="text-gray-400 text-sm text-center mt-1">
+											Log your first meal to see it here
+										</Text>
+									</View>
+								) : (
+									foodItems.map((food, index) => <Food key={index} food={food} />)
+								)}
 							</View>
 						</View>
 						<SuggestedMeals />

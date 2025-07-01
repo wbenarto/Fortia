@@ -3,7 +3,7 @@ export default {
 		name: 'Fortia',
 		slug: 'fortia',
 		extra: {
-			openaiAPIKey: process.env.OPENAI_API_KEY,
+			geminiAPIKey: process.env.GEMINI_API_KEY,
 		},
 		platforms: ['ios', 'web'],
 		entryPoint: 'app/index.tsx',
