@@ -32,6 +32,22 @@ const WeightTracking = () => {
 
 	const { user } = useUser();
 
+	// Calculate yAxisOffset based on data range
+	const calculateYAxisOffset = (data: ChartDataPoint[]) => {
+		if (data.length === 0) return 140;
+
+		const values = data.map(item => item.value);
+		const min = Math.min(...values);
+		const max = Math.max(...values);
+		const range = max - min;
+
+		// Adjust offset based on data range
+		if (range < 5) return 120; // Small range
+		if (range < 10) return 140; // Medium range
+		if (range < 20) return 160; // Large range
+		return 10; // Very large range
+	};
+
 	const DATA = [
 		{ value: 150 },
 		{ value: 150 },
@@ -45,7 +61,9 @@ const WeightTracking = () => {
 
 	// Get the last weight entry for display
 	const lastWeightEntry = userWeights.length > 0 ? userWeights[userWeights.length - 1] : null;
+	console.log(userWeights);
 	const todayDate = new Date().toISOString().split('T')[0].slice(5);
+	console.log(todayDate);
 
 	// Check if last weight entry is from today
 
@@ -144,12 +162,10 @@ const WeightTracking = () => {
 						Diff: {lastWeightEntry ? (lastWeightEntry.value - 150).toFixed(1) : '--'} lbs
 					</Text>
 				</View>
-				<View className=" overflow-hidden mx-2 border-b-[1px] border-[#F1F5F9] border-solid">
+				<View className=" overflow-hidden py-2 h-40 mx-2 border-b-[1px] border-[#F1F5F9] border-solid">
 					<LineChart
 						color={'#E3BBA1'}
 						data={userWeights}
-						height={70}
-						initialSpacing={0}
 						curved
 						textColor={'white'}
 						color2={'transparent'}
@@ -162,6 +178,7 @@ const WeightTracking = () => {
 						animateOnDataChange={false} // Set to true if you want animation when data updates later
 						// Optional: Customize animation type (easeOutQuad, linear, etc.)
 						// animationEasing="easeOutQuad"
+						// make the chart fit vertically
 						hideAxesAndRules
 						focusEnabled // Enables the focus functionality
 						showDataPointOnFocus // Shows a visual indicator on the focused data point
@@ -189,9 +206,9 @@ const WeightTracking = () => {
 						onFocus={(item: any) => {
 							setFocusedPoint(item);
 						}}
-						dataPointLabelShiftY={-25} // Adjust position of the label above the point
+						dataPointLabelShiftY={-20} // Adjust position of the label above the point
 						dataPointLabelShiftX={-5}
-						yAxisOffset={160}
+						yAxisOffset={calculateYAxisOffset(userWeights)}
 						hideDataPoints
 						data2={DATA}
 					/>
