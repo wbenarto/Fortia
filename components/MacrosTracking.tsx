@@ -7,6 +7,8 @@ import InputField from './InputField';
 import GoalSetupModal from './GoalSetupModal';
 import { fetchAPI } from '@/lib/fetch';
 import { useUser } from '@clerk/clerk-expo';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { getTodayDate } from '@/lib/dateUtils';
 
 interface NutritionData {
 	calories: number;
@@ -109,6 +111,7 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({ onMealLogged }) => {
 	} | null>(null);
 
 	const { user } = useUser();
+	const router = useRouter();
 
 	// Fetch daily summary and nutrition goals on component mount
 	useEffect(() => {
@@ -117,6 +120,16 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({ onMealLogged }) => {
 			fetchNutritionGoals();
 		}
 	}, [user?.id]);
+
+	// Refresh data when screen comes into focus (e.g., when navigating back from meals tab)
+	useFocusEffect(
+		React.useCallback(() => {
+			if (user?.id) {
+				fetchDailySummary();
+				fetchNutritionGoals();
+			}
+		}, [user?.id])
+	);
 
 	const fetchNutritionGoals = async () => {
 		if (!user?.id) return;
@@ -154,7 +167,9 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({ onMealLogged }) => {
 
 		setIsLoadingSummary(true);
 		try {
-			const response = await fetchAPI(`/(api)/meals?userId=${user.id}&summary=true`, {
+			// Use user's local timezone for today's date
+			const today = getTodayDate();
+			const response = await fetchAPI(`/(api)/meals?userId=${user.id}&date=${today}&summary=true`, {
 				method: 'GET',
 			});
 
@@ -261,7 +276,9 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({ onMealLogged }) => {
 			});
 
 			if (response.success) {
-				handleAddMealModal(); // Close modal and refresh summary
+				handleAddMealModal(); // Close modal
+				// Refresh daily summary to update nutrition display
+				await fetchDailySummary();
 				// Notify parent component to refresh meals list
 				if (onMealLogged) {
 					onMealLogged();
@@ -411,11 +428,18 @@ const MacrosTracking: React.FC<MacrosTrackingProps> = ({ onMealLogged }) => {
 
 				{/* Meal Count Display */}
 				{dailySummary && dailySummary.meal_count > 0 && (
-					<View className="mt-4 p-3 bg-gray-50 rounded-lg">
-						<Text className="text-center text-sm text-gray-600">
-							{dailySummary.meal_count} meal{dailySummary.meal_count !== 1 ? 's' : ''} logged today
-						</Text>
-					</View>
+					<TouchableOpacity
+						onPress={() => router.push('/(root)/(tabs)/meal')}
+						className="mt-4 p-3 bg-gray-50 rounded-lg active:bg-gray-100"
+					>
+						<View className="flex flex-row items-center justify-center">
+							<Text className="text-center text-sm text-gray-600">
+								{dailySummary.meal_count} meal{dailySummary.meal_count !== 1 ? 's' : ''} logged
+								today
+							</Text>
+							<Ionicons name="chevron-forward" size={16} color="#6B7280" />
+						</View>
+					</TouchableOpacity>
 				)}
 
 				{/* Fallback Goals Notice */}

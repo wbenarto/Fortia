@@ -12,28 +12,57 @@ const activityMultipliers = {
 	very_active: 1.9, // Very hard exercise, physical job
 };
 
-// Macro distributions by fitness goal
-const macroDistributions = {
-	lose_weight: { protein: 0.35, carbs: 0.35, fats: 0.3 },
-	gain_muscle: { protein: 0.3, carbs: 0.45, fats: 0.25 },
-	maintain: { protein: 0.25, carbs: 0.45, fats: 0.3 },
-	improve_fitness: { protein: 0.3, carbs: 0.4, fats: 0.3 },
-};
+// Macro distributions by fitness goal and weight difference
+const getMacroDistribution = (fitnessGoal: string, currentWeight: number, targetWeight: number) => {
+	const weightDifference = targetWeight - currentWeight;
 
-// Calculate BMR using Mifflin-St Jeor equation
-const calculateBMR = (weight: number, height: number, age: number, gender: string) => {
-	if (gender === 'male') {
-		return 10 * weight + 6.25 * height - 5 * age + 5;
-	} else {
-		return 10 * weight + 6.25 * height - 5 * age - 161;
+	switch (fitnessGoal) {
+		case 'lose_weight':
+			if (weightDifference > 0) {
+				// Losing weight - higher protein to preserve muscle
+				return { protein: 0.35, carbs: 0.35, fats: 0.3 };
+			} else if (weightDifference < 0) {
+				// Gaining weight - balanced macros
+				return { protein: 0.25, carbs: 0.45, fats: 0.3 };
+			} else {
+				// Maintaining - standard distribution
+				return { protein: 0.25, carbs: 0.45, fats: 0.3 };
+			}
+
+		case 'gain_muscle':
+			if (weightDifference < 0) {
+				// Gaining muscle - higher protein and carbs
+				return { protein: 0.3, carbs: 0.45, fats: 0.25 };
+			} else if (weightDifference > 0) {
+				// Need to lose weight first - higher protein
+				return { protein: 0.35, carbs: 0.35, fats: 0.3 };
+			} else {
+				// At target weight - muscle building macros
+				return { protein: 0.3, carbs: 0.45, fats: 0.25 };
+			}
+
+		case 'maintain':
+			// Standard maintenance macros
+			return { protein: 0.25, carbs: 0.45, fats: 0.3 };
+
+		case 'improve_fitness':
+			if (weightDifference > 0) {
+				// Losing weight while improving fitness
+				return { protein: 0.3, carbs: 0.4, fats: 0.3 };
+			} else if (weightDifference < 0) {
+				// Gaining weight while improving fitness
+				return { protein: 0.25, carbs: 0.45, fats: 0.3 };
+			} else {
+				// Body recomposition
+				return { protein: 0.3, carbs: 0.4, fats: 0.3 };
+			}
+
+		default:
+			return { protein: 0.25, carbs: 0.45, fats: 0.3 };
 	}
 };
 
-// Calculate TDEE (Total Daily Energy Expenditure)
-const calculateTDEE = (bmr: number, activityLevel: string) => {
-	const multiplier = activityMultipliers[activityLevel as keyof typeof activityMultipliers] || 1.2;
-	return bmr * multiplier;
-};
+import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
 
 // Calculate daily calories based on fitness goal and target weight
 function calculateDailyCaloriesWithTarget(
@@ -43,32 +72,64 @@ function calculateDailyCaloriesWithTarget(
 	targetWeight: number
 ): number {
 	const weightDifference = targetWeight - currentWeight; // kg
-	const weeklyWeightChange = weightDifference / 12; // Assume 12 weeks for goal
+	const absWeightDifference = Math.abs(weightDifference);
+
+	// Calculate weekly weight change goal (0.5-1 kg per week is healthy)
+	const weeklyWeightChange = Math.min(1, Math.max(0.5, absWeightDifference / 12)); // kg per week
+
+	// 1 kg of fat = 7700 calories
+	const dailyCalorieAdjustment = (weeklyWeightChange * 7700) / 7; // calories per day
 
 	switch (fitnessGoal) {
 		case 'lose_weight':
-			// Create a deficit of 500-750 calories per day for 0.5-1 kg/week loss
-			const deficit =
-				weightDifference > 0
-					? Math.min(750, Math.max(500, (Math.abs(weeklyWeightChange) * 7700) / 7))
-					: 500;
-			return Math.round(tdee - deficit);
+			if (weightDifference > 0) {
+				// User wants to lose weight (current > target)
+				// Create a deficit for weight loss
+				const deficit = Math.min(1000, Math.max(300, dailyCalorieAdjustment));
+				return Math.round(tdee - deficit);
+			} else if (weightDifference < 0) {
+				// User wants to gain weight (current < target)
+				// Create a surplus for weight gain
+				const surplus = Math.min(500, Math.max(200, dailyCalorieAdjustment));
+				return Math.round(tdee + surplus);
+			} else {
+				// Current weight = target weight, maintain
+				return Math.round(tdee);
+			}
 
 		case 'gain_muscle':
-			// Create a surplus of 300-500 calories per day for muscle gain
-			const surplus =
-				weightDifference < 0
-					? Math.min(500, Math.max(300, (Math.abs(weeklyWeightChange) * 7700) / 7))
-					: 300;
-			return Math.round(tdee + surplus);
+			if (weightDifference < 0) {
+				// User wants to gain weight/muscle (current < target)
+				// Create a surplus for muscle gain
+				const surplus = Math.min(500, Math.max(200, dailyCalorieAdjustment));
+				return Math.round(tdee + surplus);
+			} else if (weightDifference > 0) {
+				// User wants to lose weight first, then gain muscle
+				// Start with a moderate deficit
+				const deficit = Math.min(500, Math.max(200, dailyCalorieAdjustment));
+				return Math.round(tdee - deficit);
+			} else {
+				// Current weight = target weight, slight surplus for muscle building
+				return Math.round(tdee + 200);
+			}
 
 		case 'maintain':
 			// Stay close to TDEE for maintenance
 			return Math.round(tdee);
 
 		case 'improve_fitness':
-			// Slight deficit for body recomposition
-			return Math.round(tdee - 200);
+			if (weightDifference > 0) {
+				// User wants to lose weight while improving fitness
+				const deficit = Math.min(400, Math.max(200, dailyCalorieAdjustment));
+				return Math.round(tdee - deficit);
+			} else if (weightDifference < 0) {
+				// User wants to gain weight while improving fitness
+				const surplus = Math.min(300, Math.max(100, dailyCalorieAdjustment));
+				return Math.round(tdee + surplus);
+			} else {
+				// Slight deficit for body recomposition
+				return Math.round(tdee - 200);
+			}
 
 		default:
 			return Math.round(tdee);
@@ -91,11 +152,14 @@ function calculateDailyCalories(tdee: number, fitnessGoal: string): number {
 	}
 }
 
-// Calculate macros based on calories and goal
-const calculateMacros = (dailyCalories: number, fitnessGoal: string) => {
-	const distribution =
-		macroDistributions[fitnessGoal as keyof typeof macroDistributions] ||
-		macroDistributions.maintain;
+// Calculate macros based on calories, goal, and weight difference
+const calculateMacros = (
+	dailyCalories: number,
+	fitnessGoal: string,
+	currentWeight: number,
+	targetWeight: number
+) => {
+	const distribution = getMacroDistribution(fitnessGoal, currentWeight, targetWeight);
 
 	return {
 		protein: Math.round((dailyCalories * distribution.protein) / 4), // 4 calories per gram
@@ -208,7 +272,7 @@ export async function POST(request: Request) {
 		const dailyCalories =
 			customGoals?.calories ||
 			calculateDailyCaloriesWithTarget(tdee, fitnessGoal, weight, targetWeight);
-		const macros = calculateMacros(dailyCalories, fitnessGoal);
+		const macros = calculateMacros(dailyCalories, fitnessGoal, weight, targetWeight);
 
 		const finalGoals = {
 			daily_calories: customGoals?.calories || dailyCalories,
@@ -234,14 +298,14 @@ export async function POST(request: Request) {
       INSERT INTO user_nutrition_goals (
         user_id, daily_calories, daily_protein, daily_carbs, daily_fats,
         dob, age, weight, target_weight, height, gender, activity_level, fitness_goal,
-        custom_calories, custom_protein, custom_carbs, custom_fats
+        custom_calories, custom_protein, custom_carbs, custom_fats, bmr, tdee
       ) VALUES (
         ${userId}, ${finalGoals.daily_calories}, ${finalGoals.daily_protein}, 
         ${finalGoals.daily_carbs}, ${finalGoals.daily_fats}, ${finalGoals.dob}, 
         ${finalGoals.age}, ${finalGoals.weight}, ${finalGoals.target_weight}, 
         ${finalGoals.height}, ${finalGoals.gender}, ${finalGoals.activity_level}, 
         ${finalGoals.fitness_goal}, ${finalGoals.custom_calories}, ${finalGoals.custom_protein}, 
-        ${finalGoals.custom_carbs}, ${finalGoals.custom_fats}
+        ${finalGoals.custom_carbs}, ${finalGoals.custom_fats}, ${Math.round(bmr)}, ${Math.round(tdee)}
       )
       ON CONFLICT (user_id) 
       DO UPDATE SET
@@ -261,6 +325,8 @@ export async function POST(request: Request) {
         custom_protein = EXCLUDED.custom_protein,
         custom_carbs = EXCLUDED.custom_carbs,
         custom_fats = EXCLUDED.custom_fats,
+        bmr = EXCLUDED.bmr,
+        tdee = EXCLUDED.tdee,
         updated_at = NOW()
       RETURNING *
     		`;

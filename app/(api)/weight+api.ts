@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
 
 export async function POST(request: Request) {
 	try {
@@ -9,7 +10,8 @@ export async function POST(request: Request) {
 			return Response.json({ error: 'Missing required fields' }, { status: 400 });
 		}
 
-		const response = await sql`
+		// Insert the weight record
+		const weightResponse = await sql`
         INSERT INTO weights (
             weight,
             date,
@@ -21,7 +23,50 @@ export async function POST(request: Request) {
             ${clerkId}
         )
         `;
-		return new Response(JSON.stringify({ data: response }), { status: 201 });
+
+		// Update BMR and TDEE in nutrition goals if they exist
+		try {
+			// Get user's nutrition goals to calculate new BMR
+			const nutritionGoals = await sql`
+				SELECT height, age, gender, activity_level 
+				FROM user_nutrition_goals 
+				WHERE user_id = ${clerkId}
+			`;
+
+			if (nutritionGoals.length > 0) {
+				const userData = nutritionGoals[0];
+				const newBMR = Math.round(
+					calculateBMR(weight, userData.height, userData.age, userData.gender)
+				);
+				const newTDEE = calculateTDEE(newBMR, userData.activity_level);
+
+				// Update nutrition goals with new weight, BMR and TDEE
+				await sql`
+					UPDATE user_nutrition_goals 
+					SET 
+						weight = ${weight},
+						bmr = ${newBMR},
+						tdee = ${newTDEE},
+						updated_at = NOW()
+					WHERE user_id = ${clerkId}
+				`;
+
+				console.log(
+					`Updated BMR for user ${clerkId}: ${newBMR} kcal/day, TDEE: ${newTDEE} kcal/day`
+				);
+			}
+		} catch (bmrError) {
+			console.error('Failed to update BMR:', bmrError);
+			// Don't fail the weight logging if BMR update fails
+		}
+
+		return new Response(
+			JSON.stringify({
+				data: weightResponse,
+				message: 'Weight logged and BMR updated successfully',
+			}),
+			{ status: 201 }
+		);
 	} catch (err) {
 		console.error('Weight POST error:', err);
 		return Response.json({ error: 'Failed to save weight' }, { status: 400 });
@@ -32,10 +77,17 @@ export async function GET(request: Request) {
 	const sql = neon(`${process.env.DATABASE_URL}`);
 
 	try {
-		const weights = [];
+		const { searchParams } = new URL(request.url);
+		const userId = searchParams.get('userId');
+
+		if (!userId) {
+			return Response.json({ error: 'User ID is required' }, { status: 400 });
+		}
 
 		const response = await sql`
         SELECT * FROM weights 
+        WHERE clerk_id = ${userId}
+        ORDER BY date DESC
         `;
 		return Response.json({ data: response });
 	} catch (err) {

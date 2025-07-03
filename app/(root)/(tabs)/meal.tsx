@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Food from '@/components/Food';
 import SuggestedMeals from '@/components/SuggestedMeals';
 import { fetchAPI } from '@/lib/fetch';
+import { getTodayDate } from '@/lib/dateUtils';
 
 interface Meal {
 	id: string;
@@ -58,7 +59,7 @@ const Meal = () => {
 		setError('');
 
 		try {
-			const today = new Date().toISOString().split('T')[0];
+			const today = getTodayDate();
 			const response = await fetchAPI(`/(api)/meals?userId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});

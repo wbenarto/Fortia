@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import dotenv from 'dotenv';
+import { getTodayDate, getDayBounds } from '@/lib/dateUtils';
 
 dotenv.config();
 
@@ -10,15 +11,18 @@ export async function GET(request: Request) {
 	try {
 		const { searchParams } = new URL(request.url);
 		const userId = searchParams.get('userId');
-		const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+		const date = searchParams.get('date') || getTodayDate();
 		const summary = searchParams.get('summary');
 
 		if (!userId) {
 			return Response.json({ error: 'User ID is required' }, { status: 400 });
 		}
 
+		// Get day bounds for proper timezone handling
+		const { start, end } = getDayBounds(date);
+
 		if (summary === 'true') {
-			// Get daily nutrition summary
+			// Get daily nutrition summary using timezone-aware date range
 			const summaryData = await sql`
         SELECT 
           COALESCE(SUM(calories), 0) as total_calories,
@@ -31,7 +35,8 @@ export async function GET(request: Request) {
           COUNT(*) as meal_count
         FROM meals 
         WHERE user_id = ${userId} 
-        AND DATE(created_at) = ${date}
+        AND created_at >= ${start.toISOString()}
+        AND created_at < ${end.toISOString()}
       `;
 
 			return Response.json({
@@ -49,11 +54,12 @@ export async function GET(request: Request) {
 			});
 		}
 
-		// Get individual meals for the date
+		// Get individual meals for the date using timezone-aware date range
 		const meals = await sql`
       SELECT * FROM meals 
       WHERE user_id = ${userId} 
-      AND DATE(created_at) = ${date}
+      AND created_at >= ${start.toISOString()}
+      AND created_at < ${end.toISOString()}
       ORDER BY created_at DESC
     `;
 
@@ -205,5 +211,40 @@ export async function DELETE(request: Request) {
 			},
 			{ status: 500 }
 		);
+	}
+}
+
+// Debug endpoint to see all meals for a user
+export async function PATCH(request: Request) {
+	try {
+		const { searchParams } = new URL(request.url);
+		const userId = searchParams.get('userId');
+
+		if (!userId) {
+			return Response.json({ error: 'User ID is required' }, { status: 400 });
+		}
+
+		// Get all meals for debugging
+		const allMeals = await sql`
+      SELECT id, food_name, created_at, DATE(created_at) as date_only
+      FROM meals 
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT 10
+    `;
+
+		console.error('DEBUG - All meals for user:', allMeals);
+
+		return Response.json({
+			success: true,
+			data: allMeals,
+			debug: {
+				today: new Date().toISOString().split('T')[0],
+				now: new Date().toISOString(),
+			},
+		});
+	} catch (error) {
+		console.error('Debug meals error:', error);
+		return Response.json({ error: 'Debug failed' }, { status: 500 });
 	}
 }

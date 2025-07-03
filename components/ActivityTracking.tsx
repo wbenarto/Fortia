@@ -1,9 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import CustomButton from './CustomButton';
 import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
+import { fetchAPI } from '@/lib/fetch';
+import { useUser } from '@clerk/clerk-expo';
+import { useFocusEffect } from 'expo-router';
+import {
+	formatBMR,
+	getActivityLevelDescription,
+	calculateBMR,
+	calculateTDEE,
+} from '@/lib/bmrUtils';
 
 const ActivityTracking = () => {
+	const [nutritionGoals, setNutritionGoals] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState(false);
+	const { user } = useUser();
+
+	const fetchNutritionGoals = async () => {
+		if (!user?.id) return;
+
+		setIsLoading(true);
+		try {
+			const response = await fetchAPI(`/(api)/nutrition-goals?userId=${user.id}`, {
+				method: 'GET',
+			});
+
+			if (response.success && response.data) {
+				setNutritionGoals(response.data);
+			}
+		} catch (error) {
+			console.error('Failed to fetch nutrition goals:', error);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	// Fetch nutrition goals on component mount
+	useEffect(() => {
+		if (user?.id) {
+			fetchNutritionGoals();
+		}
+	}, [user?.id]);
+
+	// Refresh data when screen comes into focus
+	useFocusEffect(
+		React.useCallback(() => {
+			if (user?.id) {
+				fetchNutritionGoals();
+			}
+		}, [user?.id])
+	);
+
+	// Get BMR from stored nutrition goals with fallback calculation
+	const getStoredBMR = () => {
+		if (!nutritionGoals) return 0;
+
+		// Try to get BMR from database first
+		const storedBMR = nutritionGoals.bmr;
+		if (storedBMR && Number(storedBMR) > 0) {
+			return Number(storedBMR);
+		}
+
+		// Fallback: calculate BMR if not stored
+		if (
+			nutritionGoals.weight &&
+			nutritionGoals.height &&
+			nutritionGoals.age &&
+			nutritionGoals.gender
+		) {
+			return Math.round(
+				calculateBMR(
+					Number(nutritionGoals.weight),
+					Number(nutritionGoals.height),
+					Number(nutritionGoals.age),
+					nutritionGoals.gender
+				)
+			);
+		}
+
+		return 0;
+	};
+
+	const storedBMR = getStoredBMR();
+
 	return (
 		<View className="w-full">
 			<View className="flex flex-row justify-between items-center px-4">
@@ -39,6 +119,27 @@ const ActivityTracking = () => {
 					</View>
 				</View>
 				<View className="flex gap-2 justify-between">
+					{/* BMR Card - First on the list */}
+					{nutritionGoals && (
+						<View className="h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9]">
+							<View className="flex flex-row gap-2 mb-2 items-center">
+								<Ionicons name="heart-outline" size={14} color="#5A556B" />
+								<Text className="text-xs text-[#64748B]">Basal Metabolic Rate</Text>
+							</View>
+							<View className="flex flex-row justify-between items-center">
+								<Text className="text-lg font-JakartaBold">
+									{isLoading
+										? '...'
+										: `${Math.round(Number(nutritionGoals.bmr || 0)).toLocaleString()} kcal/day`}
+								</Text>
+								<View className="flex flex-row gap-2">
+									<Ionicons name="information-circle-outline" size={14} color="#5A556B" />
+									<Text className="text-[#64748B] text-xs">At rest</Text>
+								</View>
+							</View>
+						</View>
+					)}
+
 					<View className=" h-20 rounded-2xl px-3 flex justify-center  border-solid border-[1px] border-[#F1F5F9]">
 						<View className="flex flex-row gap-2 mb-2 items-center">
 							<Ionicons name="footsteps-outline" size={14} color="#5A556B" />
@@ -54,6 +155,27 @@ const ActivityTracking = () => {
 							</View>
 						</View>
 					</View>
+
+					{/* Daily Calories Burned Card */}
+					{nutritionGoals && (
+						<View className=" h-20 rounded-2xl px-3 flex justify-center  border-solid border-[1px] border-[#F1F5F9]">
+							<View className="flex flex-row gap-2 mb-2 items-center">
+								<Ionicons name="flame-outline" size={14} color="#5A556B" />
+								<Text className="text-xs text-[#64748B]">Daily Calories Burned</Text>
+							</View>
+							<View className="flex flex-row justify-between items-center">
+								<Text className="text-lg font-JakartaBold">
+									{isLoading ? '...' : storedBMR.toLocaleString()}
+									<Text className="text-xs text-[#64748B]"> cal/day</Text>
+								</Text>
+								<View className="flex flex-row gap-2">
+									<Ionicons name="information-circle-outline" size={14} color="#5A556B" />
+									<Text className="text-[#64748B] text-xs">BMR only</Text>
+								</View>
+							</View>
+						</View>
+					)}
+
 					<View className=" h-20 rounded-2xl px-3 flex justify-center  border-solid border-[1px] border-[#F1F5F9]">
 						<View className="flex flex-row gap-2 mb-2 items-center">
 							<Ionicons name="barbell-outline" size={14} color="#5A556B" />

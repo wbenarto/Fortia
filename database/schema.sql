@@ -43,6 +43,15 @@ CREATE TABLE IF NOT EXISTS user_nutrition_goals (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Weights table for tracking user weight over time
+CREATE TABLE IF NOT EXISTS weights (
+  id SERIAL PRIMARY KEY,
+  clerk_id TEXT NOT NULL,
+  weight DECIMAL(5,2) NOT NULL,
+  date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- API logs table for monitoring
 CREATE TABLE IF NOT EXISTS api_logs (
   id SERIAL PRIMARY KEY,
@@ -58,5 +67,7 @@ CREATE TABLE IF NOT EXISTS api_logs (
 CREATE INDEX IF NOT EXISTS idx_meals_user_date ON meals(user_id, DATE(created_at));
 CREATE INDEX IF NOT EXISTS idx_meals_created_at ON meals(created_at);
 CREATE INDEX IF NOT EXISTS idx_nutrition_goals_user_id ON user_nutrition_goals(user_id);
+CREATE INDEX IF NOT EXISTS idx_weights_clerk_id ON weights(clerk_id);
+CREATE INDEX IF NOT EXISTS idx_weights_date ON weights(date);
 CREATE INDEX IF NOT EXISTS idx_api_logs_user_id ON api_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at); 
