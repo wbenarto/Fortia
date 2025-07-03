@@ -51,9 +51,7 @@ export async function POST(request: Request) {
 					WHERE user_id = ${clerkId}
 				`;
 
-				console.log(
-					`Updated BMR for user ${clerkId}: ${newBMR} kcal/day, TDEE: ${newTDEE} kcal/day`
-				);
+				// BMR and TDEE updated successfully
 			}
 		} catch (bmrError) {
 			console.error('Failed to update BMR:', bmrError);

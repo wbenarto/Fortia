@@ -47,8 +47,7 @@ const WeightTracking = () => {
 	const lastWeightEntry = userWeights.length > 0 ? userWeights[userWeights.length - 1] : null;
 	const todayDate = new Date().toISOString().split('T')[0].slice(5);
 
-	console.log(lastWeightEntry?.label, todayDate);
-	console.log(lastWeightEntry?.label === todayDate);
+	// Check if last weight entry is from today
 
 	useFocusEffect(
 		useCallback(() => {
@@ -61,7 +60,7 @@ const WeightTracking = () => {
 						'Content-Type': 'application/json',
 					},
 				});
-				console.log('useFocusEffect');
+				// Refresh data when screen comes into focus
 
 				const data = response.data;
 				// setUserWeights(data)
@@ -84,7 +83,7 @@ const WeightTracking = () => {
 	const handleAddWeightModal = () => setAddWeightModal(!addWeightModal);
 
 	const handleWeightSubmission = async () => {
-		console.log('ello', weightForm, user);
+		// Handle weight form submission
 
 		try {
 			await fetchAPI('/(api)/weight', {

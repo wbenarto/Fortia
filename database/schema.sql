@@ -63,11 +63,25 @@ CREATE TABLE IF NOT EXISTS api_logs (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Steps table for tracking user step data
+CREATE TABLE IF NOT EXISTS steps (
+  id SERIAL PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  steps INTEGER NOT NULL,
+  goal INTEGER DEFAULT 10000,
+  calories_burned INTEGER,
+  date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, date)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_meals_user_date ON meals(user_id, DATE(created_at));
 CREATE INDEX IF NOT EXISTS idx_meals_created_at ON meals(created_at);
 CREATE INDEX IF NOT EXISTS idx_nutrition_goals_user_id ON user_nutrition_goals(user_id);
 CREATE INDEX IF NOT EXISTS idx_weights_clerk_id ON weights(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_weights_date ON weights(date);
+CREATE INDEX IF NOT EXISTS idx_steps_user_id ON steps(user_id);
+CREATE INDEX IF NOT EXISTS idx_steps_date ON steps(date);
 CREATE INDEX IF NOT EXISTS idx_api_logs_user_id ON api_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at); 

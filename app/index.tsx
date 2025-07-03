@@ -1,38 +1,35 @@
-import { View, Text, StyleSheet, Platform } from "react-native";
-import { Redirect } from "expo-router";
-import { NativeWindStyleSheet } from "nativewind";
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import { Redirect } from 'expo-router';
+import { NativeWindStyleSheet } from 'nativewind';
 import { useAuth } from '@clerk/clerk-expo';
 
 NativeWindStyleSheet.setOutput({
-  default: "native",
+	default: 'native',
 });
 
 const Home = () => {
-    console.log('hello')
-    const { isSignedIn } = useAuth()
+	const { isSignedIn } = useAuth();
 
-    if (Platform.OS === 'ios') {
-        console.log('ios console here')
-    }
+	if (Platform.OS === 'ios') {
+		// iOS specific code
+	}
 
-    if (isSignedIn) {
-        return <Redirect href={'/(root)/(tabs)/home'} />
-    }
+	if (isSignedIn) {
+		return <Redirect href={'/(root)/(tabs)/home'} />;
+	}
 
-    return (
-        <Redirect href="/(auth)/onboarding" />
-    ) 
-}
+	return <Redirect href="/(auth)/onboarding" />;
+};
 
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: 'lightblue',
-        marginTop: 20,
-        height: 100,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 20
-    }
-})
+	container: {
+		backgroundColor: 'lightblue',
+		marginTop: 20,
+		height: 100,
+		justifyContent: 'center',
+		alignItems: 'center',
+		borderRadius: 20,
+	},
+});
 
 export default Home;

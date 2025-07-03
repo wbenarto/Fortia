@@ -48,7 +48,7 @@ const SuggestedMeals = () => {
 								title="Upgrade to Premium"
 								className="rounded-full px-6 py-3"
 								onPress={() => {
-									console.log('Upgrade');
+									// Handle upgrade
 								}}
 							/>
 						</View>

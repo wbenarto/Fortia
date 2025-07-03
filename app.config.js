@@ -20,6 +20,10 @@ export default {
 		newArchEnabled: true,
 		ios: {
 			supportsTablet: true,
+			infoPlist: {
+				NSMotionUsageDescription:
+					'Fortia needs access to motion and fitness data to track your daily steps for better fitness insights.',
+			},
 		},
 		android: {
 			adaptiveIcon: {
