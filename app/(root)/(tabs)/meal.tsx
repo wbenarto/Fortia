@@ -1,11 +1,11 @@
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo';
 import ReactNativeModal from 'react-native-modal';
 import Navbar from '@/components/Navbar';
 import MacrosTracking from '@/components/MacrosTracking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Food from '@/components/Food';
+import SwipeableFoodCard from '@/components/SwipeableFoodCard';
 import SuggestedMeals from '@/components/SuggestedMeals';
 import { fetchAPI } from '@/lib/fetch';
 import { getTodayDate } from '@/lib/dateUtils';
@@ -42,6 +42,7 @@ const Meal = () => {
 	const [meals, setMeals] = useState<Meal[]>([]);
 	const [isLoadingMeals, setIsLoadingMeals] = useState(false);
 	const [error, setError] = useState('');
+
 	const insets = useSafeAreaInsets();
 	const { user } = useUser();
 
@@ -100,13 +101,46 @@ const Meal = () => {
 		fetchMeals();
 	};
 
+	// Reference to MacrosTracking refresh function
+	const macrosRefreshRef = useRef<{ refresh: () => void } | null>(null);
+
+	// Callback to refresh macros when a meal is deleted
+	const handleMealDeleted = () => {
+		// Call the MacrosTracking refresh function directly
+		if (macrosRefreshRef.current) {
+			macrosRefreshRef.current.refresh();
+		}
+	};
+
+	// Handle meal deletion
+	const handleDeleteMeal = async (mealId: string) => {
+		try {
+			const response = await fetchAPI(`/(api)/meals?id=${mealId}`, {
+				method: 'DELETE',
+			});
+
+			if (response.success) {
+				// Remove the meal from local state
+				setMeals(prevMeals => prevMeals.filter(meal => meal.id !== mealId));
+				// Refresh meals list
+				handleMealLogged();
+				// Trigger macros refresh immediately
+				handleMealDeleted();
+			} else {
+				console.error('Failed to delete meal:', response.error);
+			}
+		} catch (error) {
+			console.error('Error deleting meal:', error);
+		}
+	};
+
 	return (
 		<View className="flex-1 bg-[#ffffff]" style={{ paddingTop: insets.top }}>
 			<SignedIn>
 				<ScrollView stickyHeaderIndices={[0]} className="w-full h-full">
 					<Navbar />
 					<View className="w-full pb-20 mt-4">
-						<MacrosTracking onMealLogged={handleMealLogged} />
+						<MacrosTracking onMealLogged={handleMealLogged} ref={macrosRefreshRef} />
 						<View className="w-full ">
 							<View className="flex flex-row justify-between items-center px-4">
 								<Text className="font-JakartaSemiBold text-lg">Today's Food Log</Text>
@@ -135,7 +169,14 @@ const Meal = () => {
 										</Text>
 									</View>
 								) : (
-									foodItems.map((food, index) => <Food key={index} food={food} />)
+									foodItems.map((food, index) => (
+										<SwipeableFoodCard
+											key={meals[index].id}
+											food={food}
+											mealId={meals[index].id}
+											onDelete={handleDeleteMeal}
+										/>
+									))
 								)}
 							</View>
 						</View>
