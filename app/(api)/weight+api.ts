@@ -35,7 +35,6 @@ export async function POST(request: Request) {
 
 			if (nutritionGoals.length > 0) {
 				const userData = nutritionGoals[0];
-				console.log('🔄 User data:', userData);
 				const newBMR = Math.round(
 					calculateBMR(weight, userData.height, userData.age, userData.gender)
 				);

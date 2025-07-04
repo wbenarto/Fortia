@@ -71,21 +71,38 @@ function calculateDailyCaloriesWithTarget(
 	currentWeight: number,
 	targetWeight: number
 ): number {
+	// Check if user needs to gain weight (current weight < target weight)
+	const needsToGainWeight = currentWeight < targetWeight;
 	switch (fitnessGoal) {
 		case 'lose_weight':
-			// 20% deficit of TDEE for weight loss
-			return Math.round(tdee * 0.8);
+			if (currentWeight - targetWeight > 30) {
+				return Math.round(tdee * 0.7);
+			} else {
+				return Math.round(tdee * 0.8);
+			}
 
 		case 'gain_muscle':
 		case 'improve_fitness':
-			// 10% deficit of TDEE for muscle gain and fitness improvement
+			if (needsToGainWeight) {
+				// 10% surplus of TDEE for weight gain
+				return Math.round(tdee * 1.1);
+			}
+			// 10% deficit of TDEE for muscle gain and fitness improvement when not gaining weight
 			return Math.round(tdee * 0.9);
 
 		case 'maintain':
+			if (needsToGainWeight) {
+				// 10% surplus of TDEE for weight gain when maintaining
+				return Math.round(tdee * 1.1);
+			}
 			// Set calorie goal as TDEE for weight maintenance
 			return Math.round(tdee);
 
 		default:
+			if (needsToGainWeight) {
+				// 10% surplus of TDEE for weight gain
+				return Math.round(tdee * 1.1);
+			}
 			return Math.round(tdee);
 	}
 }

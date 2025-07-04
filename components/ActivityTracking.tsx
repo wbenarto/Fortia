@@ -350,12 +350,6 @@ const ActivityTracking = () => {
 		}
 
 		try {
-			console.log('Saving activity with data:', {
-				clerkId: user.id,
-				activityDescription: activityInput.trim(),
-				estimatedCalories: estimatedCalories,
-			});
-
 			const response = await fetchAPI('/(api)/activities', {
 				method: 'POST',
 				body: JSON.stringify({
@@ -365,10 +359,7 @@ const ActivityTracking = () => {
 				}),
 			});
 
-			console.log('API Response:', response);
-
 			if (response.success) {
-				console.log('Activity saved successfully:', response.data);
 				// Reset form
 				setActivityInput('');
 				setEstimatedCalories(null);

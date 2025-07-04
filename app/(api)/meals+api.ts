@@ -233,7 +233,7 @@ export async function PATCH(request: Request) {
       LIMIT 10
     `;
 
-		console.error('DEBUG - All meals for user:', allMeals);
+		// Debug data removed for security
 
 		return Response.json({
 			success: true,

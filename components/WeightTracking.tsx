@@ -10,6 +10,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LineChart } from 'react-native-gifted-charts';
 import Ionicons from '@expo/vector-icons/build/Ionicons';
 import { getTodayDate } from '@/lib/dateUtils';
+import { useGoalsStore } from '@/store';
 
 interface WeightEntry {
 	date: string;
@@ -31,8 +32,10 @@ const WeightTracking = () => {
 	});
 	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [focusedPoint, setFocusedPoint] = useState(null);
+	const [targetWeight, setTargetWeight] = useState<number | null>(null);
 
 	const { user } = useUser();
+	const { goalsUpdated, resetGoalsUpdate } = useGoalsStore();
 
 	// Calculate yAxisOffset based on data range
 	const calculateYAxisOffset = (data: ChartDataPoint[]) => {
@@ -51,11 +54,35 @@ const WeightTracking = () => {
 
 	// Get the last weight entry for display
 	const lastWeightEntry = userWeights.length > 0 ? userWeights[userWeights.length - 1] : null;
-	console.log(userWeights);
 	const todayDate = new Date().toISOString().split('T')[0].slice(5);
-	console.log(todayDate);
 
 	// Check if last weight entry is from today
+
+	// Listen for goals updates and refresh target weight
+	useEffect(() => {
+		if (goalsUpdated) {
+			fetchTargetWeight();
+			resetGoalsUpdate();
+		}
+	}, [goalsUpdated]);
+
+	// Fetch user's target weight
+	const fetchTargetWeight = async () => {
+		if (!user?.id) return;
+
+		try {
+			const response = await fetchAPI(`/(api)/nutrition-goals?userId=${user.id}`, {
+				method: 'GET',
+			});
+
+			if (response.success && response.data) {
+				// Target weight is already in lbs
+				setTargetWeight(response.data.target_weight);
+			}
+		} catch (error) {
+			console.error('Failed to fetch target weight:', error);
+		}
+	};
 
 	useFocusEffect(
 		useCallback(() => {
@@ -104,6 +131,7 @@ const WeightTracking = () => {
 			};
 
 			fetchData();
+			fetchTargetWeight();
 		}, [])
 	);
 
@@ -200,7 +228,6 @@ const WeightTracking = () => {
 		<View className="w-full">
 			<View className="flex flex-row justify-between items-center px-4">
 				<Text className="font-JakartaSemiBold text-lg ">Weight Progress</Text>
-				<Text className="text-[#E3BBA1] text-xs font-JakartaSemiBold">-2.2 lbs this week</Text>
 			</View>
 			<View className=" px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
 				<View className="py-6 flex flex-row justify-between items-end ">
@@ -212,11 +239,11 @@ const WeightTracking = () => {
 					</Text>
 					<Text className="text-xs text-[#64748B]">
 						Goal:{' '}
-						{lastWeightEntry
+						{lastWeightEntry && targetWeight
 							? (() => {
-									const goalDifference = lastWeightEntry.value - 150;
+									const goalDifference = lastWeightEntry.value - Number(targetWeight);
 									const needsToLose = goalDifference > 0;
-									return `${needsToLose ? 'Lose' : 'Grain'} ${Math.abs(goalDifference).toFixed(1)}`;
+									return `${needsToLose ? 'Lose' : 'Gain'} ${Math.abs(goalDifference).toFixed(1)}`;
 								})()
 							: '--'}{' '}
 						lbs
@@ -292,7 +319,9 @@ const WeightTracking = () => {
 					</View>
 					<View className="flex justify-center items-center gap-1 ">
 						<Text className="text-xs text-[#64748B]">Target</Text>
-						<Text className="text-sm">150.0 lbs</Text>
+						<Text className="text-sm">
+							{targetWeight ? `${Number(targetWeight).toFixed(1)} lbs` : '--'}
+						</Text>
 					</View>
 				</View>
 
