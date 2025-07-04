@@ -338,8 +338,36 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 
 		const getTargetGoals = () => {
 			if (nutritionGoals) {
+				// Use the stored daily_calories which should already be calculated based on fitness goal
+				// But also provide a fallback calculation in case the stored value needs updating
+				let calorieTarget = nutritionGoals.daily_calories;
+
+				// If we have TDEE and fitness goal, we can double-check the calculation
+				if (nutritionGoals.tdee && nutritionGoals.fitnessGoal) {
+					let calculatedTarget;
+					switch (nutritionGoals.fitnessGoal) {
+						case 'lose_weight':
+							calculatedTarget = Math.round(nutritionGoals.tdee * 0.8); // 20% deficit
+							break;
+						case 'gain_muscle':
+						case 'improve_fitness':
+							calculatedTarget = Math.round(nutritionGoals.tdee * 0.9); // 10% deficit
+							break;
+						case 'maintain':
+							calculatedTarget = Math.round(nutritionGoals.tdee); // No deficit
+							break;
+						default:
+							calculatedTarget = Math.round(nutritionGoals.tdee);
+					}
+
+					// Use the calculated target if it's different from stored (in case of updates)
+					if (calculatedTarget !== nutritionGoals.daily_calories) {
+						calorieTarget = calculatedTarget;
+					}
+				}
+
 				const goals = {
-					calories: nutritionGoals.daily_calories,
+					calories: calorieTarget,
 					protein: Math.round(nutritionGoals.daily_protein),
 					carbs: Math.round(nutritionGoals.daily_carbs),
 					fats: Math.round(nutritionGoals.daily_fats),
@@ -394,9 +422,9 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 							<Text className="mb-2 text-[#64748B]">Calories consumed</Text>
 							<View className="flex flex-row items-end">
 								<Text className="font-JakartaBold text-3xl">
-									{isLoadingSummary ? '...' : currentData.calories.toLocaleString()}
+									{isLoadingSummary ? '...' : Number(currentData.calories).toLocaleString()}
 								</Text>
-								<Text className="text-[#64748B]"> /{targetGoals.calories}</Text>
+								<Text className="text-[#64748B]"> /{targetGoals.calories.toLocaleString()}</Text>
 							</View>
 						</View>
 						<View className="w-16 h-16 rounded-xl flex justify-center items-center bg-[#E3BBA1]">
@@ -469,7 +497,12 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						</View>
 					)}
 
-					<CustomButton onPress={handleAddMealModal} title="Log Meal" />
+					<CustomButton
+						onPress={handleAddMealModal}
+						title="Log Meal"
+						textProp="text-base ml-4"
+						IconLeft={() => <Ionicons name="fast-food-outline" size={24} color="white" />}
+					/>
 
 					{/* Goal Setup Modal */}
 					<GoalSetupModal

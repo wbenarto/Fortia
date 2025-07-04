@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import GoalSetupModal from '../../../components/GoalSetupModal';
 import { fetchAPI } from '../../../lib/fetch';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface NutritionGoals {
 	id: string;
@@ -34,7 +35,7 @@ const Profile = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [goalSetupModal, setGoalSetupModal] = useState(false);
 	const [isRefreshing, setIsRefreshing] = useState(false);
-
+	const insets = useSafeAreaInsets();
 	useEffect(() => {
 		if (user?.id) {
 			fetchNutritionGoals();
@@ -178,7 +179,7 @@ const Profile = () => {
 	}
 
 	return (
-		<View className="flex-1 bg-[#262135]">
+		<View className="flex-1 bg-[#262135]" style={{ paddingTop: insets.top }}>
 			{/* Header */}
 			<View className="flex flex-row items-center justify-between px-4 py-6 bg-[#2D2A3F]">
 				<View className="w-6" />

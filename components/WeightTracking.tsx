@@ -8,6 +8,8 @@ import InputField from '@/components/InputField';
 import CustomButton from '@/components/CustomButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LineChart } from 'react-native-gifted-charts';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
+import { getTodayDate } from '@/lib/dateUtils';
 
 interface WeightEntry {
 	date: string;
@@ -25,7 +27,7 @@ const WeightTracking = () => {
 	const [addWeightModal, setAddWeightModal] = useState(false);
 	const [weightForm, setWeightForm] = useState({
 		weight: '',
-		date: new Date(),
+		date: new Date(), // This is just for the form state, actual date uses getTodayDate()
 	});
 	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [focusedPoint, setFocusedPoint] = useState(null);
@@ -36,26 +38,14 @@ const WeightTracking = () => {
 	const calculateYAxisOffset = (data: ChartDataPoint[]) => {
 		if (data.length === 0) return 140;
 
-		const values = data.map(item => item.value);
-		const min = Math.min(...values);
-		const max = Math.max(...values);
-		const range = max - min;
+		const range = data[data.length - 1].value;
 
 		// Adjust offset based on data range
-		if (range < 5) return 120; // Small range
-		if (range < 10) return 140; // Medium range
-		if (range < 20) return 160; // Large range
-		return 10; // Very large range
+		if (range < 100) return 60; // Small range
+		if (range < 140) return 100; // Medium range
+		if (range < 180) return 150; // Large range
+		return 150; // Very large range
 	};
-
-	const DATA = [
-		{ value: 150 },
-		{ value: 150 },
-		{ value: 150 },
-		{ value: 150 },
-		{ value: 150 },
-		{ value: 150 },
-	];
 
 	const { getToken } = useAuth();
 
@@ -81,17 +71,36 @@ const WeightTracking = () => {
 				// Refresh data when screen comes into focus
 
 				const data = response.data;
-				// setUserWeights(data)
-				setUserWeights(
-					data
-						.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
-						.slice(-6)
-						.map(({ date, weight }: WeightEntry) => ({
-							label: date.split('T')[0].slice(5),
+				// Process weight data for chart
+				const processedData = data
+					.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
+					// Group by date and take the latest entry per day to handle duplicates
+
+					.map(({ date, weight }: WeightEntry) => {
+						const dateObj = new Date(date);
+						const today = new Date();
+						const isThisYear = dateObj.getFullYear() === today.getFullYear();
+
+						// Format label based on whether it's this year
+						let label;
+						if (isThisYear) {
+							label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+						} else {
+							label = dateObj.toLocaleDateString('en-US', {
+								month: 'short',
+								day: 'numeric',
+								year: '2-digit',
+							});
+						}
+
+						return {
+							label,
 							value: +weight,
 							dataPointText: `${weight}`,
-						}))
-				);
+						};
+					});
+
+				setUserWeights(processedData);
 			};
 
 			fetchData();
@@ -103,12 +112,21 @@ const WeightTracking = () => {
 	const handleWeightSubmission = async () => {
 		// Handle weight form submission
 
+		// Validate weight input
+		if (!weightForm.weight || isNaN(Number(weightForm.weight))) {
+			console.error('Invalid weight input');
+			return;
+		}
+
 		try {
+			// Use today's date in user's local timezone (same as meal logging)
+			const dateString = getTodayDate();
+
 			await fetchAPI('/(api)/weight', {
 				method: 'POST',
 				body: JSON.stringify({
 					weight: weightForm.weight,
-					date: weightForm.date,
+					date: dateString,
 					clerkId: user?.id,
 				}),
 			});
@@ -124,24 +142,58 @@ const WeightTracking = () => {
 
 				const data = response.data;
 
-				// setUserWeights(data)
-				setUserWeights(
-					data
-						.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
-						.slice(-6)
-						.map(({ date, weight }: WeightEntry) => ({
-							label: date.split('T')[0].slice(5),
+				// Process weight data for chart (same logic as above)
+				const processedData = data
+					.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
+					// Group by date and take the latest entry per day to handle duplicates
+					.reduce((acc: WeightEntry[], entry: WeightEntry) => {
+						const existingIndex = acc.findIndex(item => item.date === entry.date);
+						if (existingIndex >= 0) {
+							// Replace with newer entry (assuming later entries are more recent)
+							acc[existingIndex] = entry;
+						} else {
+							acc.push(entry);
+						}
+						return acc;
+					}, [])
+					// Take last 12 entries instead of 6 to show more data
+					.slice(-12)
+					.map(({ date, weight }: WeightEntry) => {
+						const dateObj = new Date(date);
+						const today = new Date();
+						const isThisYear = dateObj.getFullYear() === today.getFullYear();
+
+						// Format label based on whether it's this year
+						let label;
+						if (isThisYear) {
+							label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+						} else {
+							label = dateObj.toLocaleDateString('en-US', {
+								month: 'short',
+								day: 'numeric',
+								year: '2-digit',
+							});
+						}
+
+						return {
+							label,
 							value: +weight,
 							dataPointText: `${weight}`,
-						}))
-				);
+						};
+					});
+
+				setUserWeights(processedData);
 			};
 
 			fetchData();
-			DATA.push({ value: 150 });
 			setAddWeightModal(false);
+			// Reset form
+			setWeightForm({
+				weight: '',
+				date: new Date(), // This is just for the form state, actual date uses getTodayDate()
+			});
 		} catch (error) {
-			console.error(error);
+			console.error('Weight logging error:', error);
 		}
 	};
 	return (
@@ -159,42 +211,44 @@ const WeightTracking = () => {
 						<Text className="text-[#64748B]">lbs</Text>
 					</Text>
 					<Text className="text-xs text-[#64748B]">
-						Diff: {lastWeightEntry ? (lastWeightEntry.value - 150).toFixed(1) : '--'} lbs
+						Goal:{' '}
+						{lastWeightEntry
+							? (() => {
+									const goalDifference = lastWeightEntry.value - 150;
+									const needsToLose = goalDifference > 0;
+									return `${needsToLose ? 'Lose' : 'Grain'} ${Math.abs(goalDifference).toFixed(1)}`;
+								})()
+							: '--'}{' '}
+						lbs
 					</Text>
 				</View>
-				<View className=" overflow-hidden py-2 h-40 mx-2 border-b-[1px] border-[#F1F5F9] border-solid">
+				<View className=" overflow-hidden ml-[-20px] border-b-[1px] border-[#F1F5F9] border-solid">
 					<LineChart
 						color={'#E3BBA1'}
 						data={userWeights}
+						height={140}
 						curved
-						textColor={'white'}
-						color2={'transparent'}
+						textColor={'transparent'}
+						spacing={30}
 						thickness={3}
 						xAxisLabelTextStyle={{ color: 'transparent', fontSize: 12 }}
-						yAxisTextStyle={{ color: 'white', fontSize: 12 }}
+						yAxisTextStyle={{ color: 'transparent', fontSize: 12 }}
 						hideYAxisText
-						isAnimated
-						animationDuration={2500} // Duration of the animation in milliseconds (1.5 seconds)
-						animateOnDataChange={false} // Set to true if you want animation when data updates later
-						// Optional: Customize animation type (easeOutQuad, linear, etc.)
-						// animationEasing="easeOutQuad"
-						// make the chart fit vertically
+						animationDuration={1000}
+						animationEasing="easeOutQuad"
 						hideAxesAndRules
-						focusEnabled // Enables the focus functionality
-						showDataPointOnFocus // Shows a visual indicator on the focused data point
-						showDataPointLabelOnFocus // Shows a label/value on the focused data point
-						// Optional: Customize the appearance of the focused data point
+						focusEnabled
+						showDataPointOnFocus
 						focusedDataPointShape="circle"
 						focusedDataPointWidth={15}
 						focusedDataPointHeight={15}
-						focusedDataPointColor="red" // Color of the focused data point indicator
+						focusedDataPointColor="#E3BBA1"
 						focusedDataPointRadius={6}
-						// Optional: Customize the label that appears on focus
 						pointerConfig={{
 							pointerLabelComponent: (item: any) => {
 								return (
-									<View className=" w-10 absolute top-0 h-8 flex jusitfy-center items-center mt-4">
-										<Text className="text-xs color-[#64748B] font-JakartaSemiBold">
+									<View className="w-10 absolute top-0 h-8 flex justify-center items-center mt-4">
+										<Text className="text-xs text-[#64748B] font-JakartaSemiBold">
 											{item[0].value}
 										</Text>
 									</View>
@@ -206,11 +260,9 @@ const WeightTracking = () => {
 						onFocus={(item: any) => {
 							setFocusedPoint(item);
 						}}
-						dataPointLabelShiftY={-20} // Adjust position of the label above the point
+						dataPointLabelShiftY={-20}
 						dataPointLabelShiftX={-5}
 						yAxisOffset={calculateYAxisOffset(userWeights)}
-						hideDataPoints
-						data2={DATA}
 					/>
 				</View>
 				<View className="flex flex-row justify-between py-4">
@@ -220,9 +272,23 @@ const WeightTracking = () => {
 					</View>
 					<View className="flex justify-center items-center gap-1 ">
 						<Text className="text-xs text-[#64748B]">Change</Text>
-						<Text className="text-sm text-[#E3BBA1]">
-							{lastWeightEntry ? (168.8 - lastWeightEntry.value).toFixed(1) : '--'} lbs
-						</Text>
+						<View className="flex flex-row items-center gap-1">
+							{lastWeightEntry &&
+								(() => {
+									const weightChange = 168.8 - lastWeightEntry.value;
+									const hasLostWeight = weightChange > 0;
+									return (
+										<Ionicons
+											name={hasLostWeight ? 'trending-down' : 'trending-up'}
+											size={14}
+											color={hasLostWeight ? '#DC2626' : '#16A34A'}
+										/>
+									);
+								})()}
+							<Text className="text-sm text-black font-JakartaSemiBold">
+								{lastWeightEntry ? (168.8 - lastWeightEntry.value).toFixed(1) : '--'} lbs
+							</Text>
+						</View>
 					</View>
 					<View className="flex justify-center items-center gap-1 ">
 						<Text className="text-xs text-[#64748B]">Target</Text>
@@ -230,9 +296,12 @@ const WeightTracking = () => {
 					</View>
 				</View>
 
-				{lastWeightEntry?.label === todayDate ? null : (
-					<CustomButton onPress={handleAddWeightModal} title="Log Today's Weight" />
-				)}
+				<CustomButton
+					onPress={handleAddWeightModal}
+					title="Log Today's Weight"
+					textProp="text-base ml-4"
+					IconLeft={() => <Ionicons name="scale-outline" size={24} color="white" />}
+				/>
 
 				<ReactNativeModal
 					isVisible={addWeightModal}

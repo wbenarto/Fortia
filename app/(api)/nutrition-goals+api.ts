@@ -71,65 +71,19 @@ function calculateDailyCaloriesWithTarget(
 	currentWeight: number,
 	targetWeight: number
 ): number {
-	const weightDifference = targetWeight - currentWeight; // kg
-	const absWeightDifference = Math.abs(weightDifference);
-
-	// Calculate weekly weight change goal (0.5-1 kg per week is healthy)
-	const weeklyWeightChange = Math.min(1, Math.max(0.5, absWeightDifference / 12)); // kg per week
-
-	// 1 kg of fat = 7700 calories
-	const dailyCalorieAdjustment = (weeklyWeightChange * 7700) / 7; // calories per day
-
 	switch (fitnessGoal) {
 		case 'lose_weight':
-			if (weightDifference > 0) {
-				// User wants to lose weight (current > target)
-				// Create a deficit for weight loss
-				const deficit = Math.min(1000, Math.max(300, dailyCalorieAdjustment));
-				return Math.round(tdee - deficit);
-			} else if (weightDifference < 0) {
-				// User wants to gain weight (current < target)
-				// Create a surplus for weight gain
-				const surplus = Math.min(500, Math.max(200, dailyCalorieAdjustment));
-				return Math.round(tdee + surplus);
-			} else {
-				// Current weight = target weight, maintain
-				return Math.round(tdee);
-			}
+			// 20% deficit of TDEE for weight loss
+			return Math.round(tdee * 0.8);
 
 		case 'gain_muscle':
-			if (weightDifference < 0) {
-				// User wants to gain weight/muscle (current < target)
-				// Create a surplus for muscle gain
-				const surplus = Math.min(500, Math.max(200, dailyCalorieAdjustment));
-				return Math.round(tdee + surplus);
-			} else if (weightDifference > 0) {
-				// User wants to lose weight first, then gain muscle
-				// Start with a moderate deficit
-				const deficit = Math.min(500, Math.max(200, dailyCalorieAdjustment));
-				return Math.round(tdee - deficit);
-			} else {
-				// Current weight = target weight, slight surplus for muscle building
-				return Math.round(tdee + 200);
-			}
+		case 'improve_fitness':
+			// 10% deficit of TDEE for muscle gain and fitness improvement
+			return Math.round(tdee * 0.9);
 
 		case 'maintain':
-			// Stay close to TDEE for maintenance
+			// Set calorie goal as TDEE for weight maintenance
 			return Math.round(tdee);
-
-		case 'improve_fitness':
-			if (weightDifference > 0) {
-				// User wants to lose weight while improving fitness
-				const deficit = Math.min(400, Math.max(200, dailyCalorieAdjustment));
-				return Math.round(tdee - deficit);
-			} else if (weightDifference < 0) {
-				// User wants to gain weight while improving fitness
-				const surplus = Math.min(300, Math.max(100, dailyCalorieAdjustment));
-				return Math.round(tdee + surplus);
-			} else {
-				// Slight deficit for body recomposition
-				return Math.round(tdee - 200);
-			}
 
 		default:
 			return Math.round(tdee);
@@ -140,13 +94,12 @@ function calculateDailyCaloriesWithTarget(
 function calculateDailyCalories(tdee: number, fitnessGoal: string): number {
 	switch (fitnessGoal) {
 		case 'lose_weight':
-			return Math.round(tdee - 500); // 500 calorie deficit
+			return Math.round(tdee * 0.8); // 20% deficit of TDEE
 		case 'gain_muscle':
-			return Math.round(tdee + 300); // 300 calorie surplus
-		case 'maintain':
-			return Math.round(tdee);
 		case 'improve_fitness':
-			return Math.round(tdee - 200); // Slight deficit for recomposition
+			return Math.round(tdee * 0.9); // 10% deficit of TDEE
+		case 'maintain':
+			return Math.round(tdee); // Set calorie goal as TDEE
 		default:
 			return Math.round(tdee);
 	}

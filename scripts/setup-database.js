@@ -64,9 +64,20 @@ CREATE TABLE IF NOT EXISTS steps (
   user_id TEXT NOT NULL,
   steps INTEGER NOT NULL,
   goal INTEGER DEFAULT 10000,
+  calories_burned INTEGER,
   date DATE NOT NULL,
   created_at TIMESTAMP DEFAULT NOW(),
   UNIQUE(user_id, date)
+);
+
+-- Activities table for tracking user workout activities
+CREATE TABLE IF NOT EXISTS activities (
+  id SERIAL PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  activity_description TEXT NOT NULL,
+  estimated_calories INTEGER,
+  date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- API logs table for monitoring
@@ -88,6 +99,8 @@ CREATE INDEX IF NOT EXISTS idx_weights_clerk_id ON weights(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_weights_date ON weights(date);
 CREATE INDEX IF NOT EXISTS idx_steps_user_id ON steps(user_id);
 CREATE INDEX IF NOT EXISTS idx_steps_date ON steps(date);
+CREATE INDEX IF NOT EXISTS idx_activities_user_id ON activities(user_id);
+CREATE INDEX IF NOT EXISTS idx_activities_date ON activities(date);
 CREATE INDEX IF NOT EXISTS idx_api_logs_user_id ON api_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at);
 `;

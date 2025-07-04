@@ -12,10 +12,13 @@
  * @returns BMR in calories per day
  */
 export function calculateBMR(weight: number, height: number, age: number, gender: string): number {
+	// Convert weight from pounds to kilograms (1 lb = 0.453592 kg)
+	const weightInKg = weight * 0.453592;
+
 	if (gender === 'male') {
-		return 10 * weight + 6.25 * height - 5 * age + 5;
+		return 10 * weightInKg + 6.25 * height - 5 * age + 5;
 	} else {
-		return 10 * weight + 6.25 * height - 5 * age - 161;
+		return 10 * weightInKg + 6.25 * height - 5 * age - 161;
 	}
 }
 

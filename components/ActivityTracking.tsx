@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import {
+	View,
+	Text,
+	TouchableOpacity,
+	ScrollView,
+	Platform,
+	ActivityIndicator,
+} from 'react-native';
 import CustomButton from './CustomButton';
+import ReactNativeModal from 'react-native-modal';
+import InputField from './InputField';
 import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
 import { fetchAPI } from '@/lib/fetch';
 import { useUser } from '@clerk/clerk-expo';
@@ -12,12 +21,18 @@ import {
 	calculateTDEE,
 } from '@/lib/bmrUtils';
 import { getTodayStepData, requestHealthKitPermissions, getHealthKitStatus } from '@/lib/healthKit';
+import SwipeableActivityCard from './SwipeableActivityCard';
 
 const ActivityTracking = () => {
 	const [nutritionGoals, setNutritionGoals] = useState<any>(null);
 	const [stepData, setStepData] = useState<any>(null);
 	const [healthKitStatus, setHealthKitStatus] = useState<any>(null);
+	const [activities, setActivities] = useState<any[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [workoutModal, setWorkoutModal] = useState(false);
+	const [activityInput, setActivityInput] = useState('');
+	const [estimatedCalories, setEstimatedCalories] = useState<number | null>(null);
+	const [isCalculating, setIsCalculating] = useState(false);
 	const { user } = useUser();
 
 	const fetchNutritionGoals = async () => {
@@ -115,10 +130,33 @@ const ActivityTracking = () => {
 		}
 	};
 
+	// Fetch activities from database
+	const fetchActivities = async () => {
+		if (!user?.id) return;
+
+		try {
+			const today = new Date().toISOString().split('T')[0];
+			const response = await fetchAPI(`/(api)/activities?userId=${user.id}&date=${today}`, {
+				method: 'GET',
+			});
+
+			if (response.success) {
+				setActivities(response.data || []);
+			} else {
+				console.error('Failed to fetch activities:', response.error);
+				setActivities([]);
+			}
+		} catch (error) {
+			console.error('Failed to fetch activities:', error);
+			setActivities([]);
+		}
+	};
+
 	// Fetch nutrition goals and step data on component mount
 	useEffect(() => {
 		if (user?.id) {
 			fetchNutritionGoals();
+			fetchActivities();
 			if (Platform.OS === 'ios') {
 				fetchAndUploadDeviceSteps();
 			} else {
@@ -143,6 +181,7 @@ const ActivityTracking = () => {
 		React.useCallback(() => {
 			if (user?.id) {
 				fetchNutritionGoals();
+				fetchActivities();
 				if (Platform.OS === 'ios') {
 					fetchAndUploadDeviceSteps();
 				} else {
@@ -248,13 +287,128 @@ const ActivityTracking = () => {
 	};
 
 	const stepCalories = getStepCalories();
-	const totalCaloriesBurned = storedBMR + stepCalories;
+
+	// Calculate total calories from activities
+	const getActivitiesCalories = () => {
+		return activities.reduce((total, activity) => {
+			return total + (activity.estimated_calories || 0);
+		}, 0);
+	};
+
+	const activitiesCalories = getActivitiesCalories();
+	const totalCaloriesBurned = storedBMR + stepCalories + activitiesCalories;
+
+	const handleWorkoutModal = () => {
+		setWorkoutModal(!workoutModal);
+		// Reset form when opening modal
+		if (!workoutModal) {
+			setActivityInput('');
+			setEstimatedCalories(null);
+		}
+	};
+
+	const estimateCalories = async () => {
+		if (!activityInput.trim()) return;
+
+		setIsCalculating(true);
+		try {
+			// Get user's weight for more accurate estimation
+			const userWeight = nutritionGoals?.weight || 70; // Default to 70kg if not available
+
+			const response = await fetchAPI('/(api)/meal-analysis', {
+				method: 'POST',
+				body: JSON.stringify({
+					foodDescription: `Estimate calories burned from this activity: ${activityInput}. User weight: ${userWeight}kg. Only return the number of calories burned, no other text.`,
+					portionSize: '1 session',
+				}),
+			});
+
+			if (response.success && response.data) {
+				// Extract calories from the response
+				const caloriesText = response.data.calories?.toString() || '0';
+				const calories = parseInt(caloriesText.replace(/\D/g, ''), 10);
+				setEstimatedCalories(calories);
+			} else {
+				console.error('Failed to estimate calories:', response.error);
+			}
+		} catch (error) {
+			console.error('Error estimating calories:', error);
+		} finally {
+			setIsCalculating(false);
+		}
+	};
+
+	const saveActivity = async () => {
+		if (!activityInput.trim() || !user?.id) {
+			console.error('Missing required fields for saving activity');
+			return;
+		}
+
+		if (!estimatedCalories) {
+			console.error('Estimated calories is required before saving');
+			return;
+		}
+
+		try {
+			console.log('Saving activity with data:', {
+				clerkId: user.id,
+				activityDescription: activityInput.trim(),
+				estimatedCalories: estimatedCalories,
+			});
+
+			const response = await fetchAPI('/(api)/activities', {
+				method: 'POST',
+				body: JSON.stringify({
+					clerkId: user.id,
+					activityDescription: activityInput.trim(),
+					estimatedCalories: estimatedCalories,
+				}),
+			});
+
+			console.log('API Response:', response);
+
+			if (response.success) {
+				console.log('Activity saved successfully:', response.data);
+				// Reset form
+				setActivityInput('');
+				setEstimatedCalories(null);
+				setWorkoutModal(false);
+				// Refresh activities list
+				await fetchActivities();
+			} else {
+				console.error('Failed to save activity:', response.error);
+			}
+		} catch (error) {
+			console.error('Error saving activity:', error);
+			console.error('Error details:', {
+				message: error instanceof Error ? error.message : 'Unknown error',
+				stack: error instanceof Error ? error.stack : undefined,
+			});
+		}
+	};
+
+	const deleteActivity = async (activityId: string) => {
+		if (!user?.id) return;
+
+		try {
+			const response = await fetchAPI(`/(api)/activities?id=${activityId}&userId=${user.id}`, {
+				method: 'DELETE',
+			});
+
+			if (response.success) {
+				await fetchActivities(); // Refresh the activities list
+			} else {
+				console.error('Failed to delete activity:', response.error);
+			}
+		} catch (error) {
+			console.error('Error deleting activity:', error);
+		}
+	};
 
 	return (
 		<View className="w-full">
 			<View className="flex flex-row justify-between items-center px-4">
 				<Text className="font-JakartaSemiBold text-lg">Activity Summary</Text>
-				<Text className="text-[#E3BBA1] text-xs font-JakartaSemiBold">5 Day Streak</Text>
 			</View>
 			<View className=" pb-6 px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
 				<View className="py-6 flex flex-row justify-between items-end ">
@@ -345,27 +499,112 @@ const ActivityTracking = () => {
 						</View>
 					</View>
 
-					<View className=" h-20 rounded-2xl px-3 flex justify-center  border-solid border-[1px] border-[#F1F5F9]">
-						<View className="flex flex-row gap-2 mb-2 items-center">
-							<Ionicons name="barbell-outline" size={14} color="#5A556B" />
-							<Text className="text-xs text-[#64748B]">Today's Workout</Text>
-						</View>
-						<View className="flex flex-row justify-between items-center">
-							<Text className="text-lg font-JakartaBold">Back & Biceps</Text>
-							<View className="flex flex-row gap-2">
-								<SimpleLineIcons name="fire" size={14} colors="#5A556B" />
-								<Text className="text-[#64748B]">~350 cal</Text>
+					{/* Activities Cards */}
+					{activities.length > 0 ? (
+						activities.map((activity, index) => (
+							<SwipeableActivityCard
+								key={activity.id}
+								activity={activity}
+								onDelete={deleteActivity}
+							/>
+						))
+					) : (
+						<View className="h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9]">
+							<View className="flex flex-row gap-2 mb-2 items-center">
+								<Ionicons name="barbell-outline" size={14} color="#5A556B" />
+								<Text className="text-xs text-[#64748B]">Today's Workout</Text>
+							</View>
+							<View className="flex flex-row justify-between items-center">
+								<Text className="text-lg font-JakartaBold text-[#64748B]">
+									No activities logged
+								</Text>
+								<View className="flex flex-row gap-2">
+									<SimpleLineIcons name="fire" size={14} colors="#5A556B" />
+									<Text className="text-[#64748B]">--</Text>
+								</View>
 							</View>
 						</View>
-					</View>
+					)}
 				</View>
 
 				<CustomButton
 					IconLeft={() => <Ionicons name="barbell-outline" size={24} color="white" />}
-					onPress={() => {}}
-					textProp="text-lg ml-4"
-					title="Start Workout"
+					onPress={handleWorkoutModal}
+					textProp=" text-base ml-4"
+					title="Log Activity"
 				/>
+
+				{/* Workout Modal */}
+				<ReactNativeModal isVisible={workoutModal} onBackdropPress={() => setWorkoutModal(false)}>
+					<View className="bg-white py-10 px-4 mx-10 rounded-md">
+						<View className="pb-4">
+							<Text className="text-xl text-center font-JakartaSemiBold">Log your activity</Text>
+						</View>
+
+						<View className="flex mx-auto w-full justify-center mb-4">
+							<InputField
+								label=""
+								placeholder="e.g 100 pushups, ran 2 miles.."
+								value={activityInput}
+								onChangeText={setActivityInput}
+								multiline
+								numberOfLines={3}
+								className="text-center flex p-4"
+							/>
+						</View>
+
+						{isCalculating && (
+							<View className="flex justify-center items-center mb-6">
+								<ActivityIndicator size="large" color="#E3BBA1" />
+								<Text className="text-center mt-2 text-sm text-gray-600">
+									Estimating calories burned...
+								</Text>
+							</View>
+						)}
+
+						{/* Re-analyze Button - appears after initial estimation */}
+
+						<View className="mb-6">
+							<TouchableOpacity
+								onPress={estimateCalories}
+								disabled={isCalculating}
+								className={`py-3 px-4 rounded-lg border-2 ${
+									isCalculating ? 'bg-gray-200 border-gray-300' : 'bg-white border-[#E3BBA1]'
+								}`}
+							>
+								<View className="flex flex-row items-center justify-center">
+									{isCalculating ? (
+										<ActivityIndicator size="small" color="#E3BBA1" />
+									) : (
+										<Ionicons name="refresh" size={16} color="#E3BBA1" />
+									)}
+									<Text
+										className={`ml-2 font-JakartaSemiBold ${
+											isCalculating ? 'text-gray-500' : 'text-[#E3BBA1]'
+										}`}
+									>
+										{isCalculating ? 'Re-analyzing...' : 'Analyze with AI'}
+									</Text>
+								</View>
+							</TouchableOpacity>
+						</View>
+
+						{estimatedCalories && (
+							<View className="mb-6">
+								<Text className="text-sm text-center text-[#64748B] mb-1">{activityInput}</Text>
+								<Text className="text-base text-center font-JakartaMedium">
+									~{estimatedCalories} cal
+								</Text>
+							</View>
+						)}
+
+						{estimatedCalories && (
+							<TouchableOpacity className="py-3 rounded-lg bg-[#E3BBA1]" onPress={saveActivity}>
+								<Text className="text-center font-JakartaSemiBold text-white">Save</Text>
+							</TouchableOpacity>
+						)}
+					</View>
+				</ReactNativeModal>
 			</View>
 		</View>
 	);
