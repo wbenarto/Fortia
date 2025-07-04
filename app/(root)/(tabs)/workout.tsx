@@ -186,7 +186,7 @@ const Workout = () => {
 						</View>
 
 						<ActivityTracking />
-						<View className="w-full px-4">
+						{/* <View className="w-full px-4">
 							<View className="flex flex-row justify-between items-center ">
 								<Text className="font-JakartaSemiBold text-lg">This Week's Workout</Text>
 							</View>
@@ -194,7 +194,7 @@ const Workout = () => {
 							{scheduledWorkout.map(workout => (
 								<WorkoutScheduleCard key={workout.id} workout={workout} />
 							))}
-						</View>
+						</View> */}
 					</View>
 				</ScrollView>
 			</SignedIn>

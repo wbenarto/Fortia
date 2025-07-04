@@ -14,24 +14,23 @@ const WeeklyCalendar = () => {
 	});
 
 	return (
-		<View className="flex flex-row justify-between px-4 py-2">
+		<View className="flex flex-row justify-between px-6 items-center py-1">
 			{days.map((day, index) => (
-				<View key={index} className="items-center mx-3">
+				<View
+					key={index}
+					className={`items-center border-solid ${dates[index].isToday ? 'border-[1px] border-[#E3BBA1] px-3 py-1 mx-0 rounded-md' : '   px-2'} `}
+				>
+					<Text className={`text-[10px] mb-1  text-gray-600 `}>{day}</Text>
 					<Text
-						className={`text-[10px] mb-1 ${dates[index].isToday ? 'text-[#E3BBA1]' : 'text-gray-600'}`}
-					>
-						{day}
-					</Text>
-					<Text
-						className={`text-[10px] font-JakartaSemibold ${dates[index].isToday ? 'text-[#E3BBA1] text-base' : 'text-gray-600'}`}
+						className={`text-[10px] font-JakartaSemibold ${dates[index].isToday ? 'text-gray-600 text-base' : 'text-gray-600'}`}
 					>
 						{dates[index].date}
 					</Text>
-					{dates[index].isToday ? (
+					{/* {dates[index].isToday ? (
 						<View className="w-1 h-1 mt-2 bg-[#E3BBA1] rounded-full"></View>
 					) : (
 						''
-					)}
+					)} */}
 				</View>
 			))}
 		</View>
