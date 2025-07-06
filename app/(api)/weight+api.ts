@@ -24,31 +24,29 @@ export async function POST(request: Request) {
         )
         `;
 
-		// Update BMR and TDEE in nutrition goals if they exist
+		// Update BMR and TDEE in user table if they exist
 		try {
-			// Get user's nutrition goals to calculate new BMR
-			const nutritionGoals = await sql`
+			// Get user's data to calculate new BMR
+			const userData = await sql`
 				SELECT height, age, gender, activity_level 
-				FROM user_nutrition_goals 
-				WHERE user_id = ${clerkId}
+				FROM users 
+				WHERE clerk_id = ${clerkId}
 			`;
 
-			if (nutritionGoals.length > 0) {
-				const userData = nutritionGoals[0];
-				const newBMR = Math.round(
-					calculateBMR(weight, userData.height, userData.age, userData.gender)
-				);
-				const newTDEE = calculateTDEE(newBMR, userData.activity_level);
+			if (userData.length > 0) {
+				const user = userData[0];
+				const newBMR = Math.round(calculateBMR(weight, user.height, user.age, user.gender));
+				const newTDEE = calculateTDEE(newBMR, user.activity_level);
 
-				// Update nutrition goals with new weight, BMR and TDEE
+				// Update user with new weight, BMR and TDEE
 				await sql`
-					UPDATE user_nutrition_goals 
+					UPDATE users 
 					SET 
 						weight = ${weight},
 						bmr = ${newBMR},
 						tdee = ${newTDEE},
 						updated_at = NOW()
-					WHERE user_id = ${clerkId}
+					WHERE clerk_id = ${clerkId}
 				`;
 
 				// BMR and TDEE updated successfully

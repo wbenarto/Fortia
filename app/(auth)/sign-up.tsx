@@ -73,26 +73,56 @@ const SignUp = () => {
 			// If verification was completed, set the session to active
 			// and redirect the user
 			if (signUpAttempt.status === 'complete') {
-				// Create database user
-				await fetchAPI('/(api)/user', {
-					method: 'POST',
-					body: JSON.stringify({
-						firstName: form.firstName,
-						lastName: form.lastName,
-						email: form.email,
-						clerkId: signUpAttempt.createdUserId,
-					}),
-				});
-				await setActive({ session: signUpAttempt.createdSessionId });
-				setVerification({
-					...verification,
-					error: 'Verification failed.',
-					state: 'success',
-				});
+				try {
+					// Create database user
+					const userResponse = await fetchAPI('/(api)/user', {
+						method: 'POST',
+						body: JSON.stringify({
+							firstName: form.firstName,
+							lastName: form.lastName,
+							email: form.email,
+							clerkId: signUpAttempt.createdUserId,
+						}),
+					});
+
+					if (userResponse.success) {
+						await setActive({ session: signUpAttempt.createdSessionId });
+						setVerification({
+							...verification,
+							state: 'success',
+						});
+					} else {
+						// Handle specific error cases
+						if (userResponse.error && userResponse.error.includes('already exists')) {
+							// User already exists, try to sign them in instead
+							console.log('User already exists, proceeding with sign-in...');
+							await setActive({ session: signUpAttempt.createdSessionId });
+							setVerification({
+								...verification,
+								state: 'success',
+							});
+						} else {
+							throw new Error(userResponse.error || 'Failed to create user');
+						}
+					}
+				} catch (userError: any) {
+					console.error('User creation error:', userError);
+
+					// If it's a 409 conflict (user already exists), proceed anyway
+					if (userError.message && userError.message.includes('409')) {
+						console.log('User already exists (409), proceeding with sign-in...');
+						await setActive({ session: signUpAttempt.createdSessionId });
+						setVerification({
+							...verification,
+							state: 'success',
+						});
+					} else {
+						throw userError;
+					}
+				}
 			} else {
 				// If the status is not complete, check why. User may need to
 				// complete further steps.
-				console.error(JSON.stringify(signUpAttempt, null, 2));
 				setVerification({
 					...verification,
 					state: 'failed',
@@ -101,10 +131,10 @@ const SignUp = () => {
 		} catch (err: any) {
 			// See https://clerk.com/docs/custom-flows/error-handling
 			// for more info on error handling
-			console.error(JSON.stringify(err, null, 2));
+			console.error('Verification error:', JSON.stringify(err, null, 2));
 			setVerification({
 				...verification,
-				error: err.errors[0].longMessage,
+				error: err.errors?.[0]?.longMessage || err.message || 'Verification failed',
 				state: 'failed',
 			});
 		}
@@ -204,8 +234,8 @@ const SignUp = () => {
 							You have successfully verified your account.
 						</Text>
 						<CustomButton
-							title="Browse Home"
-							onPress={() => router.replace('/(root)/(tabs)/home')}
+							title="Complete Setup"
+							onPress={() => router.replace('/(auth)/onboarding-setup')}
 							className="mt-5"
 						/>
 					</View>

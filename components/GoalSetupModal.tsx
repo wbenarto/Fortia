@@ -51,7 +51,7 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 		if (!user?.id) return;
 
 		try {
-			const response = await fetchAPI(`/(api)/nutrition-goals?userId=${user.id}`, {
+			const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
@@ -125,7 +125,7 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 			const targetWeightLbs = convertWeightToLbs(formData.targetWeight);
 
 			// We need to get the existing user data to preserve other fields
-			const existingResponse = await fetchAPI(`/(api)/nutrition-goals?userId=${user.id}`, {
+			const existingResponse = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
@@ -136,17 +136,27 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 
 			const existingData = existingResponse.data;
 
-			const response = await fetchAPI('/(api)/nutrition-goals', {
-				method: 'POST',
+			// Update user with new goals using PUT method
+			const response = await fetchAPI('/(api)/user', {
+				method: 'PUT',
 				body: JSON.stringify({
-					userId: user.id,
-					dob: existingData.dob,
-					weight: existingData.weight,
+					clerkId: user.id,
 					targetWeight: targetWeightLbs,
+					fitnessGoal: formData.fitnessGoal,
+					// Preserve existing data
+					dob: existingData.dob,
+					age: existingData.age,
+					weight: existingData.weight,
+					startingWeight: existingData.starting_weight,
 					height: existingData.height,
 					gender: existingData.gender,
 					activityLevel: existingData.activity_level,
-					fitnessGoal: formData.fitnessGoal,
+					dailyCalories: existingData.daily_calories,
+					dailyProtein: existingData.daily_protein,
+					dailyCarbs: existingData.daily_carbs,
+					dailyFats: existingData.daily_fats,
+					bmr: existingData.bmr,
+					tdee: existingData.tdee,
 				}),
 			});
 

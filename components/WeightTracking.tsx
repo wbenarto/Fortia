@@ -33,6 +33,7 @@ const WeightTracking = () => {
 	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [focusedPoint, setFocusedPoint] = useState(null);
 	const [targetWeight, setTargetWeight] = useState<number | null>(null);
+	const [startingWeight, setStartingWeight] = useState<number | null>(null);
 
 	const { user } = useUser();
 	const { goalsUpdated, resetGoalsUpdate } = useGoalsStore();
@@ -66,18 +67,19 @@ const WeightTracking = () => {
 		}
 	}, [goalsUpdated]);
 
-	// Fetch user's target weight
+	// Fetch user's target weight and starting weight
 	const fetchTargetWeight = async () => {
 		if (!user?.id) return;
 
 		try {
-			const response = await fetchAPI(`/(api)/nutrition-goals?userId=${user.id}`, {
+			const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
 			if (response.success && response.data) {
-				// Target weight is already in lbs
+				// Target weight and starting weight are already in lbs
 				setTargetWeight(response.data.target_weight);
+				setStartingWeight(response.data.starting_weight);
 			}
 		} catch (error) {
 			console.error('Failed to fetch target weight:', error);
@@ -87,63 +89,75 @@ const WeightTracking = () => {
 	useFocusEffect(
 		useCallback(() => {
 			const fetchData = async () => {
-				const token = await getToken();
-				const response = await fetchAPI(`/(api)/weight?userId=${user?.id}`, {
-					method: 'GET',
-					headers: {
-						Authorization: `Bearer ${token}`,
-						'Content-Type': 'application/json',
-					},
-				});
-				// Refresh data when screen comes into focus
+				if (!user?.id) return;
 
-				const data = response.data;
-				// Process weight data for chart
-				const processedData = data
-					.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
-					// Group by date and take the latest entry per day to handle duplicates
-					.reduce((acc: WeightEntry[], entry: WeightEntry) => {
-						const existingIndex = acc.findIndex(item => item.date === entry.date);
-						if (existingIndex >= 0) {
-							// Replace with newer entry (assuming later entries are more recent)
-							acc[existingIndex] = entry;
-						} else {
-							acc.push(entry);
-						}
-						return acc;
-					}, [])
-					// Take last 8 entries to show recent data
-					.slice(-10)
-					.map(({ date, weight }: WeightEntry) => {
-						const dateObj = new Date(date);
-						const today = new Date();
-						const isThisYear = dateObj.getFullYear() === today.getFullYear();
-
-						// Format label based on whether it's this year
-						let label;
-						if (isThisYear) {
-							label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-						} else {
-							label = dateObj.toLocaleDateString('en-US', {
-								month: 'short',
-								day: 'numeric',
-								year: '2-digit',
-							});
-						}
-
-						return {
-							label,
-							value: +weight,
-							dataPointText: `${weight}`,
-						};
+				try {
+					const token = await getToken();
+					const response = await fetchAPI(`/(api)/weight?userId=${user.id}`, {
+						method: 'GET',
+						headers: {
+							Authorization: `Bearer ${token}`,
+							'Content-Type': 'application/json',
+						},
 					});
 
-				setUserWeights(processedData);
+					if (!response.data) {
+						setUserWeights([]);
+						return;
+					}
+
+					const data = response.data;
+
+					// Process weight data for chart
+					const processedData = data
+						.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
+						// Group by date and take the latest entry per day to handle duplicates
+						.reduce((acc: WeightEntry[], entry: WeightEntry) => {
+							const existingIndex = acc.findIndex(item => item.date === entry.date);
+							if (existingIndex >= 0) {
+								// Replace with newer entry (assuming later entries are more recent)
+								acc[existingIndex] = entry;
+							} else {
+								acc.push(entry);
+							}
+							return acc;
+						}, [])
+						// Take last 8 entries to show recent data
+						.slice(-10)
+						.map(({ date, weight }: WeightEntry) => {
+							const dateObj = new Date(date);
+							const today = new Date();
+							const isThisYear = dateObj.getFullYear() === today.getFullYear();
+
+							// Format label based on whether it's this year
+							let label;
+							if (isThisYear) {
+								label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+							} else {
+								label = dateObj.toLocaleDateString('en-US', {
+									month: 'short',
+									day: 'numeric',
+									year: '2-digit',
+								});
+							}
+
+							return {
+								label,
+								value: +weight,
+								dataPointText: `${weight}`,
+							};
+						});
+
+					setUserWeights(processedData);
+				} catch (error) {
+					console.error('Error fetching weight data:', error);
+					setUserWeights([]);
+				}
 			};
 
 			fetchData();
 			fetchTargetWeight();
-		}, [])
+		}, [user?.id])
 	);
 
 	const handleAddWeightModal = () => setAddWeightModal(!addWeightModal);
@@ -261,59 +275,68 @@ const WeightTracking = () => {
 					</Text>
 				</View>
 				<View className=" overflow-hidden ml-[-20px] border-b-[1px] border-[#F1F5F9] border-solid">
-					<LineChart
-						color={'#E3BBA1'}
-						data={userWeights}
-						height={100}
-						curved
-						textColor={'transparent'}
-						spacing={30}
-						thickness={3}
-						xAxisLabelTextStyle={{ color: 'transparent', fontSize: 12 }}
-						yAxisTextStyle={{ color: 'transparent', fontSize: 12 }}
-						hideYAxisText
-						animationDuration={1000}
-						animationEasing="easeOutQuad"
-						hideAxesAndRules
-						focusEnabled
-						showDataPointOnFocus
-						focusedDataPointShape="circle"
-						focusedDataPointWidth={15}
-						focusedDataPointHeight={15}
-						focusedDataPointColor="#E3BBA1"
-						focusedDataPointRadius={6}
-						pointerConfig={{
-							pointerLabelComponent: (item: any) => {
-								return (
-									<View className="w-10 absolute top-0 h-8 flex justify-center items-center mt-4">
-										<Text className="text-xs text-[#64748B] font-JakartaSemiBold">
-											{item[0].value}
-										</Text>
-									</View>
-								);
-							},
-							pointerStripColor: 'transparent',
-							pointerColor: '#64748B',
-						}}
-						onFocus={(item: any) => {
-							setFocusedPoint(item);
-						}}
-						dataPointLabelShiftY={-20}
-						dataPointLabelShiftX={-5}
-						yAxisOffset={calculateYAxisOffset(userWeights)}
-					/>
+					{userWeights.length > 0 ? (
+						<LineChart
+							color={'#E3BBA1'}
+							data={userWeights}
+							height={100}
+							curved
+							textColor={'transparent'}
+							spacing={30}
+							thickness={3}
+							xAxisLabelTextStyle={{ color: 'transparent', fontSize: 12 }}
+							yAxisTextStyle={{ color: 'transparent', fontSize: 12 }}
+							hideYAxisText
+							animationDuration={1000}
+							animationEasing="easeOutQuad"
+							hideAxesAndRules
+							focusEnabled
+							showDataPointOnFocus
+							focusedDataPointShape="circle"
+							focusedDataPointWidth={15}
+							focusedDataPointHeight={15}
+							focusedDataPointColor="#E3BBA1"
+							focusedDataPointRadius={6}
+							pointerConfig={{
+								pointerLabelComponent: (item: any) => {
+									return (
+										<View className="w-10 absolute top-0 h-8 flex justify-center items-center mt-4">
+											<Text className="text-xs text-[#64748B] font-JakartaSemiBold">
+												{item[0].value}
+											</Text>
+										</View>
+									);
+								},
+								pointerStripColor: 'transparent',
+								pointerColor: '#64748B',
+							}}
+							onFocus={(item: any) => {
+								setFocusedPoint(item);
+							}}
+							dataPointLabelShiftY={-20}
+							dataPointLabelShiftX={-5}
+							yAxisOffset={calculateYAxisOffset(userWeights)}
+						/>
+					) : (
+						<View className="h-[100px] flex justify-center items-center">
+							<Text className="text-gray-400 text-sm">No weight data available</Text>
+						</View>
+					)}
 				</View>
 				<View className="flex flex-row justify-between py-4">
 					<View className="flex justify-center items-center gap-1 ">
 						<Text className="text-xs text-[#64748B]">Starting</Text>
-						<Text className="text-sm">168.8 lbs</Text>
+						<Text className="text-sm">
+							{startingWeight ? `${Number(startingWeight).toFixed(1)} lbs` : '--'}
+						</Text>
 					</View>
 					<View className="flex justify-center items-center gap-1 ">
 						<Text className="text-xs text-[#64748B]">Change</Text>
 						<View className="flex flex-row items-center gap-1">
 							{lastWeightEntry &&
+								startingWeight &&
 								(() => {
-									const weightChange = 168.8 - lastWeightEntry.value;
+									const weightChange = startingWeight - lastWeightEntry.value;
 									const hasLostWeight = weightChange > 0;
 									return (
 										<Ionicons
@@ -324,7 +347,10 @@ const WeightTracking = () => {
 									);
 								})()}
 							<Text className="text-sm text-black font-JakartaSemiBold">
-								{lastWeightEntry ? (168.8 - lastWeightEntry.value).toFixed(1) : '--'} lbs
+								{lastWeightEntry && startingWeight
+									? (startingWeight - lastWeightEntry.value).toFixed(1)
+									: '--'}{' '}
+								lbs
 							</Text>
 						</View>
 					</View>

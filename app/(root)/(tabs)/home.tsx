@@ -1,7 +1,16 @@
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo';
 import { CartesianChart, Line } from 'victory-native';
-import { Link, useFocusEffect } from 'expo-router';
-import { View, Text, Image, ScrollView, TouchableOpacity, Button, Platform } from 'react-native';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
+import {
+	View,
+	Text,
+	Image,
+	ScrollView,
+	TouchableOpacity,
+	Button,
+	Platform,
+	ActivityIndicator,
+} from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import Navbar from '@/components/Navbar';
 import WeightTracking from '@/components/WeightTracking';
@@ -20,6 +29,69 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function Page() {
 	const insets = useSafeAreaInsets();
+	const { user } = useUser();
+	const router = useRouter();
+	const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
+	const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+
+	// Check if user has completed onboarding
+	useFocusEffect(
+		useCallback(() => {
+			const checkOnboarding = async () => {
+				if (!user?.id) return;
+
+				try {
+					const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+						method: 'GET',
+					});
+
+					if (response.success && response.data) {
+						// Check if user has completed onboarding by looking for required fields
+						const userData = response.data;
+						if (userData.weight && userData.height && userData.fitness_goal) {
+							setHasCompletedOnboarding(true);
+						} else {
+							// User hasn't completed onboarding, redirect to onboarding setup
+							router.replace('/(auth)/onboarding-setup');
+							return;
+						}
+					} else if (response.error === 'User not found') {
+						// User doesn't exist in database, redirect to onboarding setup
+						router.replace('/(auth)/onboarding-setup');
+						return;
+					} else {
+						// Other error, redirect to onboarding setup
+						router.replace('/(auth)/onboarding-setup');
+						return;
+					}
+				} catch (error) {
+					console.error('Failed to check onboarding status:', error);
+					// If there's an error, redirect to onboarding setup
+					router.replace('/(auth)/onboarding-setup');
+					return;
+				} finally {
+					setIsCheckingOnboarding(false);
+				}
+			};
+
+			checkOnboarding();
+		}, [user?.id])
+	);
+
+	// Show loading while checking onboarding status
+	if (isCheckingOnboarding) {
+		return (
+			<View className="flex-1 bg-[#262135] justify-center items-center">
+				<ActivityIndicator size="large" color="#E3BBA1" />
+				<Text className="text-white mt-4 text-lg">Setting up your experience...</Text>
+			</View>
+		);
+	}
+
+	// Don't render the main content if onboarding is not completed
+	if (!hasCompletedOnboarding) {
+		return null;
+	}
 
 	return (
 		<View className="flex-1 bg-[#ffffff]" style={{ paddingTop: insets.top }}>

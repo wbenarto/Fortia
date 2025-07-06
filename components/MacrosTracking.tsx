@@ -154,7 +154,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 
 			setIsLoadingGoals(true);
 			try {
-				const response = await fetchAPI(`/(api)/nutrition-goals?userId=${user.id}`, {
+				const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
 					method: 'GET',
 				});
 

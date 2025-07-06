@@ -47,7 +47,7 @@ const Profile = () => {
 
 		setIsLoading(true);
 		try {
-			const response = await fetchAPI(`/(api)/nutrition-goals?userId=${user.id}`, {
+			const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
@@ -68,34 +68,51 @@ const Profile = () => {
 
 	const handleDeleteGoals = () => {
 		Alert.alert(
-			'Delete Nutrition Goals',
-			'Are you sure you want to delete your nutrition goals? This action cannot be undone.',
+			'Reset Nutrition Goals',
+			'Are you sure you want to reset your nutrition goals? This will clear your fitness goals and calculated macros.',
 			[
 				{ text: 'Cancel', style: 'cancel' },
 				{
-					text: 'Delete',
+					text: 'Reset',
 					style: 'destructive',
 					onPress: async () => {
-						if (!user?.id || !nutritionGoals?.id) return;
+						if (!user?.id) return;
 
 						try {
-							const response = await fetchAPI(`/(api)/nutrition-goals`, {
-								method: 'DELETE',
+							// Reset nutrition goals by updating user with null values
+							const response = await fetchAPI(`/(api)/user`, {
+								method: 'PUT',
 								body: JSON.stringify({
-									userId: user.id,
-									goalId: nutritionGoals.id,
+									clerkId: user.id,
+									// Preserve basic user info but clear nutrition goals
+									dob: nutritionGoals?.dob,
+									age: nutritionGoals?.age,
+									weight: nutritionGoals?.weight,
+									startingWeight: nutritionGoals?.weight, // Use current weight as starting weight
+									height: nutritionGoals?.height,
+									gender: nutritionGoals?.gender,
+									// Clear nutrition goals
+									targetWeight: null,
+									activityLevel: null,
+									fitnessGoal: null,
+									dailyCalories: null,
+									dailyProtein: null,
+									dailyCarbs: null,
+									dailyFats: null,
+									bmr: null,
+									tdee: null,
 								}),
 							});
 
 							if (response.success) {
 								setNutritionGoals(null);
-								Alert.alert('Success', 'Nutrition goals deleted successfully.');
+								Alert.alert('Success', 'Nutrition goals reset successfully.');
 							} else {
-								Alert.alert('Error', response.error || 'Failed to delete goals');
+								Alert.alert('Error', response.error || 'Failed to reset goals');
 							}
 						} catch (error) {
-							Alert.alert('Error', 'Failed to delete nutrition goals');
-							console.error('Delete goals error:', error);
+							Alert.alert('Error', 'Failed to reset nutrition goals');
+							console.error('Reset goals error:', error);
 						}
 					},
 				},
