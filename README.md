@@ -20,6 +20,38 @@ The global fitness app market is projected to reach **$120.37 billion by 2030** 
 - **Freemium Conversion**: 5-15% of free users convert to paid subscriptions
 - **Projected Revenue**: $100K-$500K annually within 2-3 years with proper marketing
 
+## 🎨 Color Theme
+
+Fortia uses a sophisticated color palette designed to create a premium, health-focused user experience:
+
+### Primary Colors
+
+- **Primary Brand Color**: `#E3BBA1` (Warm Beige) - Used for buttons, highlights, and interactive elements
+- **Primary Blue**: `#0286FF` - Used for links and primary actions
+- **Dark Background**: `#262135` (Deep Purple) - Main app background for auth screens and profile
+
+### Secondary Colors
+
+- **White**: `#FFFFFF` - Card backgrounds, text on dark backgrounds
+- **Light Gray**: `#F1F5F9` - Borders and subtle separators
+- **Text Gray**: `#64748B` - Secondary text and labels
+- **Success Green**: `#38A169` - Positive actions and achievements
+- **Danger Red**: `#F56565` - Errors and destructive actions
+
+### Color Usage Patterns
+
+- **Cards & Modals**: White backgrounds with subtle borders
+- **Interactive Elements**: Primary beige (`#E3BBA1`) for buttons and highlights
+- **Text Hierarchy**: White text on dark backgrounds, dark text on light backgrounds
+- **Status Indicators**: Green for success, red for errors, beige for active states
+- **Charts & Visualizations**: Beige accent color for data points and progress indicators
+
+### Accessibility
+
+- High contrast ratios for text readability
+- Consistent color usage across all components
+- Clear visual hierarchy through color and typography
+
 ## 🚀 Current MVP Features
 
 ### Core Functionality

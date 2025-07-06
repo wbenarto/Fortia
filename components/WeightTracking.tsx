@@ -102,7 +102,18 @@ const WeightTracking = () => {
 				const processedData = data
 					.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
 					// Group by date and take the latest entry per day to handle duplicates
-
+					.reduce((acc: WeightEntry[], entry: WeightEntry) => {
+						const existingIndex = acc.findIndex(item => item.date === entry.date);
+						if (existingIndex >= 0) {
+							// Replace with newer entry (assuming later entries are more recent)
+							acc[existingIndex] = entry;
+						} else {
+							acc.push(entry);
+						}
+						return acc;
+					}, [])
+					// Take last 8 entries to show recent data
+					.slice(-10)
 					.map(({ date, weight }: WeightEntry) => {
 						const dateObj = new Date(date);
 						const today = new Date();
@@ -184,8 +195,8 @@ const WeightTracking = () => {
 						}
 						return acc;
 					}, [])
-					// Take last 12 entries instead of 6 to show more data
-					.slice(-12)
+					// Take last 8 entries to show recent data
+					.slice(-8)
 					.map(({ date, weight }: WeightEntry) => {
 						const dateObj = new Date(date);
 						const today = new Date();
@@ -253,7 +264,7 @@ const WeightTracking = () => {
 					<LineChart
 						color={'#E3BBA1'}
 						data={userWeights}
-						height={140}
+						height={100}
 						curved
 						textColor={'transparent'}
 						spacing={30}
@@ -336,23 +347,20 @@ const WeightTracking = () => {
 					isVisible={addWeightModal}
 					onBackdropPress={() => setAddWeightModal(false)}
 				>
-					<View className="bg-white py-10 px-4 mx-10 rounded-md">
+					<View className="bg-white py-14 px-4 mx-0 rounded-md">
 						<View className="pb-4 ">
 							<Text className="text-xl text-center font-JakartaSemiBold">Log your weight</Text>
 						</View>
 
-						<View className="flex mx-auto w-full justify-center">
+						<View className="flex mx-auto  my-8 w-full justify-center">
 							<InputField
 								label=""
-								placeholder="Enter your weight"
+								placeholder="lbs"
 								keyboardType="numeric"
 								value={weightForm.weight}
 								className="text-center flex p-4 "
 								onChangeText={value => setWeightForm({ ...weightForm, weight: value })}
 							/>
-						</View>
-						<View className="mb-6">
-							<Text className="text-lg text-center font-JakartaSemiBold">lbs</Text>
 						</View>
 
 						<CustomButton onPress={handleWeightSubmission} title="Save" />

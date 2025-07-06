@@ -4,6 +4,17 @@ require('dotenv').config();
 const sql = neon(process.env.DATABASE_URL);
 
 const schema = `
+-- Users table for storing user information
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  clerk_id TEXT NOT NULL UNIQUE,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Meals table for storing user meal logs
 CREATE TABLE IF NOT EXISTS meals (
   id SERIAL PRIMARY KEY,
@@ -92,6 +103,8 @@ CREATE TABLE IF NOT EXISTS api_logs (
 );
 
 -- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_users_clerk_id ON users(clerk_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_meals_user_date ON meals(user_id, DATE(created_at));
 CREATE INDEX IF NOT EXISTS idx_meals_created_at ON meals(created_at);
 CREATE INDEX IF NOT EXISTS idx_nutrition_goals_user_id ON user_nutrition_goals(user_id);
