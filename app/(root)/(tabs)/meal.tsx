@@ -61,7 +61,7 @@ const Meal = () => {
 
 		try {
 			const today = getTodayDate();
-			const response = await fetchAPI(`/(api)/meals?userId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/(api)/meals?clerkId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});
 

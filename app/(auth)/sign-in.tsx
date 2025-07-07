@@ -1,4 +1,4 @@
-import { ScrollView, View, Text, Image } from 'react-native';
+import { ScrollView, View, Text, Image, Alert } from 'react-native';
 import { useSignIn } from '@clerk/clerk-expo';
 import { useState, useCallback } from 'react';
 import { Link, useRouter } from 'expo-router';
@@ -6,6 +6,7 @@ import { images, icons } from '@/constants';
 import InputField from '@/components/InputField';
 import OAuth from '@/components/OAuth';
 import CustomButton from '@/components/CustomButton';
+import { fetchAPI } from '@/lib/fetch';
 
 const SignIn = () => {
 	const [form, setForm] = useState({
@@ -29,16 +30,19 @@ const SignIn = () => {
 			// and redirect the user
 			if (signInAttempt.status === 'complete') {
 				await setActive({ session: signInAttempt.createdSessionId });
+
+				// Redirect to home, which will handle onboarding check
 				router.replace('/');
 			} else {
 				// If the status isn't complete, check why. User might need to
 				// complete further steps.
 				console.error(JSON.stringify(signInAttempt, null, 2));
 			}
-		} catch (err) {
+		} catch (err: any) {
 			// See https://clerk.com/docs/custom-flows/error-handling
 			// for more info on error handling
 			console.error(JSON.stringify(err, null, 2));
+			Alert.alert('Error', err.errors?.[0]?.longMessage || 'Sign in failed');
 		}
 	}, [isLoaded, form.email, form.password]);
 

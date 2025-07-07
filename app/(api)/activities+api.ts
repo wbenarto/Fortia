@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
 		// Insert the activity into the database
 		const result = await sql`
-			INSERT INTO activities (user_id, activity_description, estimated_calories, date)
+			INSERT INTO activities (clerk_id, activity_description, estimated_calories, date)
 			VALUES (${clerkId}, ${activityDescription}, ${estimatedCalories || null}, ${today})
 			RETURNING id, activity_description, estimated_calories, date, created_at
 		`;
@@ -38,17 +38,17 @@ export async function DELETE(request: Request) {
 		const sql = neon(`${process.env.DATABASE_URL}`);
 
 		const { searchParams } = new URL(request.url);
-		const activityId = searchParams.get('id');
-		const userId = searchParams.get('userId');
+		const id = searchParams.get('id');
+		const clerkId = searchParams.get('clerkId');
 
-		if (!activityId || !userId) {
-			return Response.json({ error: 'Activity ID and User ID are required' }, { status: 400 });
+		if (!id || !clerkId) {
+			return Response.json({ error: 'Activity ID and Clerk ID are required' }, { status: 400 });
 		}
 
-		// Delete the activity from the database
+		// Delete the activity (only if it belongs to the user)
 		const result = await sql`
 			DELETE FROM activities 
-			WHERE id = ${activityId} AND user_id = ${userId}
+			WHERE id = ${id} AND clerk_id = ${clerkId}
 			RETURNING id
 		`;
 
@@ -56,13 +56,10 @@ export async function DELETE(request: Request) {
 			return Response.json({ error: 'Activity not found or unauthorized' }, { status: 404 });
 		}
 
-		return new Response(
-			JSON.stringify({
-				success: true,
-				message: 'Activity deleted successfully',
-			}),
-			{ status: 200 }
-		);
+		return Response.json({
+			success: true,
+			message: 'Activity deleted successfully',
+		});
 	} catch (error) {
 		console.error('Activity DELETE error:', error);
 		return Response.json({ error: 'Failed to delete activity' }, { status: 400 });
@@ -74,18 +71,18 @@ export async function GET(request: Request) {
 
 	try {
 		const { searchParams } = new URL(request.url);
-		const userId = searchParams.get('userId');
+		const clerkId = searchParams.get('clerkId');
 		const date = searchParams.get('date');
 
-		if (!userId) {
-			return Response.json({ error: 'User ID is required' }, { status: 400 });
+		if (!clerkId) {
+			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
 		}
 
 		if (date) {
 			const response = await sql`
 				SELECT id, activity_description, estimated_calories, date, created_at
 				FROM activities
-				WHERE user_id = ${userId} AND date = ${date}
+				WHERE clerk_id = ${clerkId} AND date = ${date}
 				ORDER BY created_at DESC
 			`;
 			return Response.json({ success: true, data: response });
@@ -93,7 +90,7 @@ export async function GET(request: Request) {
 			const response = await sql`
 				SELECT id, activity_description, estimated_calories, date, created_at
 				FROM activities
-				WHERE user_id = ${userId}
+				WHERE clerk_id = ${clerkId}
 				ORDER BY created_at DESC
 			`;
 			return Response.json({ success: true, data: response });

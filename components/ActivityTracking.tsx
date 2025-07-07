@@ -60,7 +60,7 @@ const ActivityTracking = () => {
 		try {
 			const today = new Date();
 			const dateStr = today.toISOString().split('T')[0];
-			const response = await fetchAPI(`/(api)/steps?userId=${user.id}&date=${dateStr}`, {
+			const response = await fetchAPI(`/(api)/steps?clerkId=${user.id}&date=${dateStr}`, {
 				method: 'GET',
 			});
 			if (response.success && response.data && response.data.length > 0) {
@@ -102,7 +102,7 @@ const ActivityTracking = () => {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
-							userId: user.id,
+							clerkId: user.id,
 							steps: todayStepData.steps,
 							goal: todayStepData.goal,
 							caloriesBurned: todayStepData.caloriesBurned,
@@ -136,7 +136,7 @@ const ActivityTracking = () => {
 
 		try {
 			const today = new Date().toISOString().split('T')[0];
-			const response = await fetchAPI(`/(api)/activities?userId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/(api)/activities?clerkId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});
 
@@ -382,7 +382,7 @@ const ActivityTracking = () => {
 		if (!user?.id) return;
 
 		try {
-			const response = await fetchAPI(`/(api)/activities?id=${activityId}&userId=${user.id}`, {
+			const response = await fetchAPI(`/(api)/activities?id=${activityId}&clerkId=${user.id}`, {
 				method: 'DELETE',
 			});
 

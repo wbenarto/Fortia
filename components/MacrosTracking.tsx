@@ -188,7 +188,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				// Use user's local timezone for today's date
 				const today = getTodayDate();
 				const response = await fetchAPI(
-					`/(api)/meals?userId=${user.id}&date=${today}&summary=true`,
+					`/(api)/meals?clerkId=${user.id}&date=${today}&summary=true`,
 					{
 						method: 'GET',
 					}
@@ -281,7 +281,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				const response = await fetchAPI('/(api)/meals', {
 					method: 'POST',
 					body: JSON.stringify({
-						userId: user.id,
+						clerkId: user.id,
 						foodName: foodName,
 						portionSize: portionSize,
 						calories: nutritionData.calories,

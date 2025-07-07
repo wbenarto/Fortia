@@ -56,9 +56,33 @@ export default function Page() {
 							return;
 						}
 					} else if (response.error === 'User not found') {
-						// User doesn't exist in database, redirect to onboarding setup
-						router.replace('/(auth)/onboarding-setup');
-						return;
+						// User doesn't exist in database, create them first
+						try {
+							const userResponse = await fetchAPI('/(api)/user', {
+								method: 'POST',
+								body: JSON.stringify({
+									firstName: user?.firstName || '',
+									lastName: user?.lastName || '',
+									email: user?.emailAddresses?.[0]?.emailAddress || '',
+									clerkId: user.id,
+								}),
+							});
+
+							if (userResponse.success) {
+								// User created successfully, redirect to onboarding setup
+								router.replace('/(auth)/onboarding-setup');
+								return;
+							} else {
+								// User creation failed, redirect to onboarding setup anyway
+								router.replace('/(auth)/onboarding-setup');
+								return;
+							}
+						} catch (userError) {
+							console.error('User creation error:', userError);
+							// If we can't create the user, redirect to onboarding setup
+							router.replace('/(auth)/onboarding-setup');
+							return;
+						}
 					} else {
 						// Other error, redirect to onboarding setup
 						router.replace('/(auth)/onboarding-setup');

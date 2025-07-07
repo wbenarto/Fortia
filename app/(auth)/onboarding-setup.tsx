@@ -1,6 +1,6 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import OnboardingForm from '@/components/OnboardingForm';
+import OnboardingForm from '../../components/OnboardingForm';
 
 const OnboardingSetup = () => {
 	const handleComplete = () => {

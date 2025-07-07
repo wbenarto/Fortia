@@ -2,8 +2,10 @@ import { Stack } from 'expo-router';
 import { View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useUserProfile, getUserDisplayName, getUserInitials } from '@/lib/userUtils';
 
 const Navbar = () => {
+	const userProfile = useUserProfile();
 	const insets = useSafeAreaInsets();
 
 	return (
@@ -11,9 +13,9 @@ const Navbar = () => {
 			<View className="items-center flex flex-row justify-between px-6">
 				<View className="flex flex-row items-center">
 					<View className="w-12 h-12 bg-[#E3BBA1] rounded-2xl flex justify-center items-center">
-						<Text className="text-white ">WB</Text>
+						<Text className="text-white font-JakartaSemibold">{getUserInitials(userProfile)}</Text>
 					</View>
-					<Text className="ml-2 font-JakartaSemibold">Hi, William</Text>
+					<Text className="ml-2 font-JakartaSemibold">Hi, {getUserDisplayName(userProfile)}</Text>
 				</View>
 
 				<View>

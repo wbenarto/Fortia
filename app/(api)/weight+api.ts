@@ -74,17 +74,18 @@ export async function GET(request: Request) {
 
 	try {
 		const { searchParams } = new URL(request.url);
-		const userId = searchParams.get('userId');
+		const clerkId = searchParams.get('clerkId');
 
-		if (!userId) {
-			return Response.json({ error: 'User ID is required' }, { status: 400 });
+		if (!clerkId) {
+			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
 		}
 
 		const response = await sql`
         SELECT * FROM weights 
-        WHERE clerk_id = ${userId}
+        WHERE clerk_id = ${clerkId}
         ORDER BY date DESC
         `;
+
 		return Response.json({ data: response });
 	} catch (err) {
 		console.error('Weight GET error:', err);

@@ -45,8 +45,6 @@ export async function POST(request: Request) {
 		email = emailParam;
 		clerkId = clerkIdParam;
 
-		console.log('POST request received:', { firstName, lastName, email, clerkId });
-
 		if (!firstName || !lastName || !email || !clerkId) {
 			console.error('Missing required fields in POST request');
 			return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -58,7 +56,6 @@ export async function POST(request: Request) {
 		`;
 
 		if (existingUser.length > 0) {
-			console.log('User already exists, returning success');
 			return Response.json(
 				{
 					success: true,
@@ -85,7 +82,6 @@ export async function POST(request: Request) {
         RETURNING *
         `;
 
-		console.log('User creation response:', response);
 		return Response.json({ success: true, data: response[0] }, { status: 201 });
 	} catch (err) {
 		console.error('User creation error:', err);
@@ -100,7 +96,6 @@ export async function POST(request: Request) {
 					`;
 
 					if (existingUser.length > 0) {
-						console.log('User already exists (duplicate key), returning success');
 						return Response.json(
 							{
 								success: true,
@@ -157,19 +152,6 @@ export async function PUT(request: Request) {
 			customFats,
 		} = await request.json();
 
-		console.log('PUT request received:', {
-			clerkId,
-			dob,
-			age,
-			weight,
-			startingWeight,
-			targetWeight,
-			height,
-			gender,
-			activityLevel,
-			fitnessGoal,
-		});
-
 		if (!clerkId) {
 			console.error('Missing clerkId in PUT request');
 			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
@@ -179,8 +161,6 @@ export async function PUT(request: Request) {
 		const existingUser = await sql`
 			SELECT id FROM users WHERE clerk_id = ${clerkId}
 		`;
-
-		console.log('Existing user check:', existingUser);
 
 		if (existingUser.length === 0) {
 			console.error('User not found for clerkId:', clerkId);
@@ -215,8 +195,6 @@ export async function PUT(request: Request) {
             updated_at = NOW()
         WHERE clerk_id = ${clerkId}
         `;
-
-		console.log('Update response:', response);
 
 		return Response.json({ success: true, data: response });
 	} catch (err) {

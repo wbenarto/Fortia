@@ -10,12 +10,12 @@ const sql = neon(process.env.DATABASE_URL!);
 export async function GET(request: Request) {
 	try {
 		const { searchParams } = new URL(request.url);
-		const userId = searchParams.get('userId');
+		const clerkId = searchParams.get('clerkId');
 		const date = searchParams.get('date') || getTodayDate();
 		const summary = searchParams.get('summary');
 
-		if (!userId) {
-			return Response.json({ error: 'User ID is required' }, { status: 400 });
+		if (!clerkId) {
+			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
 		}
 
 		// Get day bounds for proper timezone handling
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
           COALESCE(SUM(sodium), 0) as total_sodium,
           COUNT(*) as meal_count
         FROM meals 
-        WHERE user_id = ${userId} 
+        WHERE clerk_id = ${clerkId} 
         AND created_at >= ${start.toISOString()}
         AND created_at < ${end.toISOString()}
       `;
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
 		// Get individual meals for the date using timezone-aware date range
 		const meals = await sql`
       SELECT * FROM meals 
-      WHERE user_id = ${userId} 
+      WHERE clerk_id = ${clerkId} 
       AND created_at >= ${start.toISOString()}
       AND created_at < ${end.toISOString()}
       ORDER BY created_at DESC
@@ -80,7 +80,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
 	try {
 		const {
-			userId,
+			clerkId,
 			foodName,
 			portionSize,
 			calories,
@@ -94,19 +94,19 @@ export async function POST(request: Request) {
 			mealType = 'snack',
 		} = await request.json();
 
-		if (!userId || !foodName || !portionSize) {
+		if (!clerkId || !foodName || !portionSize) {
 			return Response.json(
-				{ error: 'User ID, food name, and portion size are required' },
+				{ error: 'Clerk ID, food name, and portion size are required' },
 				{ status: 400 }
 			);
 		}
 
 		const newMeal = await sql`
       INSERT INTO meals (
-        user_id, food_name, portion_size, calories, protein, carbs, fats, 
+        clerk_id, food_name, portion_size, calories, protein, carbs, fats, 
         fiber, sugar, sodium, confidence_score, meal_type
       ) VALUES (
-        ${userId}, ${foodName}, ${portionSize}, ${calories}, ${protein}, ${carbs}, ${fats},
+        ${clerkId}, ${foodName}, ${portionSize}, ${calories}, ${protein}, ${carbs}, ${fats},
         ${fiber}, ${sugar}, ${sodium}, ${confidenceScore}, ${mealType}
       ) RETURNING *
     `;
@@ -218,17 +218,17 @@ export async function DELETE(request: Request) {
 export async function PATCH(request: Request) {
 	try {
 		const { searchParams } = new URL(request.url);
-		const userId = searchParams.get('userId');
+		const clerkId = searchParams.get('clerkId');
 
-		if (!userId) {
-			return Response.json({ error: 'User ID is required' }, { status: 400 });
+		if (!clerkId) {
+			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
 		}
 
 		// Get all meals for debugging
 		const allMeals = await sql`
       SELECT id, food_name, created_at, DATE(created_at) as date_only
       FROM meals 
-      WHERE user_id = ${userId}
+      WHERE clerk_id = ${clerkId}
       ORDER BY created_at DESC
       LIMIT 10
     `;

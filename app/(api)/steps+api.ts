@@ -1,43 +1,34 @@
 import { neon } from '@neondatabase/serverless';
 
-// Calorie calculation function
-function calculateCaloriesFromSteps(steps: number, params: any): number {
-	const { weight, height, gender, strideLength } = params;
-
-	// Calculate stride length if not provided
-	let calculatedStrideLength = strideLength;
-	if (!calculatedStrideLength) {
-		// Average stride length based on height and gender
-		if (gender === 'male') {
-			calculatedStrideLength = (height * 0.415) / 100; // Convert cm to meters
-		} else {
-			calculatedStrideLength = (height * 0.413) / 100; // Convert cm to meters
-		}
+// Calculate calories burned from steps
+function calculateCaloriesFromSteps(
+	steps: number,
+	userProfile: { weight: number; height: number; gender: string }
+) {
+	// Calculate stride length based on gender
+	let strideLength;
+	if (userProfile.gender === 'male') {
+		strideLength = (userProfile.height * 0.415) / 100; // meters per step
+	} else {
+		strideLength = (userProfile.height * 0.413) / 100; // meters per step
 	}
 
-	// Calculate distance walked in meters
-	const distanceMeters = steps * calculatedStrideLength;
-
-	// Convert to kilometers
+	// Calculate distance walked
+	const distanceMeters = steps * strideLength;
 	const distanceKm = distanceMeters / 1000;
 
-	// Calories burned per km varies by weight and walking speed
-	// Average walking speed is ~5 km/h, moderate pace
-	// Calories per km = weight (kg) × 0.6 (for moderate walking)
-	const caloriesPerKm = weight * 0.6;
+	// Calculate calories burned (rough estimate: 0.6 calories per kg per km)
+	const caloriesBurned = Math.round(distanceKm * userProfile.weight * 0.6);
 
-	// Total calories burned
-	const totalCalories = distanceKm * caloriesPerKm;
-
-	return Math.round(totalCalories);
+	return caloriesBurned;
 }
 
 export async function POST(request: Request) {
 	try {
 		const sql = neon(`${process.env.DATABASE_URL}`);
 
-		const { userId, steps, goal = 10000, date, caloriesBurned } = await request.json();
-		if (!userId || steps === undefined || !date) {
+		const { clerkId, steps, goal = 10000, date, caloriesBurned } = await request.json();
+		if (!clerkId || steps === undefined || !date) {
 			return Response.json({ error: 'Missing required fields' }, { status: 400 });
 		}
 
@@ -46,8 +37,8 @@ export async function POST(request: Request) {
 		try {
 			const userProfile = await sql`
 				SELECT weight, height, age, gender 
-				FROM user_nutrition_goals 
-				WHERE user_id = ${userId}
+				FROM users 
+				WHERE clerk_id = ${clerkId}
 			`;
 
 			if (userProfile.length > 0 && steps > 0) {
@@ -67,9 +58,9 @@ export async function POST(request: Request) {
 
 		// Upsert step data (insert or update) - only update if steps have changed
 		const result = await sql`
-			INSERT INTO steps (user_id, steps, goal, calories_burned, date)
-			VALUES (${userId}, ${steps}, ${goal}, ${calculatedCalories}, ${date})
-			ON CONFLICT (user_id, date) 
+			INSERT INTO steps (clerk_id, steps, goal, calories_burned, date)
+			VALUES (${clerkId}, ${steps}, ${goal}, ${calculatedCalories}, ${date})
+			ON CONFLICT (clerk_id, date) 
 			DO UPDATE SET 
 				steps = CASE 
 					WHEN steps.steps != EXCLUDED.steps THEN EXCLUDED.steps
@@ -99,11 +90,11 @@ export async function GET(request: Request) {
 
 	try {
 		const { searchParams } = new URL(request.url);
-		const userId = searchParams.get('userId');
+		const clerkId = searchParams.get('clerkId');
 		const date = searchParams.get('date');
 
-		if (!userId) {
-			return Response.json({ error: 'User ID is required' }, { status: 400 });
+		if (!clerkId) {
+			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
 		}
 
 		let query;
@@ -111,7 +102,7 @@ export async function GET(request: Request) {
 			// Get steps for specific date
 			query = sql`
 				SELECT * FROM steps 
-				WHERE user_id = ${userId} AND date = ${date}
+				WHERE clerk_id = ${clerkId} AND date = ${date}
 				ORDER BY created_at DESC
 				LIMIT 1
 			`;
@@ -119,7 +110,7 @@ export async function GET(request: Request) {
 			// Get all steps for user
 			query = sql`
 				SELECT * FROM steps 
-				WHERE user_id = ${userId}
+				WHERE clerk_id = ${clerkId}
 				ORDER BY date DESC
 				LIMIT 30
 			`;

@@ -11,6 +11,7 @@ import { LineChart } from 'react-native-gifted-charts';
 import Ionicons from '@expo/vector-icons/build/Ionicons';
 import { getTodayDate } from '@/lib/dateUtils';
 import { useGoalsStore } from '@/store';
+import { useUserProfile } from '@/lib/userUtils';
 
 interface WeightEntry {
 	date: string;
@@ -36,6 +37,7 @@ const WeightTracking = () => {
 	const [startingWeight, setStartingWeight] = useState<number | null>(null);
 
 	const { user } = useUser();
+	const userProfile = useUserProfile();
 	const { goalsUpdated, resetGoalsUpdate } = useGoalsStore();
 
 	// Calculate yAxisOffset based on data range
@@ -93,7 +95,7 @@ const WeightTracking = () => {
 
 				try {
 					const token = await getToken();
-					const response = await fetchAPI(`/(api)/weight?userId=${user.id}`, {
+					const response = await fetchAPI(`/(api)/weight?clerkId=${user.id}`, {
 						method: 'GET',
 						headers: {
 							Authorization: `Bearer ${token}`,
@@ -185,7 +187,7 @@ const WeightTracking = () => {
 			});
 			const fetchData = async () => {
 				const token = await getToken();
-				const response = await fetchAPI(`/(api)/weight?userId=${user?.id}`, {
+				const response = await fetchAPI(`/(api)/weight?clerkId=${user?.id}`, {
 					method: 'GET',
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -199,16 +201,6 @@ const WeightTracking = () => {
 				const processedData = data
 					.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
 					// Group by date and take the latest entry per day to handle duplicates
-					.reduce((acc: WeightEntry[], entry: WeightEntry) => {
-						const existingIndex = acc.findIndex(item => item.date === entry.date);
-						if (existingIndex >= 0) {
-							// Replace with newer entry (assuming later entries are more recent)
-							acc[existingIndex] = entry;
-						} else {
-							acc.push(entry);
-						}
-						return acc;
-					}, [])
 					// Take last 8 entries to show recent data
 					.slice(-8)
 					.map(({ date, weight }: WeightEntry) => {
