@@ -41,7 +41,6 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 				// Check if this is a new user (sign up) or existing user (sign in)
 				if (signUp.createdUserId) {
 					// This is a new user signing up with Google
-					console.log('New Google OAuth user:', signUp.createdUserId);
 
 					// Check if user already exists in our database
 					try {
@@ -128,16 +127,12 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 					}
 				} else if (signIn.userId) {
 					// This is an existing user signing in with Google
-					console.log('Existing Google OAuth user:', signIn.userId);
 
 					// Check if user exists in our database and has completed onboarding
 					try {
-						console.log('Checking if existing user exists in database for clerkId:', signIn.userId);
 						const userCheckResponse = await fetch(`/(api)/user?clerkId=${signIn.userId}`, {
 							method: 'GET',
 						});
-
-						console.log('Existing user check response status:', userCheckResponse.status);
 
 						if (userCheckResponse.ok) {
 							// User exists in database, check if they need onboarding

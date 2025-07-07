@@ -131,6 +131,8 @@ export async function PUT(request: Request) {
 
 		const {
 			clerkId,
+			firstName,
+			lastName,
 			dob,
 			age,
 			weight,
@@ -170,28 +172,31 @@ export async function PUT(request: Request) {
 			);
 		}
 
+		// Only update fields that are provided (not undefined)
 		const response = await sql`
         UPDATE users 
         SET 
-            dob = ${dob},
-            age = ${age},
-            weight = ${weight},
-            starting_weight = ${startingWeight},
-            target_weight = ${targetWeight},
-            height = ${height},
-            gender = ${gender},
-            activity_level = ${activityLevel},
-            fitness_goal = ${fitnessGoal},
-            daily_calories = ${dailyCalories},
-            daily_protein = ${dailyProtein},
-            daily_carbs = ${dailyCarbs},
-            daily_fats = ${dailyFats},
-            bmr = ${bmr},
-            tdee = ${tdee},
-            custom_calories = ${customCalories},
-            custom_protein = ${customProtein},
-            custom_carbs = ${customCarbs},
-            custom_fats = ${customFats},
+            first_name = COALESCE(${firstName}, first_name),
+            last_name = COALESCE(${lastName}, last_name),
+            dob = COALESCE(${dob}, dob),
+            age = COALESCE(${age}, age),
+            weight = COALESCE(${weight}, weight),
+            starting_weight = COALESCE(${startingWeight}, starting_weight),
+            target_weight = COALESCE(${targetWeight}, target_weight),
+            height = COALESCE(${height}, height),
+            gender = COALESCE(${gender}, gender),
+            activity_level = COALESCE(${activityLevel}, activity_level),
+            fitness_goal = COALESCE(${fitnessGoal}, fitness_goal),
+            daily_calories = COALESCE(${dailyCalories}, daily_calories),
+            daily_protein = COALESCE(${dailyProtein}, daily_protein),
+            daily_carbs = COALESCE(${dailyCarbs}, daily_carbs),
+            daily_fats = COALESCE(${dailyFats}, daily_fats),
+            bmr = COALESCE(${bmr}, bmr),
+            tdee = COALESCE(${tdee}, tdee),
+            custom_calories = COALESCE(${customCalories}, custom_calories),
+            custom_protein = COALESCE(${customProtein}, custom_protein),
+            custom_carbs = COALESCE(${customCarbs}, custom_carbs),
+            custom_fats = COALESCE(${customFats}, custom_fats),
             updated_at = NOW()
         WHERE clerk_id = ${clerkId}
         `;

@@ -424,7 +424,10 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 								<Text className="font-JakartaBold text-3xl">
 									{isLoadingSummary ? '...' : Number(currentData.calories).toLocaleString()}
 								</Text>
-								<Text className="text-[#64748B]"> /{targetGoals.calories.toLocaleString()}</Text>
+								<Text className="text-[#64748B]">
+									{' '}
+									/{targetGoals !== null ? targetGoals.calories.toLocaleString() : ''}
+								</Text>
 							</View>
 						</View>
 						<View className="w-16 h-16 rounded-xl flex justify-center items-center bg-[#E3BBA1]">

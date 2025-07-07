@@ -95,7 +95,6 @@ const SignUp = () => {
 						// Handle specific error cases
 						if (userResponse.error && userResponse.error.includes('already exists')) {
 							// User already exists, try to sign them in instead
-							console.log('User already exists, proceeding with sign-in...');
 							await setActive({ session: signUpAttempt.createdSessionId });
 							setVerification({
 								...verification,
@@ -110,7 +109,6 @@ const SignUp = () => {
 
 					// If it's a 409 conflict (user already exists), proceed anyway
 					if (userError.message && userError.message.includes('409')) {
-						console.log('User already exists (409), proceeding with sign-in...');
 						await setActive({ session: signUpAttempt.createdSessionId });
 						setVerification({
 							...verification,

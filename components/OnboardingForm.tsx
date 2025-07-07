@@ -190,26 +190,15 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 				tdee,
 			};
 
-			console.log('Sending onboarding data:', requestBody);
-
 			const response = await fetchAPI('/(api)/user', {
 				method: 'PUT',
 				body: JSON.stringify(requestBody),
 			});
 
-			console.log('Onboarding response:', response);
-
 			if (response.success) {
-				console.log('Onboarding completed successfully');
-
 				// Log the user's weight to the weights table
 				try {
 					const todayDate = getTodayDate();
-					console.log('Logging weight to weights table:', {
-						weight,
-						date: todayDate,
-						clerkId: user.id,
-					});
 
 					const weightResponse = await fetchAPI('/(api)/weight', {
 						method: 'POST',
@@ -220,11 +209,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 						}),
 					});
 
-					console.log('Weight logging response:', weightResponse);
-
-					if (weightResponse.data) {
-						console.log('Weight logged successfully');
-					} else {
+					if (!weightResponse.data) {
 						console.warn('Weight logging failed, but onboarding completed');
 					}
 				} catch (weightError) {

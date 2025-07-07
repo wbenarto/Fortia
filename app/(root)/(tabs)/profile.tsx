@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import GoalSetupModal from '../../../components/GoalSetupModal';
 import { fetchAPI } from '../../../lib/fetch';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getUserDisplayName, getUserLastName, useUserProfile } from '@/lib/userUtils';
 
 interface NutritionGoals {
 	id: string;
@@ -41,6 +42,17 @@ const Profile = () => {
 			fetchNutritionGoals();
 		}
 	}, [user?.id]);
+
+	// Refresh data when page comes into focus (e.g., after editing profile)
+	useFocusEffect(
+		React.useCallback(() => {
+			if (user?.id) {
+				fetchNutritionGoals();
+			}
+		}, [user?.id])
+	);
+
+	const userProfile = useUserProfile();
 
 	const fetchNutritionGoals = async () => {
 		if (!user?.id) return;
@@ -213,7 +225,7 @@ const Profile = () => {
 						</View>
 						<View className="flex-1">
 							<Text className="text-white text-lg font-JakartaSemiBold">
-								{user?.firstName} {user?.lastName}
+								{getUserDisplayName(userProfile)} {getUserLastName(userProfile)}
 							</Text>
 							<Text className="text-gray-400 text-sm">{user?.emailAddresses[0]?.emailAddress}</Text>
 						</View>
@@ -223,7 +235,10 @@ const Profile = () => {
 				<View className="bg-[#2D2A3F] rounded-2xl p-6 mb-6">
 					<Text className="text-white text-lg font-JakartaSemiBold mb-4">Account</Text>
 
-					<TouchableOpacity className="flex flex-row items-center justify-between py-3 border-b border-gray-700">
+					<TouchableOpacity
+						onPress={() => router.push('/edit-profile')}
+						className="flex flex-row items-center justify-between py-3 border-b border-gray-700"
+					>
 						<View className="flex flex-row items-center">
 							<Ionicons name="person-outline" size={24} color="#E3BBA1" />
 							<Text className="text-white ml-3">Edit Profile</Text>
