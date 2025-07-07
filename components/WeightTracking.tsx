@@ -57,7 +57,6 @@ const WeightTracking = () => {
 
 	// Get the last weight entry for display
 	const lastWeightEntry = userWeights.length > 0 ? userWeights[userWeights.length - 1] : null;
-	const todayDate = new Date().toISOString().split('T')[0].slice(5);
 
 	// Check if last weight entry is from today
 
@@ -111,44 +110,68 @@ const WeightTracking = () => {
 					const data = response.data;
 
 					// Process weight data for chart
-					const processedData = data
+					const sortedData = data
 						.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
 						// Group by date and take the latest entry per day to handle duplicates
-						.reduce((acc: WeightEntry[], entry: WeightEntry) => {
-							const existingIndex = acc.findIndex(item => item.date === entry.date);
-							if (existingIndex >= 0) {
-								// Replace with newer entry (assuming later entries are more recent)
-								acc[existingIndex] = entry;
-							} else {
-								acc.push(entry);
-							}
-							return acc;
-						}, [])
-						// Take last 8 entries to show recent data
-						.slice(-10)
-						.map(({ date, weight }: WeightEntry) => {
-							const dateObj = new Date(date);
-							const today = new Date();
-							const isThisYear = dateObj.getFullYear() === today.getFullYear();
 
-							// Format label based on whether it's this year
+						// Take last 10 entries to show recent data
+						.slice(-10);
+
+					// Fill up with latest weight value if less than 10 entries (UI only)
+					const latestWeight =
+						sortedData.length > 0 ? sortedData[sortedData.length - 1].weight : null;
+					const processedData = sortedData.map(({ date, weight }: WeightEntry) => {
+						const dateObj = new Date(date);
+						const today = new Date();
+						const isThisYear = dateObj.getFullYear() === today.getFullYear();
+
+						// Format label based on whether it's this year
+						let label;
+						if (isThisYear) {
+							label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+						} else {
+							label = dateObj.toLocaleDateString('en-US', {
+								month: 'short',
+								day: 'numeric',
+								year: '2-digit',
+							});
+						}
+
+						return {
+							label,
+							value: +weight,
+							dataPointText: `${weight}`,
+						};
+					});
+
+					// Fill up to 10 entries with the latest weight value for UI consistency
+					if (processedData.length < 10 && latestWeight) {
+						const entriesNeeded = 10 - processedData.length;
+						const today = new Date();
+
+						for (let i = 0; i < entriesNeeded; i++) {
+							const fillDate = new Date(today);
+							fillDate.setDate(fillDate.getDate() - (entriesNeeded - i));
+
+							const isThisYear = fillDate.getFullYear() === today.getFullYear();
 							let label;
 							if (isThisYear) {
-								label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+								label = fillDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 							} else {
-								label = dateObj.toLocaleDateString('en-US', {
+								label = fillDate.toLocaleDateString('en-US', {
 									month: 'short',
 									day: 'numeric',
 									year: '2-digit',
 								});
 							}
 
-							return {
+							processedData.push({
 								label,
-								value: +weight,
-								dataPointText: `${weight}`,
-							};
-						});
+								value: +latestWeight,
+								dataPointText: `${latestWeight}`,
+							});
+						}
+					}
 
 					setUserWeights(processedData);
 				} catch (error) {

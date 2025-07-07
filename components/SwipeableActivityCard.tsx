@@ -97,14 +97,14 @@ const SwipeableActivityCard: React.FC<SwipeableActivityCardProps> = ({ activity,
 					style={{
 						transform: [{ translateX }],
 					}}
-					className="w-full h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9] bg-white"
+					className="w-full h-16 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#E3BBA1] bg-white"
 				>
 					<View className="flex flex-row gap-2 mb-2 items-center">
 						<Ionicons name="barbell-outline" size={14} color="#5A556B" />
 						<Text className="text-xs text-[#64748B]">Exercise</Text>
 					</View>
 					<View className="flex flex-row justify-between items-center">
-						<Text className="text-lg font-JakartaBold" numberOfLines={1} ellipsizeMode="tail">
+						<Text className="text-xs font-JakartSemiBold" numberOfLines={1} ellipsizeMode="tail">
 							{activity.activity_description}
 						</Text>
 						<View className="flex flex-row gap-2">
