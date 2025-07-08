@@ -18,13 +18,13 @@ const Navbar = () => {
 					<Text className="ml-2 font-JakartaSemibold">Hi, {getUserDisplayName(userProfile)}</Text>
 				</View>
 
-				<View>
+				{/* <View>
 					<Text>
 						<View>
 							<Ionicons name="settings-outline" size={24} color="black" />
 						</View>
 					</Text>
-				</View>
+				</View> */}
 			</View>
 		</View>
 	);

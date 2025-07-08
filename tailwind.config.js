@@ -82,6 +82,10 @@ module.exports = {
 					700: '#EBEBEB',
 					800: '#ADADAD',
 				},
+				branding: {
+					100: '#E3BBA1',
+					200: '#cd9c99',
+				},
 			},
 		},
 	},

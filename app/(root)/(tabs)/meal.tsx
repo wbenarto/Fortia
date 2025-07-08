@@ -180,7 +180,7 @@ const Meal = () => {
 								)}
 							</View>
 						</View>
-						<SuggestedMeals />
+						{/* <SuggestedMeals /> */}
 					</View>
 				</ScrollView>
 			</SignedIn>

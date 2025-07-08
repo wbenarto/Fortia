@@ -3,10 +3,13 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } fr
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
+import ReactNativeModal from 'react-native-modal';
 import GoalSetupModal from '../../../components/GoalSetupModal';
 import { fetchAPI } from '../../../lib/fetch';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserDisplayName, getUserLastName, useUserProfile } from '@/lib/userUtils';
+import InputField from '../../../components/InputField';
+import CustomButton from '../../../components/CustomButton';
 
 interface NutritionGoals {
 	id: string;
@@ -36,6 +39,10 @@ const Profile = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [goalSetupModal, setGoalSetupModal] = useState(false);
 	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [deleteAccountModal, setDeleteAccountModal] = useState(false);
+	const [password, setPassword] = useState('');
+	const [isValidating, setIsValidating] = useState(false);
+	const [passwordError, setPasswordError] = useState('');
 	const insets = useSafeAreaInsets();
 	useEffect(() => {
 		if (user?.id) {
@@ -135,6 +142,46 @@ const Profile = () => {
 	const handleSignOut = () => {
 		signOut();
 		router.replace('/(auth)/sign-in');
+	};
+
+	const handleDeleteAccount = () => {
+		setDeleteAccountModal(true);
+	};
+
+	const handlePasswordValidation = async () => {
+		if (!password.trim()) {
+			Alert.alert('Error', 'Please enter your password to continue.');
+			return;
+		}
+
+		setIsValidating(true);
+		setPasswordError(''); // Clear any previous error
+
+		try {
+			// For demo purposes, let's assume the correct password is "password123"
+			// In a real app, you would validate against the user's actual password
+			const correctPassword = 'password123';
+
+			if (password === correctPassword) {
+				console.log('hooray');
+				Alert.alert('Success', 'Password is correct! Account deletion would proceed here.');
+				closeDeleteModal();
+			} else {
+				setPasswordError('Password is not correct. Please try again.');
+				setPassword(''); // Clear the password field
+			}
+		} catch (error) {
+			setPasswordError('Failed to validate password. Please try again.');
+		} finally {
+			setIsValidating(false);
+		}
+	};
+
+	const closeDeleteModal = () => {
+		setDeleteAccountModal(false);
+		setPassword('');
+		setIsValidating(false);
+		setPasswordError('');
 	};
 
 	const getActivityLevelLabel = (level: string) => {
@@ -458,6 +505,16 @@ const Profile = () => {
 						</View>
 					)}
 				</View>
+				<TouchableOpacity
+					onPress={handleDeleteAccount}
+					className="flex flex-row items-center justify-between py-4 px-4 bg-red-600/20 rounded-xl border border-red-500/30"
+				>
+					<View className="flex flex-row items-center">
+						<Ionicons name="trash-outline" size={24} color="#ef4444" />
+						<Text className="text-white ml-3 font-JakartaSemiBold">Delete Account</Text>
+					</View>
+					<Ionicons name="chevron-forward" size={20} color="white" />
+				</TouchableOpacity>
 			</ScrollView>
 
 			{/* Goal Setup Modal */}
@@ -466,6 +523,55 @@ const Profile = () => {
 				onClose={() => setGoalSetupModal(false)}
 				onGoalsSet={handleGoalsUpdated}
 			/>
+
+			{/* Delete Account Modal */}
+			<ReactNativeModal isVisible={deleteAccountModal} onBackdropPress={closeDeleteModal}>
+				<View className="bg-white py-14 px-4 mx-0 rounded-md">
+					<View className="pb-4">
+						<Text className="text-xl text-center font-JakartaSemiBold">Delete Account</Text>
+					</View>
+
+					<View className="mb-6">
+						<Text className="text-gray-600 text-center text-sm leading-5">
+							Are you absolutely sure you want to delete your account? This action cannot be undone
+							and all your information, including your nutrition goals, weight tracking, and meal
+							data will be permanently deleted.
+						</Text>
+					</View>
+
+					<View className="mb-8">
+						<InputField
+							label="Password"
+							placeholder="Enter your password to confirm"
+							secureTextEntry
+							value={password}
+							onChangeText={setPassword}
+						/>
+						{passwordError ? (
+							<Text className="text-red-500 text-sm mt-2 text-center">{passwordError}</Text>
+						) : null}
+					</View>
+
+					<View className="flex flex-row space-x-3">
+						<TouchableOpacity
+							onPress={closeDeleteModal}
+							className="flex-1 py-3 px-4 border border-gray-300 rounded-lg"
+						>
+							<Text className="text-gray-700 text-center font-JakartaSemiBold">Cancel</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity
+							onPress={handlePasswordValidation}
+							disabled={isValidating}
+							className="flex-1 py-3 px-4 bg-red-600 rounded-lg"
+						>
+							<Text className="text-white text-center font-JakartaSemiBold">
+								{isValidating ? 'Validating...' : 'Delete Account'}
+							</Text>
+						</TouchableOpacity>
+					</View>
+				</View>
+			</ReactNativeModal>
 		</View>
 	);
 };

@@ -165,7 +165,7 @@ const Workout = () => {
 					<Navbar />
 					<View className="w-full pb-20">
 						<WeeklyCalendar />
-						<View className="flex flex-row justify-between items-center px-2">
+						{/* <View className="flex flex-row justify-between items-center px-2">
 							<View className="flex flex-row justify-between items-center">
 								<CustomButton
 									title="New Workout"
@@ -183,7 +183,7 @@ const Workout = () => {
 									onPress={() => {}}
 								/>
 							</View>
-						</View>
+						</View> */}
 
 						<ActivityTracking />
 						{/* <View className="w-full px-4">

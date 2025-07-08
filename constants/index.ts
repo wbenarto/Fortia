@@ -9,12 +9,18 @@ import Home from '@/assets/icons/home.png';
 import Profile from '@/assets/icons/profile.png';
 import Chart from '@/assets/images/dummy-chart.png';
 import Calendar from '@/assets/icons/calendar.png';
+import Logo from '@/assets/images/logo-main.png';
+import Onboarding1 from '@/assets/images/onboarding-1.jpg';
+import Onboarding2 from '@/assets/images/onboarding-2.png';
 
 export const images = {
 	Icon,
 	SignUp,
 	Check,
 	Chart,
+	Logo,
+	Onboarding1,
+	Onboarding2,
 };
 
 export const icons = {
@@ -31,23 +37,23 @@ export const icons = {
 export const onboardingPages = [
 	{
 		id: 1,
-		title: 'Welcome to Fortia',
-		description: 'Your wellness journey starts here',
-		image: images.Icon,
+		title: '',
+		description: '',
+		image: images.Logo,
 	},
 	{
 		id: 2,
 		title: 'Track and Achieve Your Goals.',
 		description:
 			'Personalized calorie target, intuitive meal tracking, and activity insights to help you stay on track to reach your goals.',
-		image: images.Icon,
+		image: images.Onboarding1,
 	},
 	{
 		id: 3,
 		title: 'Cultivate Calm. Achieve Clarity.',
 		description:
 			'Access guided meditation, reduce anxiety, and log your focused work to manifest your best self.',
-		image: images.Icon,
+		image: images.Onboarding2,
 		isForm: true,
 	},
 ];
