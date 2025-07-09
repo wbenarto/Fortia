@@ -13,11 +13,11 @@ const Onboarding = () => {
 	return (
 		<SafeAreaView className="h-full bg-white">
 			{/* Background Image */}
-			{/* <Image
+			<Image
 				source={require('@/assets/images/half-dome.jpg')}
 				className="absolute left-0 mt-[-100px] h-screen w-[60%]"
 				resizeMode="cover"
-			/> */}
+			/>
 
 			{/* Content */}
 			<View className="flex-1 items-center justify-between">

@@ -165,7 +165,7 @@ const WeightTracking = () => {
 								});
 							}
 
-							processedData.push({
+							processedData.unshift({
 								label,
 								value: +latestWeight,
 								dataPointText: `${latestWeight}`,
