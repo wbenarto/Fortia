@@ -6,6 +6,7 @@ import { router, useFocusEffect } from 'expo-router';
 import ReactNativeModal from 'react-native-modal';
 import GoalSetupModal from '../../../components/GoalSetupModal';
 import PrivacyPolicyModal from '../../../components/PrivacyPolicyModal';
+import TermsAndConditionsModal from '../../../components/TermsAndConditionsModal';
 import { fetchAPI } from '../../../lib/fetch';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserDisplayName, getUserLastName, useUserProfile } from '@/lib/userUtils';
@@ -42,6 +43,7 @@ const Profile = () => {
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [deleteAccountModal, setDeleteAccountModal] = useState(false);
 	const [privacyPolicyModal, setPrivacyPolicyModal] = useState(false);
+	const [termsAndConditionsModal, setTermsAndConditionsModal] = useState(false);
 	const [password, setPassword] = useState('');
 	const [isValidating, setIsValidating] = useState(false);
 	const [passwordError, setPasswordError] = useState('');
@@ -337,6 +339,17 @@ const Profile = () => {
 						</View>
 						<Ionicons name="chevron-forward" size={20} color="gray" />
 					</TouchableOpacity>
+
+					<TouchableOpacity
+						onPress={() => setTermsAndConditionsModal(true)}
+						className="flex flex-row items-center justify-between py-3 border-b border-gray-700"
+					>
+						<View className="flex flex-row items-center">
+							<Ionicons name="document-text-outline" size={24} color="#E3BBA1" />
+							<Text className="text-white ml-3">Terms and Conditions</Text>
+						</View>
+						<Ionicons name="chevron-forward" size={20} color="gray" />
+					</TouchableOpacity>
 				</View>
 
 				{/* Nutrition Goals Section */}
@@ -582,6 +595,12 @@ const Profile = () => {
 			<PrivacyPolicyModal
 				isVisible={privacyPolicyModal}
 				onClose={() => setPrivacyPolicyModal(false)}
+			/>
+
+			{/* Terms and Conditions Modal */}
+			<TermsAndConditionsModal
+				isVisible={termsAndConditionsModal}
+				onClose={() => setTermsAndConditionsModal(false)}
 			/>
 		</View>
 	);
