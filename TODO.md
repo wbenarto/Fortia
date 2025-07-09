@@ -9,7 +9,7 @@ These are Apple's foundational rules and the most common reasons for rejection. 
 - **No Objectionable Content:** Your app must not contain content that is offensive, discriminatory, violent, pornographic, misleading, or encourages illegal activities. This includes user-generated content (UGC) if your app allows it – you'll need robust moderation tools. ✅
 - **Privacy & Data Security (1.6):** This is paramount.
   - **Privacy Policy:** You absolutely _must_ have a clear and easily accessible privacy policy within the app and on your App Store product page. It must detail what data you collect, how you use it, and how you protect it.✅
-  - **Data Collection Consent:** Obtain explicit user consent for collecting any data, especially sensitive data. Don't force users to grant unnecessary permissions to use core functionality.
+  - **Data Collection Consent:** Obtain explicit user consent for collecting any data, especially sensitive data. Don't force users to grant unnecessary permissions to use core functionality.✅
   - **App Privacy Labels (Nutrition Labels):** You'll fill out detailed privacy "nutrition labels" in App Store Connect, declaring all data your app (and any third-party SDKs) collects and how it's used. Be honest and thorough here.✅
   - **Account Deletion (5.1.1(v)):** If your app supports account creation, it _must_ also offer an in-app method for users to initiate account deletion, along with all associated data. This is a common rejection reason if missing.
 
@@ -18,7 +18,7 @@ These are Apple's foundational rules and the most common reasons for rejection. 
 - **App Completeness (2.1):**
   - **Fully Functional:** Your app must be complete and fully functional. No placeholder content, broken links, crashing features, or "beta" indicators.
   - **Demo Account:** If your app requires a login, you **must** provide a fully functional demo account (username and password) in the "App Review Information" section of App Store Connect. Without this, Apple cannot review your app.
-  - **Backend Services:** Ensure any backend services are live and accessible during review.
+  - **Backend Services:** Ensure any backend services are live and accessible during review.✅
 - **No Crashes or Bugs:** Thoroughly test your app to eliminate crashes, freezes, and significant bugs. This is a very frequent reason for rejection.
 - **Accurate Metadata (2.3):**
   - **App Name, Subtitle, Description, Keywords:** These must accurately reflect your app's functionality and content. Don't use misleading keywords or try to game the search algorithms.
@@ -112,3 +112,48 @@ Beyond the app itself, you'll need to prepare assets and information in App Stor
 11. **TestFlight Beta Testing:** Highly recommended to use TestFlight for beta testing before submitting to the App Store. It helps catch bugs and UX issues early.
 
 By meticulously going through these requirements and being proactive in addressing potential issues, you significantly increase your chances of a smooth approval process for your Fortia app! Good luck!
+
+�� Critical App Store Guideline Violations
+
+1. Missing Privacy Policy ✅
+   Issue: No privacy policy is implemented in the app
+   Guideline: Apple requires a clear, accessible privacy policy within the app
+   Impact: Automatic rejection - this is a hard requirement
+   Location: No privacy policy screen or link found in the codebase
+2. No Explicit Data Collection Consent
+   Issue: App collects sensitive health data without explicit user consent
+   Data Collected:
+   Personal health metrics (weight, height, age, gender)
+   Fitness goals and activity levels
+   Step tracking data (HealthKit integration)
+   Meal and nutrition data
+   Date of birth and personal information
+   Guideline: Must obtain explicit consent before collecting sensitive data
+   Impact: High rejection risk
+3. Incomplete Account Deletion Implementation
+   Issue: Account deletion feature is incomplete
+   Current State: Only shows a modal with password validation but doesn't actually delete data
+   Code Evidence: `149:177:app/(root)/(tabs)/profile.tsx`
+   Guideline: Must provide functional account deletion with data removal
+   Impact: High rejection risk
+4. HealthKit Permission Issues
+   Issue: HealthKit integration lacks proper consent flow
+   Current Implementation: Automatically assumes permission if available
+   Code Evidence: `198:227:lib/healthKit.ts`
+   Guideline: Must obtain explicit consent for HealthKit data access
+   Impact: High rejection risk
+5. Forced Data Collection for Core Functionality
+   Issue: Users must provide extensive personal data to use basic features
+   Required Data: DOB, weight, height, gender, fitness goals
+   Guideline: Don't force unnecessary permissions for core functionality
+   Impact: Medium rejection risk
+6. Missing Data Usage Transparency
+   Issue: No clear explanation of how collected data is used
+   Data Stored: Personal health metrics, meal data, activity tracking
+   Guideline: Must clearly explain data usage and storage
+   Impact: Medium rejection risk
+7. Inadequate Permission Descriptions
+   Issue: Motion/fitness permission description is too generic
+   Current: "Fortia needs access to motion and fitness data to track your daily steps for better fitness insights."
+   Guideline: Must be specific about what data is collected and why
+   Impact: Medium rejection risk

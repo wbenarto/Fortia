@@ -100,14 +100,6 @@ const Layout = () => {
 					tabBarIcon: ({ focused }) => <TabIcon focused={focused} iconName="barbell" />,
 				}}
 			/>
-			<Tabs.Screen
-				name="profile"
-				options={{
-					title: 'Profile',
-					headerShown: false,
-					tabBarIcon: ({ focused }) => <TabIcon focused={focused} iconName="person-circle" />,
-				}}
-			/>
 		</Tabs>
 	);
 };

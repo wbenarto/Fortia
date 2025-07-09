@@ -79,6 +79,20 @@ export async function GET(request: Request) {
 // POST - Log a new meal
 export async function POST(request: Request) {
 	try {
+		// Check if request has a body
+		const contentType = request.headers.get('content-type');
+		if (!contentType || !contentType.includes('application/json')) {
+			return Response.json({ error: 'Content-Type must be application/json' }, { status: 400 });
+		}
+
+		let body;
+		try {
+			body = await request.json();
+		} catch (parseError) {
+			console.error('JSON parse error:', parseError);
+			return Response.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+		}
+
 		const {
 			clerkId,
 			foodName,
@@ -92,7 +106,7 @@ export async function POST(request: Request) {
 			sodium,
 			confidenceScore,
 			mealType = 'snack',
-		} = await request.json();
+		} = body;
 
 		if (!clerkId || !foodName || !portionSize) {
 			return Response.json(
@@ -134,6 +148,20 @@ export async function PUT(request: Request) {
 			return Response.json({ error: 'Meal ID is required' }, { status: 400 });
 		}
 
+		// Check if request has a body
+		const contentType = request.headers.get('content-type');
+		if (!contentType || !contentType.includes('application/json')) {
+			return Response.json({ error: 'Content-Type must be application/json' }, { status: 400 });
+		}
+
+		let body;
+		try {
+			body = await request.json();
+		} catch (parseError) {
+			console.error('JSON parse error:', parseError);
+			return Response.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+		}
+
 		const {
 			foodName,
 			portionSize,
@@ -146,7 +174,7 @@ export async function PUT(request: Request) {
 			sodium,
 			confidenceScore,
 			mealType,
-		} = await request.json();
+		} = body;
 
 		const updatedMeal = await sql`
       UPDATE meals SET
