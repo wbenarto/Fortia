@@ -6,11 +6,11 @@ These are Apple's foundational rules and the most common reasons for rejection. 
 
 ### 1. Safety (Guideline 1.x)
 
-- **No Objectionable Content:** Your app must not contain content that is offensive, discriminatory, violent, pornographic, misleading, or encourages illegal activities. This includes user-generated content (UGC) if your app allows it – you'll need robust moderation tools.
+- **No Objectionable Content:** Your app must not contain content that is offensive, discriminatory, violent, pornographic, misleading, or encourages illegal activities. This includes user-generated content (UGC) if your app allows it – you'll need robust moderation tools. ✅
 - **Privacy & Data Security (1.6):** This is paramount.
-  - **Privacy Policy:** You absolutely _must_ have a clear and easily accessible privacy policy within the app and on your App Store product page. It must detail what data you collect, how you use it, and how you protect it.
+  - **Privacy Policy:** You absolutely _must_ have a clear and easily accessible privacy policy within the app and on your App Store product page. It must detail what data you collect, how you use it, and how you protect it.✅
   - **Data Collection Consent:** Obtain explicit user consent for collecting any data, especially sensitive data. Don't force users to grant unnecessary permissions to use core functionality.
-  - **App Privacy Labels (Nutrition Labels):** You'll fill out detailed privacy "nutrition labels" in App Store Connect, declaring all data your app (and any third-party SDKs) collects and how it's used. Be honest and thorough here.
+  - **App Privacy Labels (Nutrition Labels):** You'll fill out detailed privacy "nutrition labels" in App Store Connect, declaring all data your app (and any third-party SDKs) collects and how it's used. Be honest and thorough here.✅
   - **Account Deletion (5.1.1(v)):** If your app supports account creation, it _must_ also offer an in-app method for users to initiate account deletion, along with all associated data. This is a common rejection reason if missing.
 
 ### 2. Performance (Guideline 2.x)

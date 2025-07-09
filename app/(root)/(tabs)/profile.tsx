@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import ReactNativeModal from 'react-native-modal';
 import GoalSetupModal from '../../../components/GoalSetupModal';
+import PrivacyPolicyModal from '../../../components/PrivacyPolicyModal';
 import { fetchAPI } from '../../../lib/fetch';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserDisplayName, getUserLastName, useUserProfile } from '@/lib/userUtils';
@@ -40,6 +41,7 @@ const Profile = () => {
 	const [goalSetupModal, setGoalSetupModal] = useState(false);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [deleteAccountModal, setDeleteAccountModal] = useState(false);
+	const [privacyPolicyModal, setPrivacyPolicyModal] = useState(false);
 	const [password, setPassword] = useState('');
 	const [isValidating, setIsValidating] = useState(false);
 	const [passwordError, setPasswordError] = useState('');
@@ -319,16 +321,19 @@ const Profile = () => {
 
 					<TouchableOpacity className="flex flex-row items-center justify-between py-3 border-b border-gray-700">
 						<View className="flex flex-row items-center">
-							<Ionicons name="shield-outline" size={24} color="#E3BBA1" />
-							<Text className="text-white ml-3">Privacy & Security</Text>
+							<Ionicons name="help-circle-outline" size={24} color="#E3BBA1" />
+							<Text className="text-white ml-3">Help & Support</Text>
 						</View>
 						<Ionicons name="chevron-forward" size={20} color="gray" />
 					</TouchableOpacity>
 
-					<TouchableOpacity className="flex flex-row items-center justify-between py-3">
+					<TouchableOpacity
+						onPress={() => setPrivacyPolicyModal(true)}
+						className="flex flex-row items-center justify-between py-3 border-b border-gray-700"
+					>
 						<View className="flex flex-row items-center">
-							<Ionicons name="help-circle-outline" size={24} color="#E3BBA1" />
-							<Text className="text-white ml-3">Help & Support</Text>
+							<Ionicons name="shield-checkmark-outline" size={24} color="#E3BBA1" />
+							<Text className="text-white ml-3">Privacy Policy</Text>
 						</View>
 						<Ionicons name="chevron-forward" size={20} color="gray" />
 					</TouchableOpacity>
@@ -572,6 +577,12 @@ const Profile = () => {
 					</View>
 				</View>
 			</ReactNativeModal>
+
+			{/* Privacy Policy Modal */}
+			<PrivacyPolicyModal
+				isVisible={privacyPolicyModal}
+				onClose={() => setPrivacyPolicyModal(false)}
+			/>
 		</View>
 	);
 };

@@ -95,6 +95,35 @@ CREATE TABLE IF NOT EXISTS api_logs (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Privacy consent table for storing user consent records
+CREATE TABLE IF NOT EXISTS privacy_consent (
+  id SERIAL PRIMARY KEY,
+  clerk_id TEXT NOT NULL UNIQUE,
+  consent_given BOOLEAN NOT NULL DEFAULT false,
+  consent_version TEXT NOT NULL,
+  consent_method TEXT NOT NULL,
+  ip_address INET,
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Data consent table for granular data collection preferences
+CREATE TABLE IF NOT EXISTS data_consent (
+  id SERIAL PRIMARY KEY,
+  clerk_id TEXT NOT NULL UNIQUE,
+  basic_profile BOOLEAN NOT NULL DEFAULT true,
+  health_metrics BOOLEAN NOT NULL DEFAULT false,
+  nutrition_data BOOLEAN NOT NULL DEFAULT false,
+  weight_tracking BOOLEAN NOT NULL DEFAULT false,
+  step_tracking BOOLEAN NOT NULL DEFAULT false,
+  workout_activities BOOLEAN NOT NULL DEFAULT false,
+  consent_version TEXT NOT NULL DEFAULT '1.0',
+  consent_method TEXT NOT NULL DEFAULT 'onboarding',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_clerk_id ON users(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -108,6 +137,10 @@ CREATE INDEX IF NOT EXISTS idx_activities_clerk_id ON activities(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_activities_date ON activities(date);
 CREATE INDEX IF NOT EXISTS idx_api_logs_clerk_id ON api_logs(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_privacy_consent_clerk_id ON privacy_consent(clerk_id);
+CREATE INDEX IF NOT EXISTS idx_privacy_consent_created_at ON privacy_consent(created_at);
+CREATE INDEX IF NOT EXISTS idx_data_consent_clerk_id ON data_consent(clerk_id);
+CREATE INDEX IF NOT EXISTS idx_data_consent_created_at ON data_consent(created_at);
 `;
 
 async function setupDatabase() {
@@ -123,6 +156,8 @@ async function setupDatabase() {
 		await sql`DROP TABLE IF EXISTS steps CASCADE`;
 		await sql`DROP TABLE IF EXISTS activities CASCADE`;
 		await sql`DROP TABLE IF EXISTS api_logs CASCADE`;
+		await sql`DROP TABLE IF EXISTS privacy_consent CASCADE`;
+		await sql`DROP TABLE IF EXISTS data_consent CASCADE`;
 
 		// Split the schema into individual statements
 		const statements = schema

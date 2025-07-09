@@ -52,6 +52,7 @@ export async function requestStepPermissions(): Promise<HealthKitStatus> {
 
 		// For pedometer, we assume permission is granted if available
 		// iOS will prompt for motion & fitness permission automatically
+		// Note: This should only be called after user has explicitly consented to step tracking
 		return {
 			isAvailable: true,
 			isAuthorized: true,

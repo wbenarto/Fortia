@@ -13,11 +13,11 @@ const Onboarding = () => {
 	return (
 		<SafeAreaView className="h-full bg-white">
 			{/* Background Image */}
-			<Image
+			{/* <Image
 				source={require('@/assets/images/half-dome.jpg')}
 				className="absolute left-0 mt-[-100px] h-screen w-[60%]"
 				resizeMode="cover"
-			/>
+			/> */}
 
 			{/* Content */}
 			<View className="flex-1 items-center justify-between">
@@ -37,12 +37,12 @@ const Onboarding = () => {
 					activeDot={<View className="w-[32px] h-[4px] mx-1 bg-[#e3bba1] rounded-full" />}
 					onIndexChanged={index => setActiveIndex(index)}
 				>
-					{onboardingPages.map(e => {
+					{onboardingPages.map((e, index) => {
 						return (
 							<View key={e.id} className="flex items-center justify-center p-5 ">
 								<Image
 									source={e.image}
-									className={`w-full  h-[300px] rounded-md ${e.image == '17' ? 'mt-[30%]' : ''}`}
+									className={`w-full  h-[300px] rounded-md ${index == 0 ? 'mt-[40%] w-[80%]' : ''}`}
 									resizeMode="contain"
 								/>
 								<View

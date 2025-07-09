@@ -1,6 +1,10 @@
 import { TouchableOpacity, Text } from 'react-native';
 
-const getBgVariantStyle = (variant: ButtonProps['bgVariant']) => {
+const getBgVariantStyle = (variant: ButtonProps['bgVariant'], disabled?: boolean) => {
+	if (disabled) {
+		return 'bg-gray-300';
+	}
+
 	switch (variant) {
 		case 'primary':
 			return 'bg-[#E3BBA1]';
@@ -17,7 +21,11 @@ const getBgVariantStyle = (variant: ButtonProps['bgVariant']) => {
 	}
 };
 
-const getTextVariantStyle = (variant: ButtonProps['textVariant']) => {
+const getTextVariantStyle = (variant: ButtonProps['textVariant'], disabled?: boolean) => {
+	if (disabled) {
+		return 'text-gray-500';
+	}
+
 	switch (variant) {
 		case 'primary':
 			return 'text-[#E3BBA1]';
@@ -37,12 +45,13 @@ interface ButtonProps {
 	title: string;
 	bgVariant?: 'primary' | 'secondary' | 'danger' | 'success' | 'outline';
 	textVariant?: 'default' | 'primary' | 'secondary' | 'success' | 'danger';
-	IconLeft?: React.FC<IconProps>;
-	IconRight?: React.FC<IconProps>;
+	IconLeft?: React.ComponentType<any>;
+	IconRight?: React.ComponentType<any>;
 	textProp?: string;
 	className?: string;
 	width?: string | number;
 	testID?: string;
+	disabled?: boolean;
 }
 
 const CustomButton = ({
@@ -56,16 +65,19 @@ const CustomButton = ({
 	textProp,
 	width,
 	testID,
+	disabled = false,
 	...props
 }: ButtonProps) => (
 	<TouchableOpacity
-		onPress={onPress}
-		className={`w-${width} p-4 my-2 rounded-lg flex flex-row justify-center items-center shadow-sm shadow-neutral-400/70 ${getBgVariantStyle(bgVariant)} ${className}`}
+		onPress={disabled ? undefined : onPress}
+		className={`w-${width} p-4 my-2 rounded-lg flex flex-row justify-center items-center shadow-sm shadow-neutral-400/70 ${getBgVariantStyle(bgVariant, disabled)} ${className}`}
 		testID={testID}
 		{...props}
 	>
 		{IconLeft && <IconLeft />}
-		<Text className={`mx-1 font-JakartaBold ${textProp} ${getTextVariantStyle(textVariant)}`}>
+		<Text
+			className={`mx-1 font-JakartaBold ${textProp} ${getTextVariantStyle(textVariant, disabled)}`}
+		>
 			{title}
 		</Text>
 		{IconRight && <IconRight />}

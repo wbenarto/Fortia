@@ -1,26 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import {
-	View,
-	Text,
-	TouchableOpacity,
-	ScrollView,
-	Platform,
-	ActivityIndicator,
-} from 'react-native';
-import CustomButton from './CustomButton';
-import ReactNativeModal from 'react-native-modal';
-import InputField from './InputField';
-import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
-import { fetchAPI } from '@/lib/fetch';
 import { useUser } from '@clerk/clerk-expo';
+import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import {
-	formatBMR,
-	getActivityLevelDescription,
-	calculateBMR,
-	calculateTDEE,
-} from '@/lib/bmrUtils';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import ReactNativeModal from 'react-native-modal';
+
+import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
+import { fetchDataConsent, hasDataCollectionConsent } from '@/lib/consentUtils';
+import { fetchAPI } from '@/lib/fetch';
 import { getTodayStepData, requestHealthKitPermissions, getHealthKitStatus } from '@/lib/healthKit';
+
+import CustomButton from './CustomButton';
+import InputField from './InputField';
 import SwipeableActivityCard from './SwipeableActivityCard';
 
 const ActivityTracking = () => {
@@ -33,6 +24,7 @@ const ActivityTracking = () => {
 	const [activityInput, setActivityInput] = useState('');
 	const [estimatedCalories, setEstimatedCalories] = useState<number | null>(null);
 	const [isCalculating, setIsCalculating] = useState(false);
+	const [userConsentData, setUserConsentData] = useState<any>(null);
 	const { user } = useUser();
 
 	const fetchNutritionGoals = async () => {
@@ -119,14 +111,25 @@ const ActivityTracking = () => {
 	};
 
 	const requestHealthKitAccess = async () => {
+		if (!hasDataCollectionConsent(userConsentData)) {
+			Alert.alert(
+				'Consent Required',
+				'Please provide consent for data collection in your preferences.',
+				[{ text: 'OK' }]
+			);
+			return;
+		}
+
 		try {
 			const status = await requestHealthKitPermissions();
 			setHealthKitStatus(status);
 			if (status.isAuthorized) {
+				// Refresh step data after authorization
 				await fetchAndUploadDeviceSteps();
 			}
 		} catch (error) {
-			console.error('Failed to request HealthKit permissions:', error);
+			console.error('HealthKit authorization error:', error);
+			Alert.alert('Error', 'Failed to enable HealthKit access');
 		}
 	};
 
@@ -157,24 +160,32 @@ const ActivityTracking = () => {
 		if (user?.id) {
 			fetchNutritionGoals();
 			fetchActivities();
-			if (Platform.OS === 'ios') {
-				fetchAndUploadDeviceSteps();
-			} else {
-				fetchStepDataFromBackend();
-			}
+			fetchUserConsent();
 		}
 	}, [user?.id]);
 
+	const fetchUserConsent = async () => {
+		if (!user?.id) return;
+
+		try {
+			const consentData = await fetchDataConsent(user.id);
+			setUserConsentData(consentData);
+
+			// Only fetch step data if user has consented to data collection
+			if (hasDataCollectionConsent(consentData)) {
+				await fetchStepDataFromBackend();
+			}
+		} catch (error) {
+			console.error('Failed to fetch user consent:', error);
+		}
+	};
+
 	// Refresh step data when nutrition goals change (for calorie calculation)
 	useEffect(() => {
-		if (user?.id && nutritionGoals) {
-			if (Platform.OS === 'ios') {
-				fetchAndUploadDeviceSteps();
-			} else {
-				fetchStepDataFromBackend();
-			}
+		if (user?.id && nutritionGoals && hasDataCollectionConsent(userConsentData)) {
+			fetchAndUploadDeviceSteps();
 		}
-	}, [nutritionGoals]);
+	}, [user?.id, nutritionGoals, userConsentData]);
 
 	// Refresh data when screen comes into focus
 	useFocusEffect(
@@ -182,13 +193,11 @@ const ActivityTracking = () => {
 			if (user?.id) {
 				fetchNutritionGoals();
 				fetchActivities();
-				if (Platform.OS === 'ios') {
-					fetchAndUploadDeviceSteps();
-				} else {
+				if (hasDataCollectionConsent(userConsentData)) {
 					fetchStepDataFromBackend();
 				}
 			}
-		}, [user?.id])
+		}, [user?.id, userConsentData])
 	);
 
 	// Get BMR from stored nutrition goals with fallback calculation
@@ -459,18 +468,33 @@ const ActivityTracking = () => {
 						<View className="flex flex-row gap-2 mb-2 items-center">
 							<Ionicons name="footsteps-outline" size={14} color="#5A556B" />
 							<Text className="text-xs text-[#64748B]">Steps</Text>
-							{!healthKitStatus?.isAuthorized && healthKitStatus?.isAvailable && (
+							{!hasDataCollectionConsent(userConsentData) ? (
+								<TouchableOpacity
+									onPress={() =>
+										Alert.alert(
+											'Consent Required',
+											'Please provide consent for data collection in your preferences.',
+											[{ text: 'OK' }]
+										)
+									}
+									className="bg-red-500 px-2 py-1 rounded-lg"
+								>
+									<Text className="text-white text-xs">Consent Required</Text>
+								</TouchableOpacity>
+							) : !healthKitStatus?.isAuthorized && healthKitStatus?.isAvailable ? (
 								<TouchableOpacity
 									onPress={requestHealthKitAccess}
 									className="bg-[#E3BBA1] px-2 py-1 rounded-lg"
 								>
 									<Text className="text-white text-xs">Enable</Text>
 								</TouchableOpacity>
-							)}
+							) : null}
 						</View>
 						<View className="flex flex-row justify-between items-center">
 							<Text className="text-lg font-JakartaBold">
-								{stepData ? (
+								{!hasDataCollectionConsent(userConsentData) ? (
+									<Text className="text-xs text-[#64748B]">Consent required for step tracking</Text>
+								) : stepData ? (
 									<>
 										{stepData.steps.toLocaleString()}{' '}
 										<Text className="text-xs text-[#64748B]">

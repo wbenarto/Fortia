@@ -9,7 +9,7 @@ export default {
 		entryPoint: 'app/index.tsx',
 		version: '1.0.0',
 		orientation: 'portrait',
-		icon: './assets/images/icon.png',
+		icon: './assets/images/favicon.png',
 		scheme: 'Fortia',
 		userInterfaceStyle: 'automatic',
 		splash: {
@@ -27,14 +27,14 @@ export default {
 		},
 		android: {
 			adaptiveIcon: {
-				foregroundImage: './assets/images/icon.png',
+				foregroundImage: './assets/images/favicon.png',
 				backgroundColor: '#262135',
 			},
 		},
 		web: {
 			bundler: 'metro',
 			output: 'server',
-			favicon: './assets/images/icon.png',
+			favicon: './assets/images/favicon.png',
 		},
 		plugins: [
 			[
