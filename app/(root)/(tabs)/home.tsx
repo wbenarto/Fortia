@@ -25,6 +25,8 @@ import { Weights } from '@/types/type';
 import WeeklyTracking from '@/components/WeeklyTracking';
 import MacrosTracking from '@/components/MacrosTracking';
 import { Ionicons } from '@expo/vector-icons';
+import { PRIMARY } from '@/constants/colors';
+import RecipeBreakdownModal from '@/components/RecipeBreakdownModal';
 // import { DATA } from '@/lib/data'
 
 export default function Page() {
@@ -33,6 +35,7 @@ export default function Page() {
 	const router = useRouter();
 	const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
 	const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+	const [showRecipeModal, setShowRecipeModal] = useState(false);
 
 	// Check if user has completed onboarding
 	useFocusEffect(
@@ -124,6 +127,51 @@ export default function Page() {
 					<Navbar />
 					<View className="w-full pb-10">
 						<WeeklyCalendar />
+
+						{/* Mindfulness Cards Section */}
+						<View className="flex flex-row justify-between px-4 mt-4 mb-6">
+							{/* Card 1: Awakened Manifesting */}
+							<TouchableOpacity
+								className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
+								onPress={() => {
+									/* TODO: Add action */
+								}}
+							>
+								<View className="w-12 h-12 rounded-full bg-[#F8F1ED] flex items-center justify-center mb-2">
+									<Ionicons name="sparkles-outline" size={24} color={PRIMARY} />
+								</View>
+								<Text className="text-center text-secondary-800 font-JakartaSemiBold text-xs leading-tight">
+									Awakened{'\n'}Manifesting
+								</Text>
+							</TouchableOpacity>
+							{/* Card 2: Recipe Breakdown */}
+							{/* <TouchableOpacity
+								className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
+								onPress={() => setShowRecipeModal(true)}
+							>
+								<View className="w-12 h-12 rounded-full bg-[#F8F1ED] flex items-center justify-center mb-2">
+									<Ionicons name="restaurant-outline" size={24} color={PRIMARY} />
+								</View>
+								<Text className="text-center text-secondary-800 font-JakartaSemiBold text-xs leading-tight">
+									Recipe{'\n'}Breakdown
+								</Text>
+							</TouchableOpacity> */}
+							{/* Card 3: Deep Thinking */}
+							<TouchableOpacity
+								className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
+								onPress={() => {
+									/* TODO: Add action */
+								}}
+							>
+								<View className="w-12 h-12 rounded-full bg-[#F8F1ED] flex items-center justify-center mb-2">
+									<Ionicons name="bulb-outline" size={24} color={PRIMARY} />
+								</View>
+								<Text className="text-center text-secondary-800 font-JakartaSemiBold text-xs leading-tight">
+									Deep{'\n'}Thinking
+								</Text>
+							</TouchableOpacity>
+						</View>
+
 						<WeightTracking />
 						<MacrosTracking />
 						<ActivityTracking />
@@ -204,6 +252,7 @@ export default function Page() {
 						</View>
 					</View> */}
 				</ScrollView>
+				<RecipeBreakdownModal visible={showRecipeModal} onClose={() => setShowRecipeModal(false)} />
 			</SignedIn>
 			<SignedOut>
 				<Link href="/(auth)/sign-in">
