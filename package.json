@@ -52,6 +52,7 @@
 		"@shopify/react-native-skia": "^1.10.2",
 		"dotenv": "^16.6.1",
 		"expo": "^52.0.23",
+		"expo-apple-authentication": "^7.2.4",
 		"expo-blur": "~14.0.1",
 		"expo-constants": "~17.0.3",
 		"expo-font": "~13.0.2",
@@ -61,6 +62,7 @@
 		"expo-local-authentication": "^15.0.1",
 		"expo-router": "^4.0.15",
 		"expo-secure-store": "^14.0.0",
+		"expo-sensors": "~14.0.2",
 		"expo-splash-screen": "~0.29.18",
 		"expo-status-bar": "~2.0.0",
 		"expo-symbols": "~0.2.0",
@@ -81,8 +83,7 @@
 		"react-native-web": "~0.19.13",
 		"react-native-webview": "13.12.5",
 		"victory-native": "^41.16.0",
-		"zustand": "^5.0.3",
-		"expo-sensors": "~14.0.2"
+		"zustand": "^5.0.3"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.26.0",

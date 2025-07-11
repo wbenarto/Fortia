@@ -82,6 +82,7 @@ export async function POST(request: Request) {
 		// Check if request has a body
 		const contentType = request.headers.get('content-type');
 		if (!contentType || !contentType.includes('application/json')) {
+			console.error('Invalid content type:', contentType);
 			return Response.json({ error: 'Content-Type must be application/json' }, { status: 400 });
 		}
 
@@ -92,6 +93,8 @@ export async function POST(request: Request) {
 			console.error('JSON parse error:', parseError);
 			return Response.json({ error: 'Invalid JSON in request body' }, { status: 400 });
 		}
+
+		console.log('Meal POST request body:', body);
 
 		const {
 			clerkId,
@@ -108,33 +111,162 @@ export async function POST(request: Request) {
 			mealType = 'snack',
 		} = body;
 
-		if (!clerkId || !foodName || !portionSize) {
+		// Enhanced validation with detailed logging
+		if (!clerkId) {
+			console.error('Missing clerkId in request');
+			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
+		}
+
+		if (!foodName) {
+			console.error('Missing foodName in request');
+			return Response.json({ error: 'Food name is required' }, { status: 400 });
+		}
+
+		if (!portionSize) {
+			console.error('Missing portionSize in request');
+			return Response.json({ error: 'Portion size is required' }, { status: 400 });
+		}
+
+		// Validate and convert data types
+		const validatedData = {
+			clerkId: String(clerkId),
+			foodName: String(foodName).trim(),
+			portionSize: String(portionSize).trim(),
+			calories: Number(calories) || 0,
+			protein: Number(protein) || 0,
+			carbs: Number(carbs) || 0,
+			fats: Number(fats) || 0,
+			fiber: Number(fiber) || 0,
+			sugar: Number(sugar) || 0,
+			sodium: Number(sodium) || 0,
+			confidenceScore: Number(confidenceScore) || 0.5,
+			mealType: String(mealType || 'snack'),
+		};
+
+		// Validate meal type
+		const validMealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+		if (!validMealTypes.includes(validatedData.mealType)) {
+			console.error('Invalid meal type:', validatedData.mealType);
 			return Response.json(
-				{ error: 'Clerk ID, food name, and portion size are required' },
+				{
+					error: 'Invalid meal type',
+					details: `Must be one of: ${validMealTypes.join(', ')}`,
+					received: validatedData.mealType,
+				},
 				{ status: 400 }
 			);
 		}
+
+		console.log('Validated data:', validatedData);
+
+		console.log('Validating user exists in database for clerkId:', clerkId);
+
+		// Check if user exists in database before creating meal
+		const userCheck = await sql`
+			SELECT id, first_name, last_name FROM users WHERE clerk_id = ${validatedData.clerkId}
+		`;
+
+		if (userCheck.length === 0) {
+			console.error('User not found in database for clerkId:', validatedData.clerkId);
+			return Response.json(
+				{
+					error: 'User not found in database. Please complete onboarding first.',
+					clerkId: validatedData.clerkId,
+					debug: 'User does not exist in users table',
+				},
+				{ status: 400 }
+			);
+		}
+
+		console.log('User found in database:', userCheck[0]);
+
+		// Log the exact data being inserted
+		const insertData = {
+			clerk_id: validatedData.clerkId,
+			food_name: validatedData.foodName,
+			portion_size: validatedData.portionSize,
+			calories: validatedData.calories,
+			protein: validatedData.protein,
+			carbs: validatedData.carbs,
+			fats: validatedData.fats,
+			fiber: validatedData.fiber,
+			sugar: validatedData.sugar,
+			sodium: validatedData.sodium,
+			confidence_score: validatedData.confidenceScore,
+			meal_type: validatedData.mealType,
+		};
+
+		console.log('Inserting meal data:', insertData);
+		console.log('Data types:', {
+			clerk_id: typeof validatedData.clerkId,
+			food_name: typeof validatedData.foodName,
+			portion_size: typeof validatedData.portionSize,
+			calories: typeof validatedData.calories,
+			protein: typeof validatedData.protein,
+			carbs: typeof validatedData.carbs,
+			fats: typeof validatedData.fats,
+			fiber: typeof validatedData.fiber,
+			sugar: typeof validatedData.sugar,
+			sodium: typeof validatedData.sodium,
+			confidence_score: typeof validatedData.confidenceScore,
+			meal_type: typeof validatedData.mealType,
+		});
 
 		const newMeal = await sql`
       INSERT INTO meals (
         clerk_id, food_name, portion_size, calories, protein, carbs, fats, 
         fiber, sugar, sodium, confidence_score, meal_type
       ) VALUES (
-        ${clerkId}, ${foodName}, ${portionSize}, ${calories}, ${protein}, ${carbs}, ${fats},
-        ${fiber}, ${sugar}, ${sodium}, ${confidenceScore}, ${mealType}
+        ${validatedData.clerkId}, ${validatedData.foodName}, ${validatedData.portionSize}, ${validatedData.calories}, ${validatedData.protein}, ${validatedData.carbs}, ${validatedData.fats},
+        ${validatedData.fiber}, ${validatedData.sugar}, ${validatedData.sodium}, ${validatedData.confidenceScore}, ${validatedData.mealType}
       ) RETURNING *
     `;
+
+		console.log('Meal created successfully:', newMeal[0]);
 
 		return Response.json({ success: true, data: newMeal[0] });
 	} catch (error) {
 		console.error('Create meal error:', error);
-		return Response.json(
-			{
-				error: 'Failed to create meal',
-				details: error instanceof Error ? error.message : 'Unknown error',
-			},
-			{ status: 500 }
-		);
+
+		// Handle specific database errors
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+		if (errorMessage.includes('check constraint')) {
+			return Response.json(
+				{
+					error: 'Invalid meal data',
+					details: 'One or more fields contain invalid values. Please check your input.',
+					debug: errorMessage,
+				},
+				{ status: 400 }
+			);
+		} else if (errorMessage.includes('foreign key')) {
+			return Response.json(
+				{
+					error: 'User not found',
+					details: 'The user does not exist in the database.',
+					debug: errorMessage,
+				},
+				{ status: 400 }
+			);
+		} else if (errorMessage.includes('not null')) {
+			return Response.json(
+				{
+					error: 'Missing required data',
+					details: 'One or more required fields are missing.',
+					debug: errorMessage,
+				},
+				{ status: 400 }
+			);
+		} else {
+			return Response.json(
+				{
+					error: 'Failed to create meal',
+					details: errorMessage,
+				},
+				{ status: 500 }
+			);
+		}
 	}
 }
 
@@ -252,6 +384,13 @@ export async function PATCH(request: Request) {
 			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
 		}
 
+		// Get user info
+		const userInfo = await sql`
+			SELECT id, first_name, last_name, email, clerk_id, created_at
+			FROM users 
+			WHERE clerk_id = ${clerkId}
+		`;
+
 		// Get all meals for debugging
 		const allMeals = await sql`
       SELECT id, food_name, created_at, DATE(created_at) as date_only
@@ -261,14 +400,16 @@ export async function PATCH(request: Request) {
       LIMIT 10
     `;
 
-		// Debug data removed for security
-
 		return Response.json({
 			success: true,
-			data: allMeals,
+			user: userInfo.length > 0 ? userInfo[0] : null,
+			meals: allMeals,
 			debug: {
 				today: new Date().toISOString().split('T')[0],
 				now: new Date().toISOString(),
+				clerkId: clerkId,
+				userExists: userInfo.length > 0,
+				mealCount: allMeals.length,
 			},
 		});
 	} catch (error) {

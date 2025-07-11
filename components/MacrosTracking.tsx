@@ -252,51 +252,167 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			setError('');
 
 			try {
-				const response = await fetchAPI('/(api)/meal-analysis', {
+				console.log('Analyzing food:', { foodName, portionSize });
+
+				// Use direct fetch to get detailed error information
+				const response = await fetch('/(api)/meal-analysis', {
 					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
 					body: JSON.stringify({
 						foodDescription: foodName,
 						portionSize: portionSize,
 					}),
 				});
 
-				if (response.success) {
-					setNutritionData(response.data);
+				console.log('Meal analysis response status:', response.status);
+				console.log(
+					'Meal analysis response headers:',
+					Object.fromEntries(response.headers.entries())
+				);
+
+				const data = await response.json();
+				console.log('Meal analysis response data:', data);
+
+				if (response.ok && data.success) {
+					setNutritionData(data.data);
 				} else {
-					setError(response.error || 'Failed to analyze food');
+					const errorMessage =
+						data.error || data.details || `HTTP ${response.status}: Failed to analyze food`;
+					setError(errorMessage);
+					console.error('Meal analysis API error:', { status: response.status, data });
 				}
 			} catch (error) {
+				console.error('Food analysis network error:', error);
 				setError('Network error. Please try again.');
-				console.error('Food analysis error:', error);
 			} finally {
 				setIsAnalyzing(false);
 			}
 		};
 
+		const checkUserExists = async () => {
+			if (!user?.id) {
+				console.error('No user ID available');
+				return false;
+			}
+
+			try {
+				console.log('Checking if user exists for clerkId:', user.id);
+
+				const response = await fetch(`/(api)/user?clerkId=${user.id}`);
+				console.log('User check response status:', response.status);
+
+				const data = await response.json();
+				console.log('User check response data:', data);
+
+				const userExists = response.ok && data.success && data.data;
+				console.log('User exists in database:', userExists);
+
+				return userExists;
+			} catch (error) {
+				console.error('User check error:', error);
+				return false;
+			}
+		};
+
 		const handleSaveMeal = async () => {
-			if (!nutritionData || !user?.id) return;
+			if (!nutritionData || !user?.id) {
+				console.error('Missing nutritionData or user.id:', {
+					nutritionData: !!nutritionData,
+					userId: user?.id,
+				});
+				setError('Missing data. Please try again.');
+				return;
+			}
 
 			setIsSaving(true);
 			try {
-				const response = await fetchAPI('/(api)/meals', {
-					method: 'POST',
-					body: JSON.stringify({
-						clerkId: user.id,
-						foodName: foodName,
-						portionSize: portionSize,
-						calories: nutritionData.calories,
-						protein: nutritionData.protein,
-						carbs: nutritionData.carbs,
-						fats: nutritionData.fats,
-						fiber: nutritionData.fiber,
-						sugar: nutritionData.sugar,
-						sodium: nutritionData.sodium,
-						confidenceScore: nutritionData.confidence,
-						mealType: mealType,
-					}),
+				// Check if user exists in database first
+				const userExists = await checkUserExists();
+				if (!userExists) {
+					setError(
+						'Please complete your profile setup first. Go to Settings > Edit Profile to continue.'
+					);
+					console.error('User does not exist in database for clerkId:', user.id);
+					return;
+				}
+
+				// Validate nutrition data before sending
+				const validatedNutritionData = {
+					calories: Math.max(0, Number(nutritionData.calories) || 0),
+					protein: Math.max(0, Number(nutritionData.protein) || 0),
+					carbs: Math.max(0, Number(nutritionData.carbs) || 0),
+					fats: Math.max(0, Number(nutritionData.fats) || 0),
+					fiber: Math.max(0, Number(nutritionData.fiber) || 0),
+					sugar: Math.max(0, Number(nutritionData.sugar) || 0),
+					sodium: Math.max(0, Number(nutritionData.sodium) || 0),
+					confidence: Math.min(1, Math.max(0, Number(nutritionData.confidence) || 0.5)),
+				};
+
+				console.log('Validated nutrition data:', validatedNutritionData);
+
+				// Validate required fields
+				if (!foodName.trim()) {
+					setError('Food name is required');
+					return;
+				}
+
+				if (!portionSize.trim()) {
+					setError('Portion size is required');
+					return;
+				}
+
+				// Validate meal type
+				const validMealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+				const validatedMealType = validMealTypes.includes(mealType) ? mealType : 'snack';
+
+				console.log('Meal type validation:', { original: mealType, validated: validatedMealType });
+
+				const mealData = {
+					clerkId: user.id,
+					foodName: foodName.trim(),
+					portionSize: portionSize.trim(),
+					calories: validatedNutritionData.calories,
+					protein: validatedNutritionData.protein,
+					carbs: validatedNutritionData.carbs,
+					fats: validatedNutritionData.fats,
+					fiber: validatedNutritionData.fiber,
+					sugar: validatedNutritionData.sugar,
+					sodium: validatedNutritionData.sodium,
+					confidenceScore: validatedNutritionData.confidence,
+					mealType: validatedMealType,
+				};
+
+				console.log('Saving meal with data:', mealData);
+				console.log('User ID being used:', user.id);
+				console.log('Nutrition data validation:', {
+					calories: typeof nutritionData.calories,
+					protein: typeof nutritionData.protein,
+					carbs: typeof nutritionData.carbs,
+					fats: typeof nutritionData.fats,
+					fiber: typeof nutritionData.fiber,
+					sugar: typeof nutritionData.sugar,
+					sodium: typeof nutritionData.sodium,
+					confidence: typeof nutritionData.confidence,
 				});
 
-				if (response.success) {
+				// Use direct fetch to get detailed error information
+				const response = await fetch('/(api)/meals', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(mealData),
+				});
+
+				console.log('Meal save response status:', response.status);
+				console.log('Meal save response headers:', Object.fromEntries(response.headers.entries()));
+
+				const data = await response.json();
+				console.log('Meal save response data:', data);
+
+				if (response.ok && data.success) {
 					handleAddMealModal(); // Close modal
 					// Refresh daily summary to update nutrition display
 					await fetchDailySummary();
@@ -305,11 +421,14 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						onMealLogged();
 					}
 				} else {
-					setError(response.error || 'Failed to save meal');
+					const errorMessage =
+						data.error || data.details || `HTTP ${response.status}: Failed to save meal`;
+					setError(errorMessage);
+					console.error('Meal save API error:', { status: response.status, data });
 				}
 			} catch (error) {
+				console.error('Save meal network error:', error);
 				setError('Failed to save meal. Please try again.');
-				console.error('Save meal error:', error);
 			} finally {
 				setIsSaving(false);
 			}

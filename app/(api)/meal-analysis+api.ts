@@ -6,18 +6,37 @@ dotenv.config();
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 export async function POST(request: Request) {
+	const maxRetries = 3;
+	let lastError: Error | null = null;
+
+	// Read request body once before retry loop
+	let requestBody;
 	try {
-		const { foodDescription, portionSize = '100g' } = await request.json();
+		requestBody = await request.json();
+		console.log('Request body:', requestBody);
+	} catch (parseError) {
+		console.error('Failed to parse request body:', parseError);
+		return Response.json({ error: 'Invalid request body' }, { status: 400 });
+	}
 
-		if (!foodDescription) {
-			return Response.json({ error: 'Food description is required' }, { status: 400 });
-		}
+	const { foodDescription, portionSize = '100g' } = requestBody;
 
-		if (!GEMINI_API_KEY) {
-			return Response.json({ error: 'Gemini API key not configured' }, { status: 500 });
-		}
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			console.log(`=== MEAL ANALYSIS API CALLED (Attempt ${attempt}/${maxRetries}) ===`);
+			console.log('GEMINI_API_KEY exists:', !!GEMINI_API_KEY);
+			console.log('GEMINI_API_KEY length:', GEMINI_API_KEY?.length || 0);
+			console.log('Processing request:', { foodDescription, portionSize });
 
-		const prompt = `Analyze this food item and return nutrition facts in JSON format ONLY. Do not include any other text, explanations, or markdown formatting.
+			if (!foodDescription) {
+				return Response.json({ error: 'Food description is required' }, { status: 400 });
+			}
+
+			if (!GEMINI_API_KEY) {
+				return Response.json({ error: 'Gemini API key not configured' }, { status: 500 });
+			}
+
+			const prompt = `Analyze this food item and return nutrition facts in JSON format ONLY. Do not include any other text, explanations, or markdown formatting.
 
 Food: ${foodDescription}
 Portion: ${portionSize}
@@ -38,8 +57,8 @@ Return ONLY a valid JSON object with this exact structure:
 
 Be accurate and realistic with the values. Do not include any text before or after the JSON object.`;
 
-		// Comment out OpenAI request
-		/*
+			// Comment out OpenAI request
+			/*
 		const response = await fetch('https://api.openai.com/v1/chat/completions', {
 			method: 'POST',
 			headers: {
@@ -64,81 +83,208 @@ Be accurate and realistic with the values. Do not include any text before or aft
 		});
 		*/
 
-		// Gemini API request
-		const response = await fetch(
-			`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					contents: [
-						{
-							parts: [
-								{
-									text: `You are a nutrition expert. Provide accurate nutrition information in JSON format only. ${prompt}`,
-								},
-							],
-						},
-					],
-					generationConfig: {
-						temperature: 0.3,
-						maxOutputTokens: 500,
+			// Gemini API request
+			const requestBody = {
+				contents: [
+					{
+						parts: [
+							{
+								text: `You are a nutrition expert. Provide accurate nutrition information in JSON format only. ${prompt}`,
+							},
+						],
 					},
-				}),
-			}
-		);
+				],
+				generationConfig: {
+					temperature: 0.3,
+					maxOutputTokens: 500,
+				},
+			};
 
-		if (!response.ok) {
-			throw new Error(`Gemini API error: ${response.status}`);
-		}
+			console.log('Sending request to Gemini API...');
+			console.log(
+				'Request URL:',
+				`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY.substring(0, 10)}...`
+			);
+			console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
-		const data = await response.json();
-
-		const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-		if (!content) {
-			throw new Error('No response from Gemini');
-		}
-
-		// Parse the JSON response
-		let nutritionData;
-		try {
-			nutritionData = JSON.parse(content);
-		} catch (error) {
-			console.error('JSON parse error:', error);
-			console.error('Raw content that failed to parse:', content);
-
-			// Try to extract JSON from the response if it contains extra text
-			try {
-				const jsonMatch = content.match(/\{[\s\S]*\}/);
-				if (jsonMatch) {
-					nutritionData = JSON.parse(jsonMatch[0]);
-				} else {
-					throw new Error('No JSON object found in response');
+			const response = await fetch(
+				`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(requestBody),
 				}
-			} catch (extractError) {
-				console.error('JSON extraction also failed:', extractError);
-				throw new Error(
-					`Invalid JSON response from Gemini. Raw response: ${content.substring(0, 200)}...`
-				);
-			}
-		}
+			);
 
-		return Response.json({
-			success: true,
-			data: nutritionData,
-			tokens: data.usageMetadata?.totalTokenCount || 0,
-		});
-	} catch (error) {
-		console.error('Meal analysis error:', error);
-		return Response.json(
-			{
-				error: 'Failed to analyze meal',
-				details: error instanceof Error ? error.message : 'Unknown error',
-			},
-			{ status: 500 }
-		);
+			console.log('Gemini API response status:', response.status);
+			console.log('Gemini API response headers:', Object.fromEntries(response.headers.entries()));
+
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error('Gemini API error response:', errorText);
+
+				// Handle specific Gemini API errors
+				if (response.status === 503) {
+					throw new Error(
+						'Gemini API is temporarily unavailable. Please try again in a few minutes.'
+					);
+				} else if (response.status === 429) {
+					throw new Error('Rate limit exceeded. Please wait a moment before trying again.');
+				} else if (response.status === 400) {
+					throw new Error('Invalid request to Gemini API. Please check your input.');
+				} else {
+					throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+				}
+			}
+
+			const data = await response.json();
+			console.log('Full Gemini API response data:', JSON.stringify(data, null, 2));
+
+			const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+			console.log('Extracted content from Gemini:', content);
+
+			if (!content) {
+				throw new Error('No response from Gemini');
+			}
+
+			// Parse the JSON response
+			let nutritionData;
+			try {
+				// First, try to parse the content directly
+				nutritionData = JSON.parse(content);
+			} catch (error) {
+				console.error('Direct JSON parse error:', error);
+				console.error('Raw content that failed to parse:', content);
+
+				// Try multiple extraction strategies
+				let extractedJson = null;
+
+				// Strategy 1: Look for JSON object with regex
+				try {
+					const jsonMatch = content.match(/\{[\s\S]*\}/);
+					if (jsonMatch) {
+						extractedJson = JSON.parse(jsonMatch[0]);
+						console.log('Successfully extracted JSON with regex:', extractedJson);
+					}
+				} catch (regexError) {
+					console.error('Regex extraction failed:', regexError);
+				}
+
+				// Strategy 2: Look for JSON between backticks (markdown code blocks)
+				if (!extractedJson) {
+					try {
+						const codeBlockMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+						if (codeBlockMatch) {
+							extractedJson = JSON.parse(codeBlockMatch[1]);
+							console.log('Successfully extracted JSON from code block:', extractedJson);
+						}
+					} catch (codeBlockError) {
+						console.error('Code block extraction failed:', codeBlockError);
+					}
+				}
+
+				// Strategy 3: Look for JSON after "JSON:" or similar prefixes
+				if (!extractedJson) {
+					try {
+						const prefixMatch = content.match(/(?:JSON|json|Response|response):\s*(\{[\s\S]*\})/);
+						if (prefixMatch) {
+							extractedJson = JSON.parse(prefixMatch[1]);
+							console.log('Successfully extracted JSON after prefix:', extractedJson);
+						}
+					} catch (prefixError) {
+						console.error('Prefix extraction failed:', prefixError);
+					}
+				}
+
+				// Strategy 4: Try to find any valid JSON object in the content
+				if (!extractedJson) {
+					try {
+						// Split by lines and try to find JSON
+						const lines = content.split('\n');
+						for (const line of lines) {
+							const trimmed = line.trim();
+							if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+								extractedJson = JSON.parse(trimmed);
+								console.log('Successfully extracted JSON from line:', extractedJson);
+								break;
+							}
+						}
+					} catch (lineError) {
+						console.error('Line-by-line extraction failed:', lineError);
+					}
+				}
+
+				if (extractedJson) {
+					nutritionData = extractedJson;
+				} else {
+					console.error('All JSON extraction strategies failed');
+					console.error('Full raw content:', content);
+					throw new Error(
+						`Could not parse JSON from Gemini response. Raw response: ${content.substring(0, 500)}...`
+					);
+				}
+			}
+
+			// Validate the nutrition data structure
+			console.log('Parsed nutrition data:', nutritionData);
+
+			// Ensure all required fields exist with fallbacks
+			const validatedData = {
+				calories: nutritionData.calories || 0,
+				protein: nutritionData.protein || 0,
+				carbs: nutritionData.carbs || 0,
+				fats: nutritionData.fats || 0,
+				fiber: nutritionData.fiber || 0,
+				sugar: nutritionData.sugar || 0,
+				sodium: nutritionData.sodium || 0,
+				confidence: nutritionData.confidence || 0.5,
+				suggestions: nutritionData.suggestions || [],
+				notes: nutritionData.notes || '',
+			};
+
+			console.log('Validated nutrition data:', validatedData);
+
+			return Response.json({
+				success: true,
+				data: validatedData,
+				tokens: data.usageMetadata?.totalTokenCount || 0,
+			});
+		} catch (error) {
+			lastError = error instanceof Error ? error : new Error('Unknown error');
+			console.error(`Meal analysis error (attempt ${attempt}):`, lastError);
+
+			// If this is a retryable error and we haven't exhausted retries, wait and try again
+			if (
+				attempt < maxRetries &&
+				(lastError.message.includes('temporarily unavailable') ||
+					lastError.message.includes('overloaded') ||
+					lastError.message.includes('rate limit'))
+			) {
+				const waitTime = attempt * 1000; // 1s, 2s, 3s
+				console.log(`Retrying in ${waitTime}ms...`);
+				await new Promise(resolve => setTimeout(resolve, waitTime));
+				continue;
+			}
+
+			// If we've exhausted retries or it's a non-retryable error, return the error
+			return Response.json(
+				{
+					error: 'Failed to analyze meal',
+					details: lastError.message,
+				},
+				{ status: 500 }
+			);
+		}
 	}
+
+	// This should never be reached, but just in case
+	return Response.json(
+		{
+			error: 'Failed to analyze meal after all retries',
+			details: lastError?.message || 'Unknown error',
+		},
+		{ status: 500 }
+	);
 }

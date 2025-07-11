@@ -24,6 +24,7 @@ export default {
 				NSMotionUsageDescription:
 					'Fortia needs access to motion and fitness data to track your daily steps for better fitness insights.',
 			},
+			bundleIdentifier: 'com.fortia.app',
 		},
 		android: {
 			adaptiveIcon: {
@@ -43,6 +44,7 @@ export default {
 					origin: 'https://fortia.com/',
 				},
 			],
+			'expo-apple-authentication',
 		],
 		experiments: {
 			typedRoutes: true,
