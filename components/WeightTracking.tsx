@@ -268,16 +268,24 @@ const WeightTracking = () => {
 		<View className="w-full">
 			<View className="flex flex-row justify-between items-center px-4">
 				<Text className="font-JakartaSemiBold text-lg ">Weight Progress</Text>
+				<View className="flex flex-row w-24 items-center ">
+					<TouchableOpacity
+						onPress={handleAddWeightModal}
+						className="bg-[#E3BBA1] px-3 py-1 rounded-full"
+					>
+						<Text className="text-white text-xs font-JakartaSemiBold">Log Weight</Text>
+					</TouchableOpacity>
+				</View>
 			</View>
 			<View className=" px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
-				<View className="py-6 flex flex-row justify-between items-end ">
+				<View className="py-6 flex flex-row justify-between items-center ">
 					<Text>
 						<Text className="font-JakartaBold text-3xl">
 							{lastWeightEntry ? lastWeightEntry.value.toFixed(1) : '--'}
 						</Text>{' '}
 						<Text className="text-[#64748B]">lbs</Text>
 					</Text>
-					<Text className="text-xs text-[#64748B]">
+					<Text className="text-[10px] text-[#64748B]">
 						Goal:{' '}
 						{lastWeightEntry && targetWeight
 							? (() => {
@@ -294,7 +302,7 @@ const WeightTracking = () => {
 						<LineChart
 							color={'#E3BBA1'}
 							data={userWeights}
-							height={100}
+							height={80}
 							curved
 							textColor={'transparent'}
 							spacing={30}
@@ -376,13 +384,6 @@ const WeightTracking = () => {
 						</Text>
 					</View>
 				</View>
-
-				<CustomButton
-					onPress={handleAddWeightModal}
-					title="Log Today's Weight"
-					textProp="text-base ml-4"
-					IconLeft={() => <Ionicons name="scale-outline" size={24} color="white" />}
-				/>
 
 				<ReactNativeModal
 					isVisible={addWeightModal}

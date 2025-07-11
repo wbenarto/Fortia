@@ -119,6 +119,19 @@ CREATE TABLE IF NOT EXISTS data_consent (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Deep focus sessions table for tracking user focus time
+CREATE TABLE IF NOT EXISTS deep_focus_sessions (
+  id SERIAL PRIMARY KEY,
+  clerk_id TEXT NOT NULL,
+  duration_seconds INTEGER NOT NULL,
+  duration_minutes DECIMAL(5,2) GENERATED ALWAYS AS (duration_seconds / 60.0) STORED,
+  session_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  session_start_time TIMESTAMP,
+  session_end_time TIMESTAMP,
+  is_completed BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_clerk_id ON users(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -135,4 +148,7 @@ CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_privacy_consent_clerk_id ON privacy_consent(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_privacy_consent_created_at ON privacy_consent(created_at);
 CREATE INDEX IF NOT EXISTS idx_data_consent_clerk_id ON data_consent(clerk_id);
-CREATE INDEX IF NOT EXISTS idx_data_consent_created_at ON data_consent(created_at); 
+CREATE INDEX IF NOT EXISTS idx_data_consent_created_at ON data_consent(created_at);
+CREATE INDEX IF NOT EXISTS idx_deep_focus_sessions_clerk_id ON deep_focus_sessions(clerk_id);
+CREATE INDEX IF NOT EXISTS idx_deep_focus_sessions_date ON deep_focus_sessions(session_date);
+CREATE INDEX IF NOT EXISTS idx_deep_focus_sessions_created_at ON deep_focus_sessions(created_at); 

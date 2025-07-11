@@ -524,14 +524,12 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			<View className="w-full">
 				<View className="flex flex-row justify-between items-center px-4">
 					<Text className="font-JakartaSemiBold text-lg">Today's Nutrition</Text>
-					<View className="flex flex-row items-center gap-2">
+					<View className="flex flex-row w-24  items-center ">
 						<TouchableOpacity
-							onPress={() => setGoalSetupModal(true)}
-							className="bg-[#E3BBA1] px-3 py-1 rounded-full"
+							onPress={handleAddMealModal}
+							className="bg-[#E3BBA1] w-full px-3 py-1 rounded-full"
 						>
-							<Text className="text-white text-xs font-JakartaSemiBold">
-								{nutritionGoals ? 'Update Goals' : 'Set Goals'}
-							</Text>
+							<Text className="text-white text-center text-xs font-JakartaSemiBold">Log Meal</Text>
 						</TouchableOpacity>
 					</View>
 				</View>
@@ -549,8 +547,8 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 								</Text>
 							</View>
 						</View>
-						<View className="w-16 h-16 rounded-xl flex justify-center items-center bg-[#E3BBA1]">
-							<Text className="text-xl text-white font-JakartaBold ">
+						<View className="w-16 h-16 rounded-xl flex justify-center items-center border-[1px] border-[#E3BBA1] border-solid">
+							<Text className="text-xl text-white font-JakartaBold text-[#E3BBA1]">
 								{isLoadingSummary ? '...' : caloriesPercentage}%
 							</Text>
 						</View>
@@ -618,13 +616,6 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 							</Text>
 						</View>
 					)}
-
-					<CustomButton
-						onPress={handleAddMealModal}
-						title="Log Meal"
-						textProp="text-base ml-4"
-						IconLeft={() => <Ionicons name="fast-food-outline" size={24} color="white" />}
-					/>
 
 					{/* Goal Setup Modal */}
 					<GoalSetupModal

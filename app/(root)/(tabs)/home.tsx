@@ -133,9 +133,7 @@ export default function Page() {
 							{/* Card 1: Awakened Manifesting */}
 							<TouchableOpacity
 								className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
-								onPress={() => {
-									/* TODO: Add action */
-								}}
+								onPress={() => router.push('/awakened-manifesting')}
 							>
 								<View className="w-12 h-12 rounded-full bg-[#F8F1ED] flex items-center justify-center mb-2">
 									<Ionicons name="sparkles-outline" size={24} color={PRIMARY} />
@@ -159,15 +157,13 @@ export default function Page() {
 							{/* Card 3: Deep Thinking */}
 							<TouchableOpacity
 								className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
-								onPress={() => {
-									/* TODO: Add action */
-								}}
+								onPress={() => router.push('/deep-focus')}
 							>
 								<View className="w-12 h-12 rounded-full bg-[#F8F1ED] flex items-center justify-center mb-2">
 									<Ionicons name="bulb-outline" size={24} color={PRIMARY} />
 								</View>
 								<Text className="text-center text-secondary-800 font-JakartaSemiBold text-xs leading-tight">
-									Deep{'\n'}Thinking
+									Deep{'\n'}Focus
 								</Text>
 							</TouchableOpacity>
 						</View>

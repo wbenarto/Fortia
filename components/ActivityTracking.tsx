@@ -409,6 +409,14 @@ const ActivityTracking = () => {
 		<View className="w-full">
 			<View className="flex flex-row justify-between items-center px-4">
 				<Text className="font-JakartaSemiBold text-lg">Activity Summary</Text>
+				<View className="flex flex-row w-24  items-center ">
+					<TouchableOpacity
+						onPress={handleWorkoutModal}
+						className="bg-[#E3BBA1] w-full px-3 py-1 rounded-full"
+					>
+						<Text className="text-white text-center text-xs font-JakartaSemiBold">Log Meal</Text>
+					</TouchableOpacity>
+				</View>
 			</View>
 			<View className=" pb-6 px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
 				<View className="py-6 flex flex-row justify-between items-end ">
@@ -432,11 +440,11 @@ const ActivityTracking = () => {
 							<Text className="text-[#64748B]"> /{storedTDEE.toLocaleString()}</Text>
 						</View>
 					</View>
-					<View className="w-16 h-16 rounded-xl flex justify-center items-center bg-[#9ED5A0]">
+					<View className="w-16 h-16 rounded-xl flex justify-center items-center border-[1px] border-[#9ED5A0] border-solid">
 						{totalCaloriesBurned >= storedTDEE ? (
 							<Ionicons name="checkmark-sharp" size={30} color="white" />
 						) : (
-							<Text className="text-xl text-white font-JakartaBold ">
+							<Text className="text-xl text-[#9ED5A0] font-JakartaBold ">
 								{storedTDEE > 0 ? Math.round((totalCaloriesBurned / storedTDEE) * 100) : 0}%
 							</Text>
 						)}
@@ -541,13 +549,6 @@ const ActivityTracking = () => {
 						</View>
 					)}
 				</View>
-
-				<CustomButton
-					IconLeft={() => <Ionicons name="barbell-outline" size={24} color="white" />}
-					onPress={handleWorkoutModal}
-					textProp=" text-base ml-4"
-					title="Log Activity"
-				/>
 
 				{/* Workout Modal */}
 				<ReactNativeModal isVisible={workoutModal} onBackdropPress={() => setWorkoutModal(false)}>

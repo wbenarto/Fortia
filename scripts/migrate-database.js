@@ -147,6 +147,49 @@ const migrations = [
 			console.log('✅ data_consent table schema updated successfully');
 		},
 	},
+	{
+		id: '005_create_deep_focus_sessions_table',
+		description: 'Create deep_focus_sessions table for tracking focus time',
+		up: async () => {
+			console.log('Running migration: Create deep_focus_sessions table...');
+
+			// Check if table already exists
+			const tableExists = await sql`
+				SELECT EXISTS (
+					SELECT FROM information_schema.tables 
+					WHERE table_schema = 'public' 
+					AND table_name = 'deep_focus_sessions'
+				)
+			`;
+
+			if (tableExists[0].exists) {
+				console.log('✅ deep_focus_sessions table already exists, skipping...');
+				return;
+			}
+
+			// Create deep_focus_sessions table
+			await sql`
+				CREATE TABLE deep_focus_sessions (
+					id SERIAL PRIMARY KEY,
+					clerk_id TEXT NOT NULL,
+					duration_seconds INTEGER NOT NULL,
+					duration_minutes DECIMAL(5,2) GENERATED ALWAYS AS (duration_seconds / 60.0) STORED,
+					session_date DATE NOT NULL DEFAULT CURRENT_DATE,
+					session_start_time TIMESTAMP,
+					session_end_time TIMESTAMP,
+					is_completed BOOLEAN DEFAULT false,
+					created_at TIMESTAMP DEFAULT NOW()
+				)
+			`;
+
+			// Create indexes
+			await sql`CREATE INDEX idx_deep_focus_sessions_clerk_id ON deep_focus_sessions(clerk_id)`;
+			await sql`CREATE INDEX idx_deep_focus_sessions_date ON deep_focus_sessions(session_date)`;
+			await sql`CREATE INDEX idx_deep_focus_sessions_created_at ON deep_focus_sessions(created_at)`;
+
+			console.log('✅ deep_focus_sessions table created successfully');
+		},
+	},
 ];
 
 // Migration tracking table
