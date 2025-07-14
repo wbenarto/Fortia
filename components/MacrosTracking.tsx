@@ -110,6 +110,10 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			daily_carbs: number;
 			daily_fats: number;
 		} | null>(null);
+		const [rateLimitInfo, setRateLimitInfo] = useState<{
+			used: number;
+			remaining: number;
+		} | null>(null);
 
 		const { user } = useUser();
 		const router = useRouter();
@@ -263,6 +267,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					body: JSON.stringify({
 						foodDescription: foodName,
 						portionSize: portionSize,
+						userId: user?.id,
 					}),
 				});
 
@@ -277,9 +282,20 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 
 				if (response.ok && data.success) {
 					setNutritionData(data.data);
+
+					// Show rate limit info if available
+					if (data.rateLimitInfo) {
+						setRateLimitInfo(data.rateLimitInfo);
+					}
 				} else {
-					const errorMessage =
+					let errorMessage =
 						data.error || data.details || `HTTP ${response.status}: Failed to analyze food`;
+
+					// Handle rate limit errors specifically
+					if (response.status === 429 && data.rateLimitInfo) {
+						errorMessage = `Daily limit reached (${data.rateLimitInfo.used}/20 used). You can analyze 20 meals per day. Limit resets daily.`;
+					}
+
 					setError(errorMessage);
 					console.error('Meal analysis API error:', { status: response.status, data });
 				}
@@ -533,8 +549,9 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						</TouchableOpacity>
 					</View>
 				</View>
-				<View className="px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
-					<View className="py-6 flex flex-row justify-between items-end ">
+
+				<View className="px-4 py-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
+					<View className="pb-4 flex flex-row justify-between items-end ">
 						<View>
 							<Text className="mb-2 text-[#64748B]">Calories consumed</Text>
 							<View className="flex flex-row items-end">
@@ -689,7 +706,17 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 									</Text>
 								</View>
 							)}
-
+							{/* Rate Limit Display */}
+							{rateLimitInfo && (
+								<View className="px-4 mb-4 ">
+									<View className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+										<Text className="text-xs text-blue-700 text-center">
+											Meal analysis: {rateLimitInfo.used}/20 used today ({rateLimitInfo.remaining}{' '}
+											remaining)
+										</Text>
+									</View>
+								</View>
+							)}
 							{/* Meal Type Selection */}
 							<View className="mb-6">
 								<Text className="text-xs text-black font-JakartaSemiBold mb-2">Meal Type</Text>

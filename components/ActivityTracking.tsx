@@ -329,6 +329,7 @@ const ActivityTracking = () => {
 				body: JSON.stringify({
 					foodDescription: `Estimate calories burned from this activity: ${activityInput}. User weight: ${userWeight}kg. Only return the number of calories burned, no other text.`,
 					portionSize: '1 session',
+					userId: user?.id,
 				}),
 			});
 
@@ -338,7 +339,15 @@ const ActivityTracking = () => {
 				const calories = parseInt(caloriesText.replace(/\D/g, ''), 10);
 				setEstimatedCalories(calories);
 			} else {
-				console.error('Failed to estimate calories:', response.error);
+				let errorMessage = response.error || 'Failed to estimate calories';
+
+				// Handle rate limit errors specifically
+				if (response.status === 429 && response.rateLimitInfo) {
+					errorMessage = `Daily limit reached (${response.rateLimitInfo.used}/20 used). You can analyze 20 meals per day. Limit resets daily.`;
+				}
+
+				console.error('Failed to estimate calories:', errorMessage);
+				Alert.alert('Error', errorMessage);
 			}
 		} catch (error) {
 			console.error('Error estimating calories:', error);
