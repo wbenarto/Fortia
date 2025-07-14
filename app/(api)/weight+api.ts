@@ -83,7 +83,7 @@ export async function GET(request: Request) {
 		const response = await sql`
         SELECT * FROM weights 
         WHERE clerk_id = ${clerkId}
-        ORDER BY date DESC
+        ORDER BY date ASC, created_at ASC
         `;
 
 		return Response.json({ data: response });

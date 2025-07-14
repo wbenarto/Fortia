@@ -49,8 +49,8 @@ const WeightTracking = () => {
 		// Adjust offset based on data range
 		if (range < 100) return 60; // Small range
 		if (range < 140) return 100; // Medium range
-		if (range < 180) return 150; // Large range
-		return 150; // Very large range
+		if (range < 180) return 140; // Large range
+		return 170; // Very large range
 	};
 
 	const { getToken } = useAuth();
@@ -109,17 +109,10 @@ const WeightTracking = () => {
 
 					const data = response.data;
 
-					// Process weight data for chart
-					const sortedData = data
-						.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
-						// Group by date and take the latest entry per day to handle duplicates
+					// Process weight data for chart - data is already sorted ASC from API
+					// Take last 8 entries to show recent data
+					const sortedData = data.slice(-8);
 
-						// Take last 10 entries to show recent data
-						.slice(-10);
-
-					// Fill up with latest weight value if less than 10 entries (UI only)
-					const latestWeight =
-						sortedData.length > 0 ? sortedData[sortedData.length - 1].weight : null;
 					const processedData = sortedData.map(({ date, weight }: WeightEntry) => {
 						const dateObj = new Date(date);
 						const today = new Date();
@@ -143,35 +136,6 @@ const WeightTracking = () => {
 							dataPointText: `${weight}`,
 						};
 					});
-
-					// Fill up to 10 entries with the latest weight value for UI consistency
-					if (processedData.length < 10 && latestWeight) {
-						const entriesNeeded = 10 - processedData.length;
-						const today = new Date();
-
-						for (let i = 0; i < entriesNeeded; i++) {
-							const fillDate = new Date(today);
-							fillDate.setDate(fillDate.getDate() - (entriesNeeded - i));
-
-							const isThisYear = fillDate.getFullYear() === today.getFullYear();
-							let label;
-							if (isThisYear) {
-								label = fillDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-							} else {
-								label = fillDate.toLocaleDateString('en-US', {
-									month: 'short',
-									day: 'numeric',
-									year: '2-digit',
-								});
-							}
-
-							processedData.unshift({
-								label,
-								value: +latestWeight,
-								dataPointText: `${latestWeight}`,
-							});
-						}
-					}
 
 					setUserWeights(processedData);
 				} catch (error) {
@@ -208,6 +172,10 @@ const WeightTracking = () => {
 					clerkId: user?.id,
 				}),
 			});
+
+			// Add a small delay to ensure the database has been updated
+			await new Promise(resolve => setTimeout(resolve, 100));
+
 			const fetchData = async () => {
 				const token = await getToken();
 				const response = await fetchAPI(`/(api)/weight?clerkId=${user?.id}`, {
@@ -221,34 +189,29 @@ const WeightTracking = () => {
 				const data = response.data;
 
 				// Process weight data for chart (same logic as above)
-				const processedData = data
-					.sort((a: WeightEntry, b: WeightEntry) => +new Date(a.date) - +new Date(b.date))
-					// Group by date and take the latest entry per day to handle duplicates
-					// Take last 8 entries to show recent data
-					.slice(-8)
-					.map(({ date, weight }: WeightEntry) => {
-						const dateObj = new Date(date);
-						const today = new Date();
-						const isThisYear = dateObj.getFullYear() === today.getFullYear();
+				const processedData = data.slice(-8).map(({ date, weight }: WeightEntry) => {
+					const dateObj = new Date(date);
+					const today = new Date();
+					const isThisYear = dateObj.getFullYear() === today.getFullYear();
 
-						// Format label based on whether it's this year
-						let label;
-						if (isThisYear) {
-							label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-						} else {
-							label = dateObj.toLocaleDateString('en-US', {
-								month: 'short',
-								day: 'numeric',
-								year: '2-digit',
-							});
-						}
+					// Format label based on whether it's this year
+					let label;
+					if (isThisYear) {
+						label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+					} else {
+						label = dateObj.toLocaleDateString('en-US', {
+							month: 'short',
+							day: 'numeric',
+							year: '2-digit',
+						});
+					}
 
-						return {
-							label,
-							value: +weight,
-							dataPointText: `${weight}`,
-						};
-					});
+					return {
+						label,
+						value: +weight,
+						dataPointText: `${weight}`,
+					};
+				});
 
 				setUserWeights(processedData);
 			};
@@ -297,12 +260,13 @@ const WeightTracking = () => {
 						lbs
 					</Text>
 				</View>
-				<View className=" overflow-hidden ml-[-20px] border-b-[1px] border-[#F1F5F9] border-solid">
+				<View className=" h-32 overflow-hidden ml-[-20px] border-b-[1px] border-[#F1F5F9] border-solid">
 					{userWeights.length > 0 ? (
 						<LineChart
 							color={'#E3BBA1'}
 							data={userWeights}
 							height={80}
+							width={300}
 							curved
 							textColor={'transparent'}
 							spacing={30}
@@ -310,8 +274,6 @@ const WeightTracking = () => {
 							xAxisLabelTextStyle={{ color: 'transparent', fontSize: 12 }}
 							yAxisTextStyle={{ color: 'transparent', fontSize: 12 }}
 							hideYAxisText
-							animationDuration={1000}
-							animationEasing="easeOutQuad"
 							hideAxesAndRules
 							focusEnabled
 							showDataPointOnFocus
@@ -320,24 +282,9 @@ const WeightTracking = () => {
 							focusedDataPointHeight={15}
 							focusedDataPointColor="#E3BBA1"
 							focusedDataPointRadius={6}
-							pointerConfig={{
-								pointerLabelComponent: (item: any) => {
-									return (
-										<View className="w-10 absolute top-0 h-8 flex justify-center items-center mt-4">
-											<Text className="text-xs text-[#64748B] font-JakartaSemiBold">
-												{item[0].value}
-											</Text>
-										</View>
-									);
-								},
-								pointerStripColor: 'transparent',
-								pointerColor: '#64748B',
-							}}
 							onFocus={(item: any) => {
 								setFocusedPoint(item);
 							}}
-							dataPointLabelShiftY={-20}
-							dataPointLabelShiftX={-5}
 							yAxisOffset={calculateYAxisOffset(userWeights)}
 						/>
 					) : (

@@ -414,7 +414,9 @@ const ActivityTracking = () => {
 						onPress={handleWorkoutModal}
 						className="bg-[#E3BBA1] w-full px-3 py-1 rounded-full"
 					>
-						<Text className="text-white text-center text-xs font-JakartaSemiBold">Log Meal</Text>
+						<Text className="text-white text-center text-xs font-JakartaSemiBold">
+							Log Activity
+						</Text>
 					</TouchableOpacity>
 				</View>
 			</View>
@@ -440,9 +442,9 @@ const ActivityTracking = () => {
 							<Text className="text-[#64748B]"> /{storedTDEE.toLocaleString()}</Text>
 						</View>
 					</View>
-					<View className="w-16 h-16 rounded-xl flex justify-center items-center border-[1px] border-[#9ED5A0] border-solid">
+					<View className="w-16 h-16 rounded-xl flex justify-center items-center border-[2px] border-[#9ED5A0] border-solid">
 						{totalCaloriesBurned >= storedTDEE ? (
-							<Ionicons name="checkmark-sharp" size={30} color="white" />
+							<Ionicons name="checkmark-sharp" size={30} color="#9ED5A0" />
 						) : (
 							<Text className="text-xl text-[#9ED5A0] font-JakartaBold ">
 								{storedTDEE > 0 ? Math.round((totalCaloriesBurned / storedTDEE) * 100) : 0}%
@@ -551,10 +553,17 @@ const ActivityTracking = () => {
 				</View>
 
 				{/* Workout Modal */}
-				<ReactNativeModal isVisible={workoutModal} onBackdropPress={() => setWorkoutModal(false)}>
-					<View className="bg-white py-10 px-4 mx-10 rounded-md">
-						<View className="pb-4">
+				<ReactNativeModal
+					className=" w-full h-full bg-red-100 p-0 m-0 mt-20 rounded-lg"
+					isVisible={workoutModal}
+					onBackdropPress={() => setWorkoutModal(false)}
+				>
+					<View className="bg-white w-full h-full p-6 rounded-md">
+						<View className="pb-4 flex flex-row justify-between items-center">
 							<Text className="text-xl text-center font-JakartaSemiBold">Log your activity</Text>
+							<TouchableOpacity onPress={() => setWorkoutModal(false)}>
+								<Ionicons name="close" size={24} color="black" />
+							</TouchableOpacity>
 						</View>
 
 						<View className="flex mx-auto w-full justify-center mb-4">

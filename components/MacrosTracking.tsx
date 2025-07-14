@@ -94,7 +94,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 		const [addMealModal, setAddMealModal] = useState(false);
 		const [goalSetupModal, setGoalSetupModal] = useState(false);
 		const [foodName, setFoodName] = useState('');
-		const [portionSize, setPortionSize] = useState('100g');
+		const [portionSize, setPortionSize] = useState('');
 		const [nutritionData, setNutritionData] = useState<NutritionData | null>(null);
 		const [isAnalyzing, setIsAnalyzing] = useState(false);
 		const [isSaving, setIsSaving] = useState(false);
@@ -232,7 +232,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			if (!addMealModal) {
 				// Reset state when opening modal
 				setFoodName('');
-				setPortionSize('100g');
+				setPortionSize('');
 				setNutritionData(null);
 				setError('');
 				setMealType('snack');
@@ -547,7 +547,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 								</Text>
 							</View>
 						</View>
-						<View className="w-16 h-16 rounded-xl flex justify-center items-center border-[1px] border-[#E3BBA1] border-solid">
+						<View className="w-16 h-16 rounded-xl flex justify-center items-center border-[2px] border-[#E3BBA1] border-solid">
 							<Text className="text-xl text-white font-JakartaBold text-[#E3BBA1]">
 								{isLoadingSummary ? '...' : caloriesPercentage}%
 							</Text>
@@ -624,8 +624,12 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						onGoalsSet={handleGoalsSet}
 					/>
 
-					<ReactNativeModal isVisible={addMealModal} onBackdropPress={() => setAddMealModal(false)}>
-						<ScrollView className="bg-white py-6 px-4 rounded-md max-h-[80%]">
+					<ReactNativeModal
+						className=" w-full p-0 m-0 mt-20 rounded-lg"
+						isVisible={addMealModal}
+						onBackdropPress={() => setAddMealModal(false)}
+					>
+						<ScrollView className="bg-white px-4 rounded-md py-6">
 							<View className="flex flex-row justify-between items-center mb-6">
 								<Text className="text-xl font-JakartaSemiBold">Log Your Meal</Text>
 								<TouchableOpacity onPress={() => setAddMealModal(false)}>
@@ -638,7 +642,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 									label="Food Name"
 									className="rounded-sm"
 									labelClassName="text-xs text-black font-JakartaSemiBold"
-									placeholder="e.g. Chicken Breast"
+									placeholder="e.g. Chicken Breast or In-N-Out Double Double"
 									value={foodName}
 									onChangeText={setFoodName}
 								/>
@@ -649,7 +653,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 									label="Amount"
 									className="rounded-sm"
 									labelClassName="text-xs text-black font-JakartaSemiBold"
-									placeholder="e.g. 100g or 1 cup"
+									placeholder="e.g. 100g or 1 cup or 1 serving"
 									value={portionSize}
 									onChangeText={setPortionSize}
 								/>
@@ -721,10 +725,10 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 										onPress={analyzeFood}
 										disabled={isAnalyzing}
 									>
-										<Ionicons name="mic" size={36} color="white" />
+										<Ionicons name="aperture-sharp" size={36} color="white" />
 									</TouchableOpacity>
 									<Text className="text-center mt-2 text-sm text-gray-600">
-										Tap to analyze with AI
+										Tap to analyze meal
 									</Text>
 								</View>
 							)}

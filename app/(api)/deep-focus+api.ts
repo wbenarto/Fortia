@@ -96,7 +96,7 @@ export async function GET(request: Request) {
 				`;
 				break;
 			case 'week':
-				// Get last 7 days of data
+				// Get current week data (Sunday to Saturday)
 				query = sql`
 					SELECT 
 						TO_CHAR(session_date, 'Dy') as day_label,
@@ -105,7 +105,8 @@ export async function GET(request: Request) {
 						COALESCE(SUM(duration_minutes) / 60.0, 0) as total_hours
 					FROM deep_focus_sessions 
 					WHERE clerk_id = ${clerkId} 
-						AND session_date >= CURRENT_DATE - INTERVAL '6 days'
+						AND session_date >= DATE_TRUNC('week', CURRENT_DATE)
+						AND session_date < DATE_TRUNC('week', CURRENT_DATE) + INTERVAL '7 days'
 					GROUP BY session_date, TO_CHAR(session_date, 'Dy')
 					ORDER BY session_date
 				`;
