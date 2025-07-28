@@ -565,7 +565,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 							</View>
 						</View>
 						<View className="w-16 h-16 rounded-xl flex justify-center items-center border-[2px] border-[#E3BBA1] border-solid">
-							<Text className="text-xl text-white font-JakartaBold text-[#E3BBA1]">
+							<Text className="text-lg  font-JakartaBold text-[#E3BBA1]">
 								{isLoadingSummary ? '...' : caloriesPercentage}%
 							</Text>
 						</View>
@@ -657,7 +657,6 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 							<View className="flex mx-auto w-full justify-center mb-4">
 								<InputField
 									label="Food Name"
-									className="rounded-sm"
 									labelClassName="text-xs text-black font-JakartaSemiBold"
 									placeholder="e.g. Chicken Breast or In-N-Out Double Double"
 									value={foodName}
@@ -668,7 +667,6 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 							<View className="flex mx-auto w-full justify-center mb-4">
 								<InputField
 									label="Amount"
-									className="rounded-sm"
 									labelClassName="text-xs text-black font-JakartaSemiBold"
 									placeholder="e.g. 100g or 1 cup or 1 serving"
 									value={portionSize}
@@ -697,7 +695,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 													isAnalyzing ? 'text-gray-500' : 'text-[#E3BBA1]'
 												}`}
 											>
-												{isAnalyzing ? 'Re-analyzing...' : 'Re-analyze with AI'}
+												{isAnalyzing ? 'Re-analyzing...' : 'Re-analyze meal'}
 											</Text>
 										</View>
 									</TouchableOpacity>
@@ -771,7 +769,8 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 
 							{nutritionData && (
 								<View className="mb-6">
-									<Text className="text-lg font-JakartaSemiBold mb-4 text-center">
+									<Text className="text-2xl  text-center font-JakartaSemiBold ">{foodName}</Text>
+									<Text className="text-base text-gray-600 font-JakartaSemiBold mb-4 text-center">
 										Nutrition Analysis
 									</Text>
 

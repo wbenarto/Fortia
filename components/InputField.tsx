@@ -39,18 +39,18 @@ const InputField = ({
 		<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 			<View className="my-2 w-full">
 				{label && (
-					<Text className={`text-md font-JakartaSemiBold mb-3 text-black ${labelStyle}`}>
+					<Text className={`text-sm font-JakartaSemiBold mb-2 text-black ${labelStyle}`}>
 						{label}
 					</Text>
 				)}
 				<View
-					className={`flex flex-row justify-start items-center relative bg-neutral-100 rounded-md border border-neutral-100
+					className={`flex flex-row justify-start items-center relative rounded-md
                     focus:border-primary-500 ${containerStyle}
                 `}
 				>
 					{icon && <Image source={icon} className={`w-6 h-6 ml-4 ${iconStyle}`} />}
 					<TextInput
-						className={`rounded-full p-4 font-JakartaSemiBold text-[15px] flex-1 ${inputStyle} text-left`}
+						className={`px-2 py-2 font-JakartaSemiBold border-b-[1px] border-gray-400 text-sm flex-1 ${inputStyle} text-left`}
 						secureTextEntry={secureTextEntry}
 						testID={testID}
 						{...props}

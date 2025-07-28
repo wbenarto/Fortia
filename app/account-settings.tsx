@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { useUser, useAuth } from '@clerk/clerk-expo';
+import { useUser, useAuth, useSignIn } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, Stack } from 'expo-router';
 import ReactNativeModal from 'react-native-modal';
@@ -37,6 +37,7 @@ interface NutritionGoals {
 const AccountSettings = () => {
 	const { user } = useUser();
 	const { signOut } = useAuth();
+	const { signIn } = useSignIn();
 	const [nutritionGoals, setNutritionGoals] = useState<NutritionGoals | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [goalSetupModal, setGoalSetupModal] = useState(false);
@@ -65,6 +66,23 @@ const AccountSettings = () => {
 	);
 
 	const userProfile = useUserProfile();
+
+	// Check if user signed up with email/password (not OAuth)
+	const isEmailPasswordUser = () => {
+		if (!user) return false;
+
+		// Check if user has any OAuth accounts
+		const hasOAuthAccounts = user.externalAccounts && user.externalAccounts.length > 0;
+
+		// Check if user has password-based authentication
+		// This is more reliable than checking email verification status
+		// OAuth users will have verified emails but no password-based auth
+		const hasPasswordAuth = user.passwordEnabled;
+
+		// User can change password if they have password-based authentication
+		// OAuth-only users (no password auth) cannot change passwords
+		return hasPasswordAuth;
+	};
 
 	const fetchNutritionGoals = async () => {
 		if (!user?.id) return;
@@ -100,31 +118,103 @@ const AccountSettings = () => {
 	};
 
 	const handlePasswordValidation = async () => {
-		if (!password.trim()) {
-			Alert.alert('Error', 'Please enter your password to continue.');
-			return;
-		}
-
 		setIsValidating(true);
 		setPasswordError(''); // Clear any previous error
 
 		try {
-			// For demo purposes, let's assume the correct password is "password123"
-			// In a real app, you would validate against the user's actual password
-			const correctPassword = 'password123';
+			// For password-based users, validate their password
+			if (isEmailPasswordUser() && signIn) {
+				// Check if password is provided for password-based users
+				if (!password.trim()) {
+					Alert.alert('Error', 'Please enter your password to continue.');
+					return;
+				}
 
-			if (password === correctPassword) {
-				console.log('hooray');
-				Alert.alert('Success', 'Password is correct! Account deletion would proceed here.');
-				closeDeleteModal();
+				// Use Clerk's password verification
+				const signInAttempt = await signIn.create({
+					identifier: user?.emailAddresses[0]?.emailAddress || '',
+					password: password,
+				});
+
+				if (signInAttempt.status === 'complete') {
+					// Password is correct, proceed with account deletion
+					await performAccountDeletion();
+				} else {
+					setPasswordError('Password is not correct. Please try again.');
+					setPassword(''); // Clear the password field
+				}
 			} else {
-				setPasswordError('Password is not correct. Please try again.');
-				setPassword(''); // Clear the password field
+				// For OAuth users, just proceed with deletion (no password to verify)
+				await performAccountDeletion();
 			}
 		} catch (error) {
-			setPasswordError('Failed to validate password. Please try again.');
+			console.error('Password validation error:', error);
+			setPasswordError('Password is not correct. Please try again.');
+			setPassword(''); // Clear the password field
 		} finally {
 			setIsValidating(false);
+		}
+	};
+
+	const performAccountDeletion = async () => {
+		if (!user?.id) {
+			Alert.alert('Error', 'User not found');
+			return;
+		}
+
+		try {
+			// Step 1: Delete all data from our database
+			console.log('Deleting user data from database...');
+			const dbResponse = await fetchAPI(`/(api)/delete-account?clerkId=${user.id}`, {
+				method: 'DELETE',
+			});
+
+			if (!dbResponse.success) {
+				console.error('Database deletion failed:', dbResponse.error);
+				Alert.alert('Error', 'Failed to delete account data. Please try again.');
+				return;
+			}
+
+			console.log('Database deletion successful');
+
+			// Step 2: Delete user from Clerk
+			console.log('Deleting user from Clerk...');
+			await user.delete();
+
+			console.log('Clerk deletion successful');
+
+			// Step 3: Show success message and redirect
+			Alert.alert(
+				'Account Deleted',
+				'Your account and all associated data have been permanently deleted.',
+				[
+					{
+						text: 'OK',
+						onPress: () => {
+							// Sign out and redirect to sign-in
+							signOut();
+							router.replace('/(auth)/sign-in');
+						},
+					},
+				]
+			);
+		} catch (error) {
+			console.error('Account deletion error:', error);
+
+			// Check if it's a Clerk error
+			if (error instanceof Error && error.message.includes('clerk')) {
+				Alert.alert(
+					'Deletion Error',
+					'Failed to delete account from authentication service. Please contact support.',
+					[{ text: 'OK' }]
+				);
+			} else {
+				Alert.alert(
+					'Deletion Error',
+					'Failed to delete account. Please try again or contact support.',
+					[{ text: 'OK' }]
+				);
+			}
 		}
 	};
 
@@ -381,6 +471,37 @@ const AccountSettings = () => {
 					<View className="mb-6">
 						<Text className="text-white text-lg font-JakartaSemiBold mb-4">Account Actions</Text>
 						<View className="space-y-3">
+							{/* Only show Change Password for email/password users */}
+							{isEmailPasswordUser() && (
+								<TouchableOpacity
+									onPress={() => router.push('/(auth)/change-password')}
+									className="bg-[#2D2A3F] rounded-xl p-4 flex flex-row items-center"
+								>
+									<Ionicons name="lock-closed-outline" size={24} color="#E3BBA1" />
+									<View className="ml-4 flex-1">
+										<Text className="text-white font-JakartaSemiBold">Change Password</Text>
+										<Text className="text-gray-400 text-sm">Update your account password</Text>
+									</View>
+									<Ionicons name="chevron-forward" size={20} color="gray" />
+								</TouchableOpacity>
+							)}
+
+							{/* Show OAuth info for OAuth-only users */}
+							{!isEmailPasswordUser() &&
+								user?.externalAccounts &&
+								user.externalAccounts.length > 0 && (
+									<View className="bg-[#2D2A3F] rounded-xl p-4 flex flex-row items-center border border-gray-600">
+										<Ionicons name="information-circle-outline" size={24} color="#E3BBA1" />
+										<View className="ml-4 flex-1">
+											<Text className="text-white font-JakartaSemiBold">Password Management</Text>
+											<Text className="text-gray-400 text-sm">
+												Password changes are managed through your{' '}
+												{user?.externalAccounts[0]?.provider} account
+											</Text>
+										</View>
+									</View>
+								)}
+
 							<TouchableOpacity
 								onPress={handleSignOut}
 								className="bg-[#2D2A3F] rounded-xl p-4 flex flex-row items-center"
@@ -447,18 +568,34 @@ const AccountSettings = () => {
 							</Text>
 						</View>
 
-						<View className="mb-6">
-							<Text className="text-white font-JakartaSemiBold mb-2">
-								Enter your password to confirm:
-							</Text>
-							<InputField
-								placeholder="Password"
-								value={password}
-								onChangeText={setPassword}
-								secureTextEntry
-								error={passwordError}
-							/>
-						</View>
+						{/* Show password field only for password-based users */}
+						{isEmailPasswordUser() && (
+							<View className="mb-6">
+								<Text className="text-white font-JakartaSemiBold mb-2">
+									Enter your password to confirm:
+								</Text>
+								<InputField
+									placeholder="Password"
+									value={password}
+									onChangeText={setPassword}
+									secureTextEntry
+									error={passwordError}
+								/>
+							</View>
+						)}
+
+						{/* Show different message for OAuth users */}
+						{!isEmailPasswordUser() && (
+							<View className="mb-6">
+								<Text className="text-white font-JakartaSemiBold mb-2">
+									Confirm Account Deletion
+								</Text>
+								<Text className="text-gray-400 text-sm">
+									This will permanently delete your account and all associated data. This action
+									cannot be undone.
+								</Text>
+							</View>
+						)}
 
 						<View className="flex flex-row space-x-3">
 							<TouchableOpacity
@@ -476,7 +613,7 @@ const AccountSettings = () => {
 									<ActivityIndicator size="small" color="white" />
 								) : (
 									<Text className="text-white text-center font-JakartaSemiBold">
-										Delete Account
+										{isEmailPasswordUser() ? 'Delete Account' : 'Confirm Deletion'}
 									</Text>
 								)}
 							</TouchableOpacity>

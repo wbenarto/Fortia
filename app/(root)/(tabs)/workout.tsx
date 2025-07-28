@@ -1,15 +1,28 @@
 import Navbar from '@/components/Navbar';
 import { SignedIn } from '@clerk/clerk-expo';
 import { View, Text, ScrollView } from 'react-native';
+import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import WeeklyCalendar from '@/components/WeeklyCalendar';
 import ActivityTracking from '@/components/ActivityTracking';
 import { Ionicons } from '@expo/vector-icons';
 import CustomButton from '@/components/CustomButton';
 import WorkoutScheduleCard from '@/components/WorkoutScheduleCard';
+import NewWorkoutModal from '@/components/NewWorkoutModal';
 
 const Workout = () => {
 	const insets = useSafeAreaInsets();
+	const [workoutModal, setWorkoutModal] = useState(false);
+
+	const handleWorkoutModal = () => {
+		setWorkoutModal(!workoutModal);
+	};
+
+	const handleSaveWorkout = async (workoutData: any) => {
+		// TODO: Implement workout saving logic
+		console.log('Saving workout:', workoutData);
+		// This will be implemented when we add the database tables and API
+	};
 
 	const scheduledWorkout = [
 		{
@@ -165,13 +178,13 @@ const Workout = () => {
 					<Navbar />
 					<View className="w-full pb-20">
 						<WeeklyCalendar />
-						{/* <View className="flex flex-row justify-between items-center px-2">
+						<View className="flex flex-row justify-between items-center mb-4 px-2">
 							<View className="flex flex-row justify-between items-center">
 								<CustomButton
 									title="New Workout"
 									className="rounded-full px-12 py-3 rounded-lg "
 									IconLeft={() => <Ionicons name="add" size={20} color="white" />}
-									onPress={() => {}}
+									onPress={handleWorkoutModal}
 								/>
 							</View>
 							<View className="flex flex-row justify-between items-center">
@@ -183,7 +196,7 @@ const Workout = () => {
 									onPress={() => {}}
 								/>
 							</View>
-						</View> */}
+						</View>
 
 						<ActivityTracking />
 						{/* <View className="w-full px-4">
@@ -197,6 +210,13 @@ const Workout = () => {
 						</View> */}
 					</View>
 				</ScrollView>
+
+				{/* New Workout Modal */}
+				<NewWorkoutModal
+					isVisible={workoutModal}
+					onClose={() => setWorkoutModal(false)}
+					onSave={handleSaveWorkout}
+				/>
 			</SignedIn>
 		</View>
 	);

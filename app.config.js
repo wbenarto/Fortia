@@ -3,6 +3,9 @@ export default {
 		name: 'Fortia',
 		slug: 'fortia',
 		extra: {
+			eas: {
+				projectId: '061a67d8-c8d4-4d24-b007-4c4b50e330ee',
+			},
 			geminiAPIKey: process.env.GEMINI_API_KEY,
 		},
 		platforms: ['ios', 'web'],
@@ -21,8 +24,11 @@ export default {
 		ios: {
 			supportsTablet: true,
 			infoPlist: {
+				ITSAppUsesNonExemptEncryption: false,
 				NSMotionUsageDescription:
 					'Fortia needs access to motion and fitness data to track your daily steps for better fitness insights.',
+				NSMicrophoneUsageDescription:
+					'Fortia needs access to your microphone for audio recording features.',
 			},
 			bundleIdentifier: 'com.fortia.app',
 		},
@@ -45,6 +51,14 @@ export default {
 				},
 			],
 			'expo-apple-authentication',
+			'expo-secure-store',
+			// Add expo-av plugin configuration
+			[
+				'expo-av',
+				{
+					microphonePermission: false,
+				},
+			],
 		],
 		experiments: {
 			typedRoutes: true,
