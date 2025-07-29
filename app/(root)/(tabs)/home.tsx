@@ -108,9 +108,10 @@ export default function Page() {
 	// Show loading while checking onboarding status
 	if (isCheckingOnboarding) {
 		return (
-			<View className="flex-1 bg-[#262135] justify-center items-center">
-				<ActivityIndicator size="large" color="#E3BBA1" />
-				<Text className="text-white mt-4 text-lg">Setting up your experience...</Text>
+			<View className="flex-1 bg-[#E3BBA1] justify-center items-center">
+				<ActivityIndicator size="large" color="black" />
+				<Image source={require('@/assets/images/logo-main-fortia-1.png')} className="w-10 h-10" />
+				<Text className="text-black mt-4 text-lg">Setting up your experience...</Text>
 			</View>
 		);
 	}

@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { mealAnalysisRateLimiter } from '@/lib/rateLimiter';
+import { exerciseAnalysisRateLimiter } from '@/lib/rateLimiter';
 
 // Load environment variables
 dotenv.config();
@@ -14,23 +14,24 @@ export async function POST(request: Request) {
 	let requestBody;
 	try {
 		requestBody = await request.json();
+		console.log('Exercise analysis request received');
 	} catch (parseError) {
 		console.error('Failed to parse request body:', parseError);
 		return Response.json({ error: 'Invalid request body' }, { status: 400 });
 	}
 
-	const { foodDescription, portionSize = '100g', userId } = requestBody;
+	const { exerciseDescription, duration, userId } = requestBody;
 
 	// Rate limiting check
 	if (!userId) {
 		return Response.json({ error: 'User ID is required for rate limiting' }, { status: 400 });
 	}
 
-	if (!mealAnalysisRateLimiter.canMakeRequest(userId)) {
-		const usageInfo = mealAnalysisRateLimiter.getUsageInfo(userId);
+	if (!exerciseAnalysisRateLimiter.canMakeRequest(userId)) {
+		const usageInfo = exerciseAnalysisRateLimiter.getUsageInfo(userId);
 		return Response.json(
 			{
-				error: 'Daily meal analysis limit reached. You can analyze 20 meals per day.',
+				error: 'Daily exercise analysis limit reached. You can analyze 20 exercises per day.',
 				rateLimitInfo: {
 					used: usageInfo.count,
 					remaining: usageInfo.remaining,
@@ -43,63 +44,30 @@ export async function POST(request: Request) {
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
-			console.log(`=== MEAL ANALYSIS API CALLED (Attempt ${attempt}/${maxRetries}) ===`);
-			console.log('Processing meal analysis request');
+			console.log(`=== EXERCISE ANALYSIS API CALLED (Attempt ${attempt}/${maxRetries}) ===`);
+			console.log('Processing exercise analysis request');
 
-			if (!foodDescription) {
-				return Response.json({ error: 'Food description is required' }, { status: 400 });
+			if (!exerciseDescription) {
+				return Response.json({ error: 'Exercise description is required' }, { status: 400 });
 			}
 
 			if (!GEMINI_API_KEY) {
 				return Response.json({ error: 'Gemini API key not configured' }, { status: 500 });
 			}
 
-			const prompt = `Analyze this food item and return nutrition facts in JSON format ONLY. Do not include any other text, explanations, or markdown formatting.
+			const prompt = `Analyze this exercise and estimate calories burned in JSON format ONLY. Do not include any other text, explanations, or markdown formatting.
 
-Food: ${foodDescription}
-Portion: ${portionSize}
+Exercise: ${exerciseDescription}
+Duration: ${duration}
 
 Return ONLY a valid JSON object with this exact structure:
 {
-  "calories": number,
-  "protein": number,
-  "carbs": number,
-  "fats": number,
-  "fiber": number,
-  "sugar": number,
-  "sodium": number,
+  "calories_burned": number,
   "confidence": number (0-1),
-  "suggestions": ["food1", "food2", "food3"],
-  "notes": "string with additional nutrition info"
+  "notes": "string with additional exercise info or recommendations"
 }
 
-Be accurate and realistic with the values. Do not include any text before or after the JSON object.`;
-
-			// Comment out OpenAI request
-			/*
-		const response = await fetch('https://api.openai.com/v1/chat/completions', {
-			method: 'POST',
-			headers: {
-				'Authorization': `Bearer ${OPENAI_API_KEY}`,
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				model: 'gpt-4o-mini',
-				messages: [
-					{
-						role: 'system',
-						content: 'You are a nutrition expert. Provide accurate nutrition information in JSON format only.'
-					},
-					{
-						role: 'user',
-						content: prompt
-					}
-				],
-				temperature: 0.3,
-				max_tokens: 500,
-			}),
-		});
-		*/
+Be realistic with the calorie estimates. Consider the exercise type, intensity, and duration. Do not include any text before or after the JSON object.`;
 
 			// Gemini API request
 			const requestBody = {
@@ -107,14 +75,14 @@ Be accurate and realistic with the values. Do not include any text before or aft
 					{
 						parts: [
 							{
-								text: `You are a nutrition expert. Provide accurate nutrition information in JSON format only. ${prompt}`,
+								text: `You are a fitness expert. Provide accurate calorie burn estimates in JSON format only. ${prompt}`,
 							},
 						],
 					},
 				],
 				generationConfig: {
 					temperature: 0.3,
-					maxOutputTokens: 500,
+					maxOutputTokens: 300,
 				},
 			};
 
@@ -152,17 +120,20 @@ Be accurate and realistic with the values. Do not include any text before or aft
 			}
 
 			const data = await response.json();
+			console.log('Gemini API response received');
+
 			const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+			console.log('Extracted content from Gemini');
 
 			if (!content) {
 				throw new Error('No response from Gemini');
 			}
 
 			// Parse the JSON response
-			let nutritionData;
+			let exerciseData;
 			try {
 				// First, try to parse the content directly
-				nutritionData = JSON.parse(content);
+				exerciseData = JSON.parse(content);
 			} catch (error) {
 				console.error('Direct JSON parse error:', error);
 				console.error('Raw content that failed to parse:', content);
@@ -226,7 +197,7 @@ Be accurate and realistic with the values. Do not include any text before or aft
 				}
 
 				if (extractedJson) {
-					nutritionData = extractedJson;
+					exerciseData = extractedJson;
 				} else {
 					console.error('All JSON extraction strategies failed');
 					console.error('Full raw content:', content);
@@ -236,40 +207,33 @@ Be accurate and realistic with the values. Do not include any text before or aft
 				}
 			}
 
-			// Validate the nutrition data structure
-			console.log('Parsed nutrition data:', nutritionData);
+			// Validate the exercise data structure
+			console.log('Parsed exercise data:', exerciseData);
 
 			// Ensure all required fields exist with fallbacks
 			const validatedData = {
-				calories: nutritionData.calories || 0,
-				protein: nutritionData.protein || 0,
-				carbs: nutritionData.carbs || 0,
-				fats: nutritionData.fats || 0,
-				fiber: nutritionData.fiber || 0,
-				sugar: nutritionData.sugar || 0,
-				sodium: nutritionData.sodium || 0,
-				confidence: nutritionData.confidence || 0.5,
-				suggestions: nutritionData.suggestions || [],
-				notes: nutritionData.notes || '',
+				calories_burned: exerciseData.calories_burned || 0,
+				confidence: exerciseData.confidence || 0.5,
+				notes: exerciseData.notes || '',
 			};
 
-			console.log('Validated nutrition data:', validatedData);
+			console.log('Validated exercise data:', validatedData);
 
 			// Record successful request for rate limiting
-			mealAnalysisRateLimiter.recordRequest(userId);
+			exerciseAnalysisRateLimiter.recordRequest(userId);
 
 			return Response.json({
 				success: true,
 				data: validatedData,
 				tokens: data.usageMetadata?.totalTokenCount || 0,
 				rateLimitInfo: {
-					used: mealAnalysisRateLimiter.getUsageInfo(userId).count,
-					remaining: mealAnalysisRateLimiter.getUsageInfo(userId).remaining,
+					used: exerciseAnalysisRateLimiter.getUsageInfo(userId).count,
+					remaining: exerciseAnalysisRateLimiter.getUsageInfo(userId).remaining,
 				},
 			});
 		} catch (error) {
 			lastError = error instanceof Error ? error : new Error('Unknown error');
-			console.error(`Meal analysis error (attempt ${attempt}):`, lastError);
+			console.error(`Exercise analysis error (attempt ${attempt}):`, lastError);
 
 			// If this is a retryable error and we haven't exhausted retries, wait and try again
 			if (
@@ -287,7 +251,7 @@ Be accurate and realistic with the values. Do not include any text before or aft
 			// If we've exhausted retries or it's a non-retryable error, return the error
 			return Response.json(
 				{
-					error: 'Failed to analyze meal',
+					error: 'Failed to analyze exercise',
 					details: lastError.message,
 				},
 				{ status: 500 }
@@ -298,7 +262,7 @@ Be accurate and realistic with the values. Do not include any text before or aft
 	// This should never be reached, but just in case
 	return Response.json(
 		{
-			error: 'Failed to analyze meal after all retries',
+			error: 'Failed to analyze exercise after all retries',
 			details: lastError?.message || 'Unknown error',
 		},
 		{ status: 500 }

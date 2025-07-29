@@ -1,5 +1,5 @@
 import Navbar from '@/components/Navbar';
-import { SignedIn } from '@clerk/clerk-expo';
+import { SignedIn, useUser } from '@clerk/clerk-expo';
 import { View, Text, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,19 +9,46 @@ import { Ionicons } from '@expo/vector-icons';
 import CustomButton from '@/components/CustomButton';
 import WorkoutScheduleCard from '@/components/WorkoutScheduleCard';
 import NewWorkoutModal from '@/components/NewWorkoutModal';
+import { fetchAPI } from '@/lib/fetch';
 
 const Workout = () => {
 	const insets = useSafeAreaInsets();
+	const { user } = useUser();
 	const [workoutModal, setWorkoutModal] = useState(false);
+	const [refreshTrigger, setRefreshTrigger] = useState(0);
 
 	const handleWorkoutModal = () => {
 		setWorkoutModal(!workoutModal);
 	};
 
 	const handleSaveWorkout = async (workoutData: any) => {
-		// TODO: Implement workout saving logic
-		console.log('Saving workout:', workoutData);
-		// This will be implemented when we add the database tables and API
+		try {
+			if (!user?.id) {
+				console.error('No user ID available');
+				return;
+			}
+
+			const response = await fetchAPI('/(api)/workouts', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					...workoutData,
+					clerkId: user.id,
+				}),
+			});
+
+			if (response.success) {
+				console.log('Workout saved successfully:', response);
+				// Trigger refresh of ActivityTracking component
+				setRefreshTrigger(prev => prev + 1);
+			} else {
+				console.error('Failed to save workout:', response.error);
+			}
+		} catch (error) {
+			console.error('Error saving workout:', error);
+		}
 	};
 
 	const scheduledWorkout = [
@@ -178,16 +205,17 @@ const Workout = () => {
 					<Navbar />
 					<View className="w-full pb-20">
 						<WeeklyCalendar />
-						<View className="flex flex-row justify-between items-center mb-4 px-2">
+						<View className="flex flex-row justify-center items-center my-4 px-2">
 							<View className="flex flex-row justify-between items-center">
 								<CustomButton
-									title="New Workout"
-									className="rounded-full px-12 py-3 rounded-lg "
-									IconLeft={() => <Ionicons name="add" size={20} color="white" />}
+									title="Schedule a Workout"
+									textVariant="primary"
+									className="rounded-full px-6 s py-3 border-[1px] border-[#E3BBA1] border-solid bg-white "
+									IconLeft={() => <Ionicons name="add" size={20} color="#E3BBA1" />}
 									onPress={handleWorkoutModal}
 								/>
 							</View>
-							<View className="flex flex-row justify-between items-center">
+							{/* <View className="flex flex-row justify-between items-center">
 								<CustomButton
 									title="AI Assistant"
 									textVariant="primary"
@@ -195,10 +223,10 @@ const Workout = () => {
 									IconLeft={() => <Ionicons name="mic-outline" size={20} color="#E3BBA1" />}
 									onPress={() => {}}
 								/>
-							</View>
+							</View> */}
 						</View>
 
-						<ActivityTracking />
+						<ActivityTracking refreshTrigger={refreshTrigger} />
 						{/* <View className="w-full px-4">
 							<View className="flex flex-row justify-between items-center ">
 								<Text className="font-JakartaSemiBold text-lg">This Week's Workout</Text>
@@ -216,6 +244,7 @@ const Workout = () => {
 					isVisible={workoutModal}
 					onClose={() => setWorkoutModal(false)}
 					onSave={handleSaveWorkout}
+					userId={user?.id}
 				/>
 			</SignedIn>
 		</View>

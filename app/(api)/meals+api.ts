@@ -94,8 +94,6 @@ export async function POST(request: Request) {
 			return Response.json({ error: 'Invalid JSON in request body' }, { status: 400 });
 		}
 
-		console.log('Meal POST request body:', body);
-
 		const {
 			clerkId,
 			foodName,

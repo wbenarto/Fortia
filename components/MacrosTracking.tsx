@@ -272,13 +272,8 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				});
 
 				console.log('Meal analysis response status:', response.status);
-				console.log(
-					'Meal analysis response headers:',
-					Object.fromEntries(response.headers.entries())
-				);
 
 				const data = await response.json();
-				console.log('Meal analysis response data:', data);
 
 				if (response.ok && data.success) {
 					setNutritionData(data.data);
@@ -320,7 +315,6 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				console.log('User check response status:', response.status);
 
 				const data = await response.json();
-				console.log('User check response data:', data);
 
 				const userExists = response.ok && data.success && data.data;
 				console.log('User exists in database:', userExists);
@@ -423,10 +417,8 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				});
 
 				console.log('Meal save response status:', response.status);
-				console.log('Meal save response headers:', Object.fromEntries(response.headers.entries()));
 
 				const data = await response.json();
-				console.log('Meal save response data:', data);
 
 				if (response.ok && data.success) {
 					handleAddMealModal(); // Close modal

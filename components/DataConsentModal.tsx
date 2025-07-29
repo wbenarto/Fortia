@@ -97,7 +97,12 @@ const DataConsentModal: React.FC<DataConsentModalProps> = ({
 				method: 'POST',
 				body: JSON.stringify({
 					clerkId,
-					dataCollectionConsent: true,
+					basicProfile: true,
+					healthMetrics: true,
+					nutritionData: true,
+					weightTracking: true,
+					stepTracking: true,
+					workoutActivities: true,
 					consentVersion: '1.0',
 					consentMethod: 'onboarding',
 				}),

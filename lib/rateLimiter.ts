@@ -89,10 +89,14 @@ class RateLimiter {
 // Create a singleton instance for meal analysis rate limiting
 export const mealAnalysisRateLimiter = new RateLimiter(20, 24 * 60 * 60 * 1000); // 20 requests per day
 
+// Create a singleton instance for exercise analysis rate limiting
+export const exerciseAnalysisRateLimiter = new RateLimiter(20, 24 * 60 * 60 * 1000); // 20 requests per day
+
 // Clean up old entries every hour
 setInterval(
 	() => {
 		mealAnalysisRateLimiter.cleanup();
+		exerciseAnalysisRateLimiter.cleanup();
 	},
 	60 * 60 * 1000
 );

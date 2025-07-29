@@ -190,6 +190,103 @@ const migrations = [
 			console.log('✅ deep_focus_sessions table created successfully');
 		},
 	},
+
+	{
+		id: '006_create_workout_planning_tables',
+		description:
+			'Create workout_sessions and workout_exercises tables for workout planning feature',
+		up: async () => {
+			console.log('Running migration: Create workout planning tables...');
+
+			// Check if workout_sessions table already exists
+			const sessionsTableExists = await sql`
+				SELECT EXISTS (
+					SELECT FROM information_schema.tables 
+					WHERE table_schema = 'public' 
+					AND table_name = 'workout_sessions'
+				)
+			`;
+
+			if (sessionsTableExists[0].exists) {
+				console.log('✅ workout_sessions table already exists, skipping...');
+			} else {
+				// Create workout_sessions table
+				await sql`
+					CREATE TABLE workout_sessions (
+						id SERIAL PRIMARY KEY,
+						clerk_id TEXT NOT NULL,
+						title TEXT NOT NULL,
+						workout_type TEXT NOT NULL CHECK (workout_type IN ('exercise', 'barbell')),
+						scheduled_date DATE,
+						created_at TIMESTAMP DEFAULT NOW(),
+						updated_at TIMESTAMP DEFAULT NOW()
+					)
+				`;
+				console.log('✅ workout_sessions table created successfully');
+			}
+
+			// Check if workout_exercises table already exists
+			const exercisesTableExists = await sql`
+				SELECT EXISTS (
+					SELECT FROM information_schema.tables 
+					WHERE table_schema = 'public' 
+					AND table_name = 'workout_exercises'
+				)
+			`;
+
+			if (exercisesTableExists[0].exists) {
+				console.log('✅ workout_exercises table already exists, skipping...');
+			} else {
+				// Create workout_exercises table
+				await sql`
+					CREATE TABLE workout_exercises (
+						id SERIAL PRIMARY KEY,
+						workout_session_id INTEGER NOT NULL REFERENCES workout_sessions(id) ON DELETE CASCADE,
+						exercise_name TEXT NOT NULL,
+						sets INTEGER,
+						reps INTEGER,
+						weight DECIMAL(6,2),
+						duration TEXT,
+						order_index INTEGER NOT NULL DEFAULT 1,
+						notes TEXT,
+						is_completed BOOLEAN DEFAULT false,
+						completed_at TIMESTAMP,
+						calories_burned INTEGER,
+						created_at TIMESTAMP DEFAULT NOW()
+					)
+				`;
+				console.log('✅ workout_exercises table created successfully');
+			}
+
+			// Create indexes (only if they don't exist)
+			const indexes = [
+				{ name: 'idx_workout_sessions_clerk_id', table: 'workout_sessions', column: 'clerk_id' },
+				{ name: 'idx_workout_sessions_date', table: 'workout_sessions', column: 'scheduled_date' },
+				{
+					name: 'idx_workout_sessions_created_at',
+					table: 'workout_sessions',
+					column: 'created_at',
+				},
+				{
+					name: 'idx_workout_exercises_session_id',
+					table: 'workout_exercises',
+					column: 'workout_session_id',
+				},
+				{ name: 'idx_workout_exercises_order', table: 'workout_exercises', column: 'order_index' },
+			];
+
+			// Create indexes (only if they don't exist)
+			await sql`CREATE INDEX IF NOT EXISTS idx_workout_sessions_clerk_id ON workout_sessions(clerk_id)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_workout_sessions_date ON workout_sessions(scheduled_date)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_workout_sessions_created_at ON workout_sessions(created_at)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_workout_exercises_session_id ON workout_exercises(workout_session_id)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_workout_exercises_order ON workout_exercises(order_index)`;
+
+			console.log('✅ All workout planning indexes created successfully');
+
+			console.log('✅ Workout planning tables migration completed successfully');
+		},
+	},
 ];
 
 // Migration tracking table

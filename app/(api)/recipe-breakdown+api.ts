@@ -57,7 +57,6 @@ async function retryWithBackoff<T>(
 export async function POST(request: Request) {
 	try {
 		console.log('Recipe breakdown API called');
-		console.log('GEMINI_API_KEY exists:', !!GEMINI_API_KEY);
 
 		if (!GEMINI_API_KEY) {
 			console.error('GEMINI_API_KEY not configured');
@@ -65,7 +64,6 @@ export async function POST(request: Request) {
 		}
 
 		const body = await request.json();
-		console.log('Request body:', body);
 
 		const { videoUrl } = body;
 		if (!videoUrl) {
@@ -132,10 +130,7 @@ export async function POST(request: Request) {
 		console.log('Gemini API response status:', response.status);
 
 		const data = await response.json();
-		console.log('Gemini API response data:', data);
-
 		const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-		console.log('Gemini response:', text);
 
 		let result;
 		try {

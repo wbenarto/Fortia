@@ -14,7 +14,12 @@ export async function GET(request: Request) {
 
 		const consentData = await sql`
       SELECT 
-        data_collection_consent,
+        basic_profile,
+        health_metrics,
+        nutrition_data,
+        weight_tracking,
+        step_tracking,
+        workout_activities,
         consent_version,
         updated_at
       FROM data_consent 
@@ -44,7 +49,12 @@ export async function POST(request: Request) {
 	try {
 		const {
 			clerkId,
-			dataCollectionConsent = false,
+			basicProfile = true,
+			healthMetrics = false,
+			nutritionData = false,
+			weightTracking = false,
+			stepTracking = false,
+			workoutActivities = false,
 			consentVersion = '1.0',
 			consentMethod = 'onboarding',
 		} = await request.json();
@@ -57,14 +67,24 @@ export async function POST(request: Request) {
 		const result = await sql`
       INSERT INTO data_consent (
         clerk_id,
-        data_collection_consent,
+        basic_profile,
+        health_metrics,
+        nutrition_data,
+        weight_tracking,
+        step_tracking,
+        workout_activities,
         consent_version,
         consent_method,
         created_at,
         updated_at
       ) VALUES (
         ${clerkId},
-        ${dataCollectionConsent},
+        ${basicProfile},
+        ${healthMetrics},
+        ${nutritionData},
+        ${weightTracking},
+        ${stepTracking},
+        ${workoutActivities},
         ${consentVersion},
         ${consentMethod},
         NOW(),
@@ -72,7 +92,12 @@ export async function POST(request: Request) {
       )
       ON CONFLICT (clerk_id) 
       DO UPDATE SET
-        data_collection_consent = EXCLUDED.data_collection_consent,
+        basic_profile = EXCLUDED.basic_profile,
+        health_metrics = EXCLUDED.health_metrics,
+        nutrition_data = EXCLUDED.nutrition_data,
+        weight_tracking = EXCLUDED.weight_tracking,
+        step_tracking = EXCLUDED.step_tracking,
+        workout_activities = EXCLUDED.workout_activities,
         consent_version = EXCLUDED.consent_version,
         consent_method = EXCLUDED.consent_method,
         updated_at = NOW()
@@ -99,14 +124,42 @@ export async function PUT(request: Request) {
 			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
 		}
 
-		const { dataCollectionConsent, consentVersion } = await request.json();
+		const {
+			basicProfile,
+			healthMetrics,
+			nutritionData,
+			weightTracking,
+			stepTracking,
+			workoutActivities,
+			consentVersion,
+		} = await request.json();
 
 		const updateFields = [];
 		const updateValues = [];
 
-		if (dataCollectionConsent !== undefined) {
-			updateFields.push('data_collection_consent = $' + (updateValues.length + 1));
-			updateValues.push(dataCollectionConsent);
+		if (basicProfile !== undefined) {
+			updateFields.push('basic_profile = $' + (updateValues.length + 1));
+			updateValues.push(basicProfile);
+		}
+		if (healthMetrics !== undefined) {
+			updateFields.push('health_metrics = $' + (updateValues.length + 1));
+			updateValues.push(healthMetrics);
+		}
+		if (nutritionData !== undefined) {
+			updateFields.push('nutrition_data = $' + (updateValues.length + 1));
+			updateValues.push(nutritionData);
+		}
+		if (weightTracking !== undefined) {
+			updateFields.push('weight_tracking = $' + (updateValues.length + 1));
+			updateValues.push(weightTracking);
+		}
+		if (stepTracking !== undefined) {
+			updateFields.push('step_tracking = $' + (updateValues.length + 1));
+			updateValues.push(stepTracking);
+		}
+		if (workoutActivities !== undefined) {
+			updateFields.push('workout_activities = $' + (updateValues.length + 1));
+			updateValues.push(workoutActivities);
 		}
 		if (consentVersion) {
 			updateFields.push('consent_version = $' + (updateValues.length + 1));

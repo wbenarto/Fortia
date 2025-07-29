@@ -132,6 +132,34 @@ CREATE TABLE IF NOT EXISTS deep_focus_sessions (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Workout sessions table for storing workout plans
+CREATE TABLE IF NOT EXISTS workout_sessions (
+  id SERIAL PRIMARY KEY,
+  clerk_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  workout_type TEXT NOT NULL CHECK (workout_type IN ('exercise', 'barbell')),
+  scheduled_date DATE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Workout exercises table for storing exercises within workout sessions
+CREATE TABLE IF NOT EXISTS workout_exercises (
+  id SERIAL PRIMARY KEY,
+  workout_session_id INTEGER NOT NULL REFERENCES workout_sessions(id) ON DELETE CASCADE,
+  exercise_name TEXT NOT NULL,
+  sets INTEGER,
+  reps INTEGER,
+  weight DECIMAL(6,2), -- in lbs/kg
+  duration TEXT, -- for cardio exercises (e.g., "30 minutes", "2 miles")
+  order_index INTEGER NOT NULL DEFAULT 1, -- for exercise order in workout
+  notes TEXT,
+  is_completed BOOLEAN DEFAULT false,
+  completed_at TIMESTAMP,
+  calories_burned INTEGER,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_clerk_id ON users(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -151,4 +179,9 @@ CREATE INDEX IF NOT EXISTS idx_data_consent_clerk_id ON data_consent(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_data_consent_created_at ON data_consent(created_at);
 CREATE INDEX IF NOT EXISTS idx_deep_focus_sessions_clerk_id ON deep_focus_sessions(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_deep_focus_sessions_date ON deep_focus_sessions(session_date);
-CREATE INDEX IF NOT EXISTS idx_deep_focus_sessions_created_at ON deep_focus_sessions(created_at); 
+CREATE INDEX IF NOT EXISTS idx_deep_focus_sessions_created_at ON deep_focus_sessions(created_at);
+CREATE INDEX IF NOT EXISTS idx_workout_sessions_clerk_id ON workout_sessions(clerk_id);
+CREATE INDEX IF NOT EXISTS idx_workout_sessions_date ON workout_sessions(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_workout_sessions_created_at ON workout_sessions(created_at);
+CREATE INDEX IF NOT EXISTS idx_workout_exercises_session_id ON workout_exercises(workout_session_id);
+CREATE INDEX IF NOT EXISTS idx_workout_exercises_order ON workout_exercises(order_index); 

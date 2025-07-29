@@ -12,13 +12,13 @@ export default {
 		entryPoint: 'app/index.tsx',
 		version: '1.0.0',
 		orientation: 'portrait',
-		icon: './assets/images/favicon.png',
+		icon: './assets/images/logo-main-fortia-1.png',
 		scheme: 'Fortia',
 		userInterfaceStyle: 'automatic',
 		splash: {
-			image: './assets/images/splash.png',
+			image: './assets/images/logo-main-fortia-1.png',
 			resizeMode: 'contain',
-			backgroundColor: '#262135',
+			backgroundColor: '#E3BBA1',
 		},
 		newArchEnabled: true,
 		ios: {
@@ -34,8 +34,8 @@ export default {
 		},
 		android: {
 			adaptiveIcon: {
-				foregroundImage: './assets/images/favicon.png',
-				backgroundColor: '#262135',
+				foregroundImage: './assets/images/logo-main-fortia-1.png',
+				backgroundColor: '#E3BBA1',
 			},
 		},
 		web: {

@@ -113,7 +113,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 
 	const validateForm = (): boolean => {
 		// Check if user has provided consent for data collection
-		if (!userConsentData?.data_collection_consent) {
+		if (!hasDataCollectionConsent(userConsentData)) {
 			Alert.alert('Error', 'Please provide consent for data collection');
 			setDataConsentModal(true);
 			return false;
@@ -284,7 +284,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 
 		try {
 			// Check if user has consented to data collection
-			if (!userConsentData?.data_collection_consent) {
+			if (!hasDataCollectionConsent(userConsentData)) {
 				Alert.alert('Error', 'Please provide consent for data collection to continue');
 				setDataConsentModal(true);
 				return;
@@ -351,7 +351,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 
 			if (response.success) {
 				// Log the user's weight to the weights table if data collection is consented
-				if (userConsentData?.data_collection_consent) {
+				if (hasDataCollectionConsent(userConsentData)) {
 					try {
 						const todayDate = getTodayDate();
 

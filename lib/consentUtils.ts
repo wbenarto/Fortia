@@ -1,7 +1,12 @@
 import { fetchAPI } from './fetch';
 
 export interface DataConsent {
-	data_collection_consent: boolean;
+	basic_profile: boolean;
+	health_metrics: boolean;
+	nutrition_data: boolean;
+	weight_tracking: boolean;
+	step_tracking: boolean;
+	workout_activities: boolean;
 	consent_version: string;
 	updated_at: string;
 }
@@ -38,7 +43,12 @@ export async function storeDataConsent(
 			method: 'POST',
 			body: JSON.stringify({
 				clerkId,
-				dataCollectionConsent,
+				basicProfile: dataCollectionConsent,
+				healthMetrics: dataCollectionConsent,
+				nutritionData: dataCollectionConsent,
+				weightTracking: dataCollectionConsent,
+				stepTracking: dataCollectionConsent,
+				workoutActivities: dataCollectionConsent,
 				consentMethod,
 			}),
 		});
@@ -61,7 +71,12 @@ export async function updateDataConsent(
 		const response = await fetchAPI(`/(api)/data-consent?clerkId=${clerkId}`, {
 			method: 'PUT',
 			body: JSON.stringify({
-				dataCollectionConsent,
+				basicProfile: dataCollectionConsent,
+				healthMetrics: dataCollectionConsent,
+				nutritionData: dataCollectionConsent,
+				weightTracking: dataCollectionConsent,
+				stepTracking: dataCollectionConsent,
+				workoutActivities: dataCollectionConsent,
 			}),
 		});
 
@@ -74,9 +89,18 @@ export async function updateDataConsent(
 
 /**
  * Check if user has consented to data collection
+ * Returns true if any of the consent fields are true
  */
 export function hasDataCollectionConsent(consentData: DataConsent | null): boolean {
-	return consentData?.data_collection_consent || false;
+	if (!consentData) return false;
+	return (
+		consentData.basic_profile ||
+		consentData.health_metrics ||
+		consentData.nutrition_data ||
+		consentData.weight_tracking ||
+		consentData.step_tracking ||
+		consentData.workout_activities
+	);
 }
 
 /**

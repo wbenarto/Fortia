@@ -8,17 +8,24 @@ import ReactNativeModal from 'react-native-modal';
 import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
 import { fetchDataConsent, hasDataCollectionConsent } from '@/lib/consentUtils';
 import { fetchAPI } from '@/lib/fetch';
+import { getTodayDate } from '@/lib/dateUtils';
 import { getTodayStepData, requestHealthKitPermissions, getHealthKitStatus } from '@/lib/healthKit';
 
 import CustomButton from './CustomButton';
 import InputField from './InputField';
 import SwipeableActivityCard from './SwipeableActivityCard';
+import SwipeableExerciseCard from './SwipeableExerciseCard';
 
-const ActivityTracking = () => {
+interface ActivityTrackingProps {
+	refreshTrigger?: number;
+}
+
+const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	const [nutritionGoals, setNutritionGoals] = useState<any>(null);
 	const [stepData, setStepData] = useState<any>(null);
 	const [healthKitStatus, setHealthKitStatus] = useState<any>(null);
 	const [activities, setActivities] = useState<any[]>([]);
+	const [scheduledExercises, setScheduledExercises] = useState<any[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [workoutModal, setWorkoutModal] = useState(false);
 	const [activityInput, setActivityInput] = useState('');
@@ -50,9 +57,8 @@ const ActivityTracking = () => {
 	const fetchStepDataFromBackend = async () => {
 		if (!user?.id) return;
 		try {
-			const today = new Date();
-			const dateStr = today.toISOString().split('T')[0];
-			const response = await fetchAPI(`/(api)/steps?clerkId=${user.id}&date=${dateStr}`, {
+			const today = getTodayDate();
+			const response = await fetchAPI(`/(api)/steps?clerkId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});
 			if (response.success && response.data && response.data.length > 0) {
@@ -88,8 +94,7 @@ const ActivityTracking = () => {
 				const currentBackendSteps = stepData?.steps || 0;
 				if (todayStepData.steps !== currentBackendSteps) {
 					// Upload to backend
-					const today = new Date();
-					const dateStr = today.toISOString().split('T')[0];
+					const today = getTodayDate();
 					await fetchAPI('/(api)/steps', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
@@ -98,7 +103,7 @@ const ActivityTracking = () => {
 							steps: todayStepData.steps,
 							goal: todayStepData.goal,
 							caloriesBurned: todayStepData.caloriesBurned,
-							date: dateStr,
+							date: today,
 						}),
 					});
 				}
@@ -138,7 +143,7 @@ const ActivityTracking = () => {
 		if (!user?.id) return;
 
 		try {
-			const today = new Date().toISOString().split('T')[0];
+			const today = getTodayDate();
 			const response = await fetchAPI(`/(api)/activities?clerkId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});
@@ -155,11 +160,62 @@ const ActivityTracking = () => {
 		}
 	};
 
+	// Fetch scheduled exercises from database
+	const fetchScheduledExercises = async () => {
+		if (!user?.id) return;
+
+		try {
+			const today = getTodayDate();
+			const response = await fetchAPI(`/(api)/workouts?clerkId=${user.id}&date=${today}`, {
+				method: 'GET',
+			});
+
+			if (response.success) {
+				// Flatten the data: create individual cards for each exercise
+				const flattenedExercises: any[] = [];
+
+				response.workouts.forEach((workout: any) => {
+					if (workout.workout_type === 'exercise') {
+						// Single exercise - create one card
+						flattenedExercises.push({
+							id: workout.id,
+							name: workout.title,
+							duration:
+								workout.exercises.length > 0 ? workout.exercises[0].duration : 'No duration',
+							workout_type: 'exercise',
+							session_title: workout.title, // For single exercises, session title is the same as exercise name
+							calories_burned:
+								workout.exercises.length > 0 ? workout.exercises[0].calories_burned : undefined,
+						});
+					} else if (workout.workout_type === 'barbell') {
+						// Multi-exercise session - create individual cards for each exercise
+						workout.exercises.forEach((exercise: any) => {
+							flattenedExercises.push({
+								id: `${workout.id}-${exercise.id}`, // Unique ID for each exercise
+								name: exercise.name,
+								duration: exercise.duration || 'No duration',
+								workout_type: 'barbell',
+								session_title: workout.title, // Use the session title
+								session_id: workout.id, // Keep reference to session for deletion
+								calories_burned: exercise.calories_burned,
+							});
+						});
+					}
+				});
+
+				setScheduledExercises(flattenedExercises);
+			}
+		} catch (error) {
+			console.error('Failed to fetch scheduled exercises:', error);
+		}
+	};
+
 	// Fetch nutrition goals and step data on component mount
 	useEffect(() => {
 		if (user?.id) {
 			fetchNutritionGoals();
 			fetchActivities();
+			fetchScheduledExercises();
 			fetchUserConsent();
 		}
 	}, [user?.id]);
@@ -193,12 +249,21 @@ const ActivityTracking = () => {
 			if (user?.id) {
 				fetchNutritionGoals();
 				fetchActivities();
+				fetchScheduledExercises();
 				if (hasDataCollectionConsent(userConsentData)) {
 					fetchStepDataFromBackend();
 				}
 			}
 		}, [user?.id, userConsentData])
 	);
+
+	// Refresh scheduled exercises when refreshTrigger changes
+	useEffect(() => {
+		if (user?.id && refreshTrigger > 0) {
+			console.log('Refreshing scheduled exercises due to refreshTrigger:', refreshTrigger);
+			fetchScheduledExercises();
+		}
+	}, [refreshTrigger, user?.id]);
 
 	// Get BMR from stored nutrition goals with fallback calculation
 	const getStoredBMR = () => {
@@ -305,7 +370,16 @@ const ActivityTracking = () => {
 	};
 
 	const activitiesCalories = getActivitiesCalories();
-	const totalCaloriesBurned = storedBMR + stepCalories + activitiesCalories;
+
+	// Calculate total calories from scheduled exercises
+	const getExercisesCalories = () => {
+		return scheduledExercises.reduce((total, exercise) => {
+			return total + (exercise.calories_burned || 0);
+		}, 0);
+	};
+
+	const exercisesCalories = getExercisesCalories();
+	const totalCaloriesBurned = storedBMR + stepCalories + activitiesCalories + exercisesCalories;
 
 	const handleWorkoutModal = () => {
 		setWorkoutModal(!workoutModal);
@@ -414,17 +488,87 @@ const ActivityTracking = () => {
 		}
 	};
 
+	const toggleExerciseCompletion = async (exerciseId: string, isCompleted: boolean) => {
+		console.log('Toggling exercise completion:', { exerciseId, isCompleted });
+		// TODO: Implement API call to update exercise completion status
+		// For now, just log the action
+	};
+
+	const deleteScheduledExercise = async (exerciseId: string) => {
+		if (!user?.id) return;
+
+		try {
+			// Find the exercise to get the session_id
+			const exercise = scheduledExercises.find(ex => ex.id === exerciseId);
+			if (!exercise) {
+				console.error('Exercise not found for deletion');
+				return;
+			}
+
+			// Determine the session ID and exercise ID to delete
+			let sessionId: string;
+			let individualExerciseId: string | null = null;
+
+			if (exercise.workout_type === 'barbell') {
+				// For barbell exercises, extract the actual exercise ID from the compound ID
+				// The ID format is "sessionId-exerciseId"
+				const idParts = exerciseId.split('-');
+				if (idParts.length === 2) {
+					sessionId = exercise.session_id;
+					individualExerciseId = idParts[1]; // The actual exercise ID
+				} else {
+					sessionId = exercise.session_id;
+				}
+			} else {
+				// For single exercises, use the exercise ID directly
+				sessionId = exerciseId;
+			}
+
+			if (!sessionId) {
+				console.error('No session ID found for exercise:', exercise);
+				Alert.alert('Error', 'Unable to delete exercise. Please try again.');
+				return;
+			}
+
+			console.log('Deleting exercise:', { exerciseId, sessionId, individualExerciseId, exercise });
+
+			// Build the API URL with appropriate parameters
+			let apiUrl = `/(api)/workouts?clerkId=${user.id}&sessionId=${sessionId}`;
+			if (individualExerciseId) {
+				apiUrl += `&exerciseId=${individualExerciseId}`;
+			}
+
+			const response = await fetchAPI(apiUrl, {
+				method: 'DELETE',
+			});
+
+			if (response.success) {
+				console.log('Exercise deleted successfully, refreshing data...');
+				// Refresh the data instead of just removing from local state
+				await fetchScheduledExercises();
+			} else {
+				console.error('Failed to delete scheduled exercise:', response.error);
+				// Show error to user
+				Alert.alert('Error', `Failed to delete exercise: ${response.error}`);
+			}
+		} catch (error) {
+			console.error('Error deleting scheduled exercise:', error);
+			// Show error to user
+			Alert.alert('Error', 'Failed to delete exercise. Please try again.');
+		}
+	};
+
 	return (
 		<View className="w-full">
 			<View className="flex flex-row justify-between items-center px-4">
 				<Text className="font-JakartaSemiBold text-lg">Activity Summary</Text>
-				<View className="flex flex-row w-24  items-center ">
+				<View className="flex flex-row  w-28 items-center ">
 					<TouchableOpacity
 						onPress={handleWorkoutModal}
 						className="bg-[#E3BBA1] w-full px-3 py-1 rounded-full"
 					>
 						<Text className="text-white text-center text-xs font-JakartaSemiBold">
-							Log Activity
+							Log Exercise
 						</Text>
 					</TouchableOpacity>
 				</View>
@@ -535,6 +679,34 @@ const ActivityTracking = () => {
 						</View>
 					</View>
 
+					{/* Scheduled Exercises Cards */}
+					{scheduledExercises.length > 0 ? (
+						scheduledExercises.map((exercise, index) => (
+							<SwipeableExerciseCard
+								key={exercise.id}
+								exercise={exercise}
+								onDelete={deleteScheduledExercise}
+								onToggleCompletion={toggleExerciseCompletion}
+							/>
+						))
+					) : (
+						<View className="h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9]">
+							<View className="flex flex-row gap-2 mb-2 items-center">
+								<Ionicons name="calendar-outline" size={14} color="#5A556B" />
+								<Text className="text-xs text-[#64748B]">Scheduled Exercises</Text>
+							</View>
+							<View className="flex flex-row justify-between items-center">
+								<Text className="text-lg font-JakartaBold text-[#64748B]">
+									No exercises scheduled
+								</Text>
+								<View className="flex flex-row gap-2">
+									<Ionicons name="time-outline" size={14} color="#5A556B" />
+									<Text className="text-[#64748B]">--</Text>
+								</View>
+							</View>
+						</View>
+					)}
+
 					{/* Activities Cards */}
 					{activities.length > 0 ? (
 						activities.map((activity, index) => (
@@ -544,7 +716,7 @@ const ActivityTracking = () => {
 								onDelete={deleteActivity}
 							/>
 						))
-					) : (
+					) : scheduledExercises.length === 0 ? (
 						<View className="h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9]">
 							<View className="flex flex-row gap-2 mb-2 items-center">
 								<Ionicons name="barbell-outline" size={14} color="#5A556B" />
@@ -560,7 +732,7 @@ const ActivityTracking = () => {
 								</View>
 							</View>
 						</View>
-					)}
+					) : null}
 				</View>
 
 				{/* Workout Modal */}
