@@ -208,10 +208,7 @@ export async function DELETE(request: Request) {
 		const sessionId = searchParams.get('sessionId');
 		const exerciseId = searchParams.get('exerciseId');
 
-		console.log('DELETE request received:', { clerkId, sessionId, exerciseId });
-
 		if (!clerkId) {
-			console.log('Missing clerkId');
 			return Response.json({ error: 'Clerk ID is required' }, { status: 401 });
 		}
 
@@ -233,8 +230,6 @@ export async function DELETE(request: Request) {
 				console.log('Invalid exerciseId:', exerciseId);
 				return Response.json({ error: 'Invalid exercise ID format' }, { status: 400 });
 			}
-
-			console.log('Deleting individual exercise:', { parsedExerciseId, parsedSessionId, clerkId });
 
 			// Verify the exercise belongs to a session owned by the user
 			const exerciseCheck = await sql`
@@ -286,7 +281,6 @@ export async function DELETE(request: Request) {
 		}
 
 		// If no exerciseId, delete entire session (existing behavior)
-		console.log('Checking session ownership:', { parsedSessionId, clerkId });
 
 		// First verify the session belongs to the user
 		const sessionCheck = await sql`

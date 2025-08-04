@@ -73,7 +73,7 @@ const SwipeableExerciseCard: React.FC<SwipeableExerciseCardProps> = ({
 				text: 'Delete',
 				style: 'destructive',
 				onPress: () => {
-					console.log('Delete confirmed, calling onDelete with ID:', exercise.id);
+					console.log('Delete confirmed, calling onDelete');
 					onDelete(exercise.id);
 					// Animate back to original position
 					Animated.spring(translateX, {

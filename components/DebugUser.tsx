@@ -16,12 +16,12 @@ const DebugUser = () => {
 		setIsLoading(true);
 		try {
 			// Debug user info
-			const userResponse = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+			const userResponse = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
 			// Debug meals
-			const mealsResponse = await fetchAPI(`/(api)/meals?clerkId=${user.id}`, {
+			const mealsResponse = await fetchAPI(`/api/meals?clerkId=${user.id}`, {
 				method: 'PATCH',
 			});
 

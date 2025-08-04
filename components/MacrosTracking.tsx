@@ -158,7 +158,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 
 			setIsLoadingGoals(true);
 			try {
-				const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+				const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 					method: 'GET',
 				});
 
@@ -192,7 +192,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				// Use user's local timezone for today's date
 				const today = getTodayDate();
 				const response = await fetchAPI(
-					`/(api)/meals?clerkId=${user.id}&date=${today}&summary=true`,
+					`/api/meals?clerkId=${user.id}&date=${today}&summary=true`,
 					{
 						method: 'GET',
 					}
@@ -258,8 +258,8 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			try {
 				console.log('Analyzing food:', { foodName, portionSize });
 
-				// Use direct fetch to get detailed error information
-				const response = await fetch('/(api)/meal-analysis', {
+				// Use fetchAPI utility to get the correct base URL
+				const data = await fetchAPI('/api/meal-analysis', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -271,11 +271,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					}),
 				});
 
-				console.log('Meal analysis response status:', response.status);
-
-				const data = await response.json();
-
-				if (response.ok && data.success) {
+				if (data.success) {
 					setNutritionData(data.data);
 
 					// Show rate limit info if available
@@ -283,16 +279,15 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						setRateLimitInfo(data.rateLimitInfo);
 					}
 				} else {
-					let errorMessage =
-						data.error || data.details || `HTTP ${response.status}: Failed to analyze food`;
+					let errorMessage = data.error || data.details || 'Failed to analyze food';
 
 					// Handle rate limit errors specifically
-					if (response.status === 429 && data.rateLimitInfo) {
+					if (data.rateLimitInfo) {
 						errorMessage = `Daily limit reached (${data.rateLimitInfo.used}/20 used). You can analyze 20 meals per day. Limit resets daily.`;
 					}
 
 					setError(errorMessage);
-					console.error('Meal analysis API error:', { status: response.status, data });
+					console.error('Meal analysis API error:', data);
 				}
 			} catch (error) {
 				console.error('Food analysis network error:', error);
@@ -309,14 +304,9 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			}
 
 			try {
-				console.log('Checking if user exists for clerkId:', user.id);
+				const data = await fetchAPI(`/api/user?clerkId=${user.id}`);
 
-				const response = await fetch(`/(api)/user?clerkId=${user.id}`);
-				console.log('User check response status:', response.status);
-
-				const data = await response.json();
-
-				const userExists = response.ok && data.success && data.data;
+				const userExists = data.success && data.data;
 				console.log('User exists in database:', userExists);
 
 				return userExists;
@@ -328,10 +318,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 
 		const handleSaveMeal = async () => {
 			if (!nutritionData || !user?.id) {
-				console.error('Missing nutritionData or user.id:', {
-					nutritionData: !!nutritionData,
-					userId: user?.id,
-				});
+				console.error('Missing nutritionData or user.id');
 				setError('Missing data. Please try again.');
 				return;
 			}
@@ -344,7 +331,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					setError(
 						'Please complete your profile setup first. Go to Settings > Edit Profile to continue.'
 					);
-					console.error('User does not exist in database for clerkId:', user.id);
+					console.error('User does not exist in database');
 					return;
 				}
 
@@ -392,10 +379,11 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					sodium: validatedNutritionData.sodium,
 					confidenceScore: validatedNutritionData.confidence,
 					mealType: validatedMealType,
+					date: getTodayDate(), // Add user's local date for proper timezone handling
 				};
 
-				console.log('Saving meal with data:', mealData);
-				console.log('User ID being used:', user.id);
+				console.log('Saving meal with data (clerkId hidden)');
+
 				console.log('Nutrition data validation:', {
 					calories: typeof nutritionData.calories,
 					protein: typeof nutritionData.protein,
@@ -407,8 +395,8 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					confidence: typeof nutritionData.confidence,
 				});
 
-				// Use direct fetch to get detailed error information
-				const response = await fetch('/(api)/meals', {
+				// Use fetchAPI utility to get the correct base URL
+				const data = await fetchAPI('/api/meals', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -416,11 +404,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					body: JSON.stringify(mealData),
 				});
 
-				console.log('Meal save response status:', response.status);
-
-				const data = await response.json();
-
-				if (response.ok && data.success) {
+				if (data.success) {
 					handleAddMealModal(); // Close modal
 					// Refresh daily summary to update nutrition display
 					await fetchDailySummary();
@@ -429,10 +413,9 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						onMealLogged();
 					}
 				} else {
-					const errorMessage =
-						data.error || data.details || `HTTP ${response.status}: Failed to save meal`;
+					const errorMessage = data.error || data.details || 'Failed to save meal';
 					setError(errorMessage);
-					console.error('Meal save API error:', { status: response.status, data });
+					console.error('Meal save API error:', data);
 				}
 			} catch (error) {
 				console.error('Save meal network error:', error);

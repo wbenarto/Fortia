@@ -51,7 +51,7 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 		if (!user?.id) return;
 
 		try {
-			const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+			const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
@@ -125,7 +125,7 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 			const targetWeightLbs = convertWeightToLbs(formData.targetWeight);
 
 			// We need to get the existing user data to preserve other fields
-			const existingResponse = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+			const existingResponse = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
@@ -137,7 +137,7 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 			const existingData = existingResponse.data;
 
 			// Update user with new goals using PUT method
-			const response = await fetchAPI('/(api)/user', {
+			const response = await fetchAPI('/api/user', {
 				method: 'PUT',
 				body: JSON.stringify({
 					clerkId: user.id,

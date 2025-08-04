@@ -344,7 +344,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 				tdee,
 			};
 
-			const response = await fetchAPI('/(api)/user', {
+			const response = await fetchAPI('/api/user', {
 				method: 'PUT',
 				body: JSON.stringify(requestBody),
 			});
@@ -355,7 +355,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 					try {
 						const todayDate = getTodayDate();
 
-						const weightResponse = await fetchAPI('/(api)/weight', {
+						const weightResponse = await fetchAPI('/api/weight', {
 							method: 'POST',
 							body: JSON.stringify({
 								weight: weight.toString(),

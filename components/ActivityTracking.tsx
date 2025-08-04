@@ -28,7 +28,8 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	const [scheduledExercises, setScheduledExercises] = useState<any[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [workoutModal, setWorkoutModal] = useState(false);
-	const [activityInput, setActivityInput] = useState('');
+	const [exerciseName, setExerciseName] = useState('');
+	const [exerciseDuration, setExerciseDuration] = useState('');
 	const [estimatedCalories, setEstimatedCalories] = useState<number | null>(null);
 	const [isCalculating, setIsCalculating] = useState(false);
 	const [userConsentData, setUserConsentData] = useState<any>(null);
@@ -39,7 +40,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 
 		setIsLoading(true);
 		try {
-			const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+			const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
@@ -58,7 +59,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 		if (!user?.id) return;
 		try {
 			const today = getTodayDate();
-			const response = await fetchAPI(`/(api)/steps?clerkId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/api/steps?clerkId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});
 			if (response.success && response.data && response.data.length > 0) {
@@ -95,7 +96,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 				if (todayStepData.steps !== currentBackendSteps) {
 					// Upload to backend
 					const today = getTodayDate();
-					await fetchAPI('/(api)/steps', {
+					await fetchAPI('/api/steps', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
@@ -144,7 +145,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 
 		try {
 			const today = getTodayDate();
-			const response = await fetchAPI(`/(api)/activities?clerkId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/api/activities?clerkId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});
 
@@ -166,7 +167,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 
 		try {
 			const today = getTodayDate();
-			const response = await fetchAPI(`/(api)/workouts?clerkId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/api/workouts?clerkId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});
 
@@ -385,39 +386,36 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 		setWorkoutModal(!workoutModal);
 		// Reset form when opening modal
 		if (!workoutModal) {
-			setActivityInput('');
+			setExerciseName('');
+			setExerciseDuration('');
 			setEstimatedCalories(null);
 		}
 	};
 
 	const estimateCalories = async () => {
-		if (!activityInput.trim()) return;
+		if (!exerciseName.trim() || !exerciseDuration.trim()) return;
 
 		setIsCalculating(true);
 		try {
-			// Get user's weight for more accurate estimation
-			const userWeight = nutritionGoals?.weight || 70; // Default to 70kg if not available
-
-			const response = await fetchAPI('/(api)/meal-analysis', {
+			const response = await fetchAPI('/api/exercise-analysis', {
 				method: 'POST',
 				body: JSON.stringify({
-					foodDescription: `Estimate calories burned from this activity: ${activityInput}. User weight: ${userWeight}kg. Only return the number of calories burned, no other text.`,
-					portionSize: '1 session',
+					exerciseDescription: exerciseName.trim(),
+					duration: exerciseDuration.trim(),
 					userId: user?.id,
 				}),
 			});
 
 			if (response.success && response.data) {
-				// Extract calories from the response
-				const caloriesText = response.data.calories?.toString() || '0';
-				const calories = parseInt(caloriesText.replace(/\D/g, ''), 10);
+				// Extract calories from the exercise analysis response
+				const calories = response.data.calories_burned || 0;
 				setEstimatedCalories(calories);
 			} else {
 				let errorMessage = response.error || 'Failed to estimate calories';
 
 				// Handle rate limit errors specifically
 				if (response.status === 429 && response.rateLimitInfo) {
-					errorMessage = `Daily limit reached (${response.rateLimitInfo.used}/20 used). You can analyze 20 meals per day. Limit resets daily.`;
+					errorMessage = `Daily limit reached (${response.rateLimitInfo.used}/20 used). You can analyze 20 exercises per day. Limit resets daily.`;
 				}
 
 				console.error('Failed to estimate calories:', errorMessage);
@@ -431,7 +429,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	};
 
 	const saveActivity = async () => {
-		if (!activityInput.trim() || !user?.id) {
+		if (!exerciseName.trim() || !exerciseDuration.trim() || !user?.id) {
 			console.error('Missing required fields for saving activity');
 			return;
 		}
@@ -442,18 +440,19 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 		}
 
 		try {
-			const response = await fetchAPI('/(api)/activities', {
+			const response = await fetchAPI('/api/activities', {
 				method: 'POST',
 				body: JSON.stringify({
 					clerkId: user.id,
-					activityDescription: activityInput.trim(),
+					activityDescription: `${exerciseName.trim()} for ${exerciseDuration.trim()}`,
 					estimatedCalories: estimatedCalories,
 				}),
 			});
 
 			if (response.success) {
 				// Reset form
-				setActivityInput('');
+				setExerciseName('');
+				setExerciseDuration('');
 				setEstimatedCalories(null);
 				setWorkoutModal(false);
 				// Refresh activities list
@@ -474,7 +473,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 		if (!user?.id) return;
 
 		try {
-			const response = await fetchAPI(`/(api)/activities?id=${activityId}&clerkId=${user.id}`, {
+			const response = await fetchAPI(`/api/activities?id=${activityId}&clerkId=${user.id}`, {
 				method: 'DELETE',
 			});
 
@@ -489,7 +488,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	};
 
 	const toggleExerciseCompletion = async (exerciseId: string, isCompleted: boolean) => {
-		console.log('Toggling exercise completion:', { exerciseId, isCompleted });
+		console.log('Toggling exercise completion');
 		// TODO: Implement API call to update exercise completion status
 		// For now, just log the action
 	};
@@ -530,7 +529,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 				return;
 			}
 
-			console.log('Deleting exercise:', { exerciseId, sessionId, individualExerciseId, exercise });
+			console.log('Deleting exercise');
 
 			// Build the API URL with appropriate parameters
 			let apiUrl = `/(api)/workouts?clerkId=${user.id}&sessionId=${sessionId}`;
@@ -749,15 +748,25 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 							</TouchableOpacity>
 						</View>
 
-						<View className="flex mx-auto w-full justify-center mb-4">
+						<View className="mb-4 bg-white rounded-xl">
 							<InputField
-								label=""
-								placeholder="e.g 100 pushups, ran 2 miles.."
-								value={activityInput}
-								onChangeText={setActivityInput}
-								multiline
-								numberOfLines={3}
-								className=" flex p-4"
+								label="Exercise Name"
+								labelStyle="text-sm"
+								placeholder="e.g. Morning Bike Ride, Light Run, Swimming, etc..."
+								value={exerciseName}
+								onChangeText={setExerciseName}
+								className="text-left text-sm placeholder:text-xs border-none"
+							/>
+						</View>
+
+						<View className="mb-4 bg-white rounded-xl">
+							<InputField
+								label="Exercise Duration"
+								labelStyle="text-sm"
+								placeholder="e.g. 30 minutes or 2 miles..."
+								value={exerciseDuration}
+								onChangeText={setExerciseDuration}
+								className="text-left text-sm placeholder:text-xs border-none"
 							/>
 						</View>
 
@@ -775,9 +784,11 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 						<View className="mb-6">
 							<TouchableOpacity
 								onPress={estimateCalories}
-								disabled={isCalculating}
+								disabled={isCalculating || !exerciseName.trim() || !exerciseDuration.trim()}
 								className={`py-3 px-4 rounded-lg border-2 ${
-									isCalculating ? 'bg-gray-200 border-gray-300' : 'bg-white border-[#E3BBA1]'
+									isCalculating || !exerciseName.trim() || !exerciseDuration.trim()
+										? 'bg-gray-200 border-gray-300'
+										: 'bg-white border-[#E3BBA1]'
 								}`}
 							>
 								<View className="flex flex-row items-center justify-center">
@@ -788,7 +799,9 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 									)}
 									<Text
 										className={`ml-2 font-JakartaSemiBold ${
-											isCalculating ? 'text-gray-500' : 'text-[#E3BBA1]'
+											isCalculating || !exerciseName.trim() || !exerciseDuration.trim()
+												? 'text-gray-500'
+												: 'text-[#E3BBA1]'
 										}`}
 									>
 										{isCalculating ? 'Re-analyzing...' : 'Analyze activity'}
@@ -799,7 +812,9 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 
 						{estimatedCalories && (
 							<View className="mb-6">
-								<Text className="text-sm text-center text-[#64748B] mb-1">{activityInput}</Text>
+								<Text className="text-sm text-center text-[#64748B] mb-1">
+									{exerciseName} for {exerciseDuration}
+								</Text>
 								<Text className="text-base text-center font-JakartaMedium">
 									~{estimatedCalories} cal
 								</Text>

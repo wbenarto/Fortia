@@ -73,7 +73,7 @@ const WeightTracking = () => {
 		if (!user?.id) return;
 
 		try {
-			const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+			const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
@@ -94,7 +94,7 @@ const WeightTracking = () => {
 
 				try {
 					const token = await getToken();
-					const response = await fetchAPI(`/(api)/weight?clerkId=${user.id}`, {
+					const response = await fetchAPI(`/api/weight?clerkId=${user.id}`, {
 						method: 'GET',
 						headers: {
 							Authorization: `Bearer ${token}`,
@@ -164,7 +164,7 @@ const WeightTracking = () => {
 			// Use today's date in user's local timezone (same as meal logging)
 			const dateString = getTodayDate();
 
-			await fetchAPI('/(api)/weight', {
+			await fetchAPI('/api/weight', {
 				method: 'POST',
 				body: JSON.stringify({
 					weight: weightForm.weight,
@@ -178,7 +178,7 @@ const WeightTracking = () => {
 
 			const fetchData = async () => {
 				const token = await getToken();
-				const response = await fetchAPI(`/(api)/weight?clerkId=${user?.id}`, {
+				const response = await fetchAPI(`/api/weight?clerkId=${user?.id}`, {
 					method: 'GET',
 					headers: {
 						Authorization: `Bearer ${token}`,

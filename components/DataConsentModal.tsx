@@ -93,7 +93,7 @@ const DataConsentModal: React.FC<DataConsentModalProps> = ({
 		setIsSubmitting(true);
 		try {
 			// Store data collection consent
-			await fetchAPI('/(api)/data-consent', {
+			await fetchAPI('/api/data-consent', {
 				method: 'POST',
 				body: JSON.stringify({
 					clerkId,
@@ -109,7 +109,7 @@ const DataConsentModal: React.FC<DataConsentModalProps> = ({
 			});
 
 			// Store privacy consent
-			await fetchAPI('/(api)/privacy-consent', {
+			await fetchAPI('/api/privacy-consent', {
 				method: 'POST',
 				body: JSON.stringify({
 					clerkId,

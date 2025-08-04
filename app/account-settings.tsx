@@ -89,7 +89,7 @@ const AccountSettings = () => {
 
 		setIsLoading(true);
 		try {
-			const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+			const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
@@ -165,7 +165,7 @@ const AccountSettings = () => {
 		try {
 			// Step 1: Delete all data from our database
 			console.log('Deleting user data from database...');
-			const dbResponse = await fetchAPI(`/(api)/delete-account?clerkId=${user.id}`, {
+			const dbResponse = await fetchAPI(`/api/delete-account?clerkId=${user.id}`, {
 				method: 'DELETE',
 			});
 

@@ -28,7 +28,7 @@ const Workout = () => {
 				return;
 			}
 
-			const response = await fetchAPI('/(api)/workouts', {
+			const response = await fetchAPI('/api/workouts', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

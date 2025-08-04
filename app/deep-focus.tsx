@@ -170,7 +170,7 @@ const DeepFocus = () => {
 			const token = await getToken();
 			const sessionEndTime = new Date();
 
-			const response = await fetchAPI('/(api)/deep-focus', {
+			const response = await fetchAPI('/api/deep-focus', {
 				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -203,7 +203,7 @@ const DeepFocus = () => {
 
 		try {
 			const token = await getToken();
-			const response = await fetchAPI(`/(api)/deep-focus?clerkId=${user.id}&period=week`, {
+			const response = await fetchAPI(`/api/deep-focus?clerkId=${user.id}&period=week`, {
 				method: 'GET',
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -276,7 +276,7 @@ const DeepFocus = () => {
 			const token = await getToken();
 
 			// Fetch today's data
-			const todayResponse = await fetchAPI(`/(api)/deep-focus?clerkId=${user.id}&period=today`, {
+			const todayResponse = await fetchAPI(`/api/deep-focus?clerkId=${user.id}&period=today`, {
 				method: 'GET',
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -285,7 +285,7 @@ const DeepFocus = () => {
 			});
 
 			// Fetch week's data
-			const weekResponse = await fetchAPI(`/(api)/deep-focus?clerkId=${user.id}&period=week`, {
+			const weekResponse = await fetchAPI(`/api/deep-focus?clerkId=${user.id}&period=week`, {
 				method: 'GET',
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -294,7 +294,7 @@ const DeepFocus = () => {
 			});
 
 			// Fetch year's data
-			const yearResponse = await fetchAPI(`/(api)/deep-focus?clerkId=${user.id}&period=year`, {
+			const yearResponse = await fetchAPI(`/api/deep-focus?clerkId=${user.id}&period=year`, {
 				method: 'GET',
 				headers: {
 					Authorization: `Bearer ${token}`,

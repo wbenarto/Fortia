@@ -49,7 +49,7 @@ export const useUserProfile = (): UserProfile & { refresh: () => void } => {
 		}
 
 		try {
-			const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+			const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 

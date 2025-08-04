@@ -44,7 +44,7 @@ export default function Page() {
 				if (!user?.id) return;
 
 				try {
-					const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+					const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 						method: 'GET',
 					});
 
@@ -61,7 +61,7 @@ export default function Page() {
 					} else if (response.error === 'User not found') {
 						// User doesn't exist in database, create them first
 						try {
-							const userResponse = await fetchAPI('/(api)/user', {
+							const userResponse = await fetchAPI('/api/user', {
 								method: 'POST',
 								body: JSON.stringify({
 									firstName: user?.firstName || '',

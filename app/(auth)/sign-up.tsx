@@ -75,7 +75,7 @@ const SignUp = () => {
 			if (signUpAttempt.status === 'complete') {
 				try {
 					// Create database user
-					const userResponse = await fetchAPI('/(api)/user', {
+					const userResponse = await fetchAPI('/api/user', {
 						method: 'POST',
 						body: JSON.stringify({
 							firstName: form.firstName,

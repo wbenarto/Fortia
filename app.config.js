@@ -6,13 +6,12 @@ export default {
 			eas: {
 				projectId: '061a67d8-c8d4-4d24-b007-4c4b50e330ee',
 			},
-			geminiAPIKey: process.env.GEMINI_API_KEY,
 		},
 		platforms: ['ios', 'web'],
 		entryPoint: 'app/index.tsx',
 		version: '1.0.0',
 		orientation: 'portrait',
-		icon: './assets/images/logo-main-fortia-1.png',
+		icon: './assets/icons/fortia-app-icon-main.png',
 		scheme: 'Fortia',
 		userInterfaceStyle: 'automatic',
 		splash: {
@@ -29,6 +28,16 @@ export default {
 					'Fortia needs access to motion and fitness data to track your daily steps for better fitness insights.',
 				NSMicrophoneUsageDescription:
 					'Fortia needs access to your microphone for audio recording features.',
+				NSAppTransportSecurity: {
+					NSAllowsArbitraryLoads: true,
+					NSExceptionDomains: {
+						'10.0.0.19': {
+							NSExceptionAllowsInsecureHTTPLoads: true,
+							NSExceptionMinimumTLSVersion: '1.0',
+							NSExceptionRequiresForwardSecrecy: false,
+						},
+					},
+				},
 			},
 			bundleIdentifier: 'com.fortia.app',
 		},

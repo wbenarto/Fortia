@@ -10,8 +10,6 @@ export async function DELETE(request: Request) {
 			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
 		}
 
-		console.log(`Starting account deletion for user: ${clerkId}`);
-
 		// Delete all user data from all tables in the correct order
 		// Start with tables that reference other tables, then move to main tables
 
@@ -80,10 +78,7 @@ export async function DELETE(request: Request) {
 		if (userResult.length === 0) {
 			console.log('No user record found to delete');
 		} else {
-			console.log(`Deleted user record with ID: ${userResult[0].id}`);
 		}
-
-		console.log(`Account deletion completed successfully for user: ${clerkId}`);
 
 		return Response.json({
 			success: true,

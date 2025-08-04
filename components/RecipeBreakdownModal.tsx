@@ -56,7 +56,7 @@ const RecipeBreakdownModal: React.FC<RecipeBreakdownModalProps> = ({ visible, on
 		setRecipeData(null);
 
 		try {
-			const response = await fetchAPI('/(api)/recipe-breakdown', {
+			const response = await fetchAPI('/api/recipe-breakdown', {
 				method: 'POST',
 				body: JSON.stringify({ videoUrl: search.trim() }),
 				headers: { 'Content-Type': 'application/json' },

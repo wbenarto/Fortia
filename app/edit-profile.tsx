@@ -73,7 +73,7 @@ const EditProfileContent = () => {
 
 		setIsLoading(true);
 		try {
-			const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`, {
+			const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
 				method: 'GET',
 			});
 
@@ -160,7 +160,7 @@ const EditProfileContent = () => {
 			// Format date as YYYY-MM-DD for database DATE type
 			const dob = `${dobYear}-${dobMonth.padStart(2, '0')}-${dobDay.padStart(2, '0')}`;
 
-			const response = await fetchAPI(`/(api)/user`, {
+			const response = await fetchAPI(`/api/user`, {
 				method: 'PUT',
 				body: JSON.stringify({
 					clerkId: user.id,

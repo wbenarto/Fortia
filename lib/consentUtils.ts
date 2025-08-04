@@ -16,7 +16,7 @@ export interface DataConsent {
  */
 export async function fetchDataConsent(clerkId: string): Promise<DataConsent | null> {
 	try {
-		const response = await fetchAPI(`/(api)/data-consent?clerkId=${clerkId}`, {
+		const response = await fetchAPI(`/api/data-consent?clerkId=${clerkId}`, {
 			method: 'GET',
 		});
 
@@ -39,7 +39,7 @@ export async function storeDataConsent(
 	consentMethod: string = 'onboarding'
 ): Promise<boolean> {
 	try {
-		const response = await fetchAPI('/(api)/data-consent', {
+		const response = await fetchAPI('/api/data-consent', {
 			method: 'POST',
 			body: JSON.stringify({
 				clerkId,
@@ -68,7 +68,7 @@ export async function updateDataConsent(
 	dataCollectionConsent: boolean
 ): Promise<boolean> {
 	try {
-		const response = await fetchAPI(`/(api)/data-consent?clerkId=${clerkId}`, {
+		const response = await fetchAPI(`/api/data-consent?clerkId=${clerkId}`, {
 			method: 'PUT',
 			body: JSON.stringify({
 				basicProfile: dataCollectionConsent,

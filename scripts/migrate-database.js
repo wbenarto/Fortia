@@ -79,6 +79,33 @@ const migrations = [
 	},
 
 	{
+		id: '004_add_notes_to_meals_table',
+		description: 'Add notes column to meals table for additional meal information',
+		up: async () => {
+			console.log('Running migration: Add notes column to meals table...');
+
+			// Check if notes column already exists
+			const columnExists = await sql`
+				SELECT EXISTS (
+					SELECT FROM information_schema.columns 
+					WHERE table_schema = 'public' 
+					AND table_name = 'meals' 
+					AND column_name = 'notes'
+				)
+			`;
+
+			if (columnExists[0].exists) {
+				console.log('✅ notes column already exists in meals table, skipping...');
+				return;
+			}
+
+			// Add notes column
+			await sql`ALTER TABLE meals ADD COLUMN notes TEXT`;
+			console.log('✅ notes column added to meals table successfully');
+		},
+	},
+
+	{
 		id: '003_add_missing_indexes',
 		description: 'Add any missing indexes for performance',
 		up: async () => {

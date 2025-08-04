@@ -61,7 +61,7 @@ const Meal = () => {
 
 		try {
 			const today = getTodayDate();
-			const response = await fetchAPI(`/(api)/meals?clerkId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/api/meals?clerkId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});
 
@@ -115,7 +115,7 @@ const Meal = () => {
 	// Handle meal deletion
 	const handleDeleteMeal = async (mealId: string) => {
 		try {
-			const response = await fetchAPI(`/(api)/meals?id=${mealId}`, {
+			const response = await fetchAPI(`/api/meals?id=${mealId}`, {
 				method: 'DELETE',
 			});
 

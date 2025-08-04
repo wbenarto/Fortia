@@ -149,7 +149,7 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 			if (activeTab === 'exercise') {
 				setIsAnalyzing(true);
 				try {
-					const analysisResponse = await fetchAPI('/(api)/exercise-analysis', {
+					const analysisResponse = await fetchAPI('/api/exercise-analysis', {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
@@ -191,7 +191,7 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 				for (let i = 0; i < validExercises.length; i++) {
 					const exercise = validExercises[i];
 					try {
-						const analysisResponse = await fetchAPI('/(api)/exercise-analysis', {
+						const analysisResponse = await fetchAPI('/api/exercise-analysis', {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json',

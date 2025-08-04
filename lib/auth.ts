@@ -45,14 +45,13 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 
 					// Check if user already exists in our database
 					try {
-						const userCheckResponse = await fetch(`/(api)/user?clerkId=${signUp.createdUserId}`, {
+						const userCheckResponse = await fetchAPI(`/api/user?clerkId=${signUp.createdUserId}`, {
 							method: 'GET',
 						});
 
-						if (userCheckResponse.ok) {
+						if (userCheckResponse.success) {
 							// User exists in database, check if they need onboarding
-							const userCheck = await userCheckResponse.json();
-							const userData = userCheck.data;
+							const userData = userCheckResponse.data;
 							if (userData.weight && userData.height && userData.fitness_goal) {
 								// User has completed onboarding
 								return {
@@ -70,10 +69,10 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 									needsOnboarding: true,
 								};
 							}
-						} else if (userCheckResponse.status === 404) {
+						} else {
 							// User doesn't exist in database, create them
 							try {
-								const userResponse = await fetchAPI('/(api)/user', {
+								const userResponse = await fetchAPI('/api/user', {
 									method: 'POST',
 									body: JSON.stringify({
 										firstName: signUp.firstName || '',
@@ -107,14 +106,6 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 									message: 'Failed to create user profile',
 								};
 							}
-						} else {
-							// Other error occurred
-							console.error('User check failed with status:', userCheckResponse.status);
-							return {
-								success: false,
-								code: 'user_check_failed',
-								message: 'Failed to check user status',
-							};
 						}
 					} catch (checkError) {
 						console.error('User check error:', checkError);
@@ -131,14 +122,13 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 
 					// Check if user exists in our database and has completed onboarding
 					try {
-						const userCheckResponse = await fetch(`/(api)/user?clerkId=${signIn.userId}`, {
+						const userCheckResponse = await fetchAPI(`/api/user?clerkId=${signIn.userId}`, {
 							method: 'GET',
 						});
 
-						if (userCheckResponse.ok) {
+						if (userCheckResponse.success) {
 							// User exists in database, check if they need onboarding
-							const userCheck = await userCheckResponse.json();
-							const userData = userCheck.data;
+							const userData = userCheckResponse.data;
 							if (userData.weight && userData.height && userData.fitness_goal) {
 								// User has completed onboarding
 								return {
@@ -156,10 +146,10 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 									needsOnboarding: true,
 								};
 							}
-						} else if (userCheckResponse.status === 404) {
+						} else {
 							// User doesn't exist in database, create them
 							try {
-								const userResponse = await fetchAPI('/(api)/user', {
+								const userResponse = await fetchAPI('/api/user', {
 									method: 'POST',
 									body: JSON.stringify({
 										firstName: signIn.firstName || '',
@@ -193,14 +183,6 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 									message: 'Failed to create user profile',
 								};
 							}
-						} else {
-							// Other error occurred
-							console.error('User check failed with status:', userCheckResponse.status);
-							return {
-								success: false,
-								code: 'user_check_failed',
-								message: 'Failed to check user status',
-							};
 						}
 					} catch (checkError) {
 						console.error('User check error:', checkError);
@@ -254,14 +236,13 @@ export const appleOAuth = async (startOAuthFlow: any) => {
 
 					// Check if user already exists in our database
 					try {
-						const userCheckResponse = await fetch(`/(api)/user?clerkId=${signUp.createdUserId}`, {
+						const userCheckResponse = await fetchAPI(`/api/user?clerkId=${signUp.createdUserId}`, {
 							method: 'GET',
 						});
 
-						if (userCheckResponse.ok) {
+						if (userCheckResponse.success) {
 							// User exists in database, check if they need onboarding
-							const userCheck = await userCheckResponse.json();
-							const userData = userCheck.data;
+							const userData = userCheckResponse.data;
 							if (userData.weight && userData.height && userData.fitness_goal) {
 								// User has completed onboarding
 								return {
@@ -282,7 +263,7 @@ export const appleOAuth = async (startOAuthFlow: any) => {
 						} else {
 							// User doesn't exist in database, create them
 							try {
-								const userResponse = await fetchAPI('/(api)/user', {
+								const userResponse = await fetchAPI('/api/user', {
 									method: 'POST',
 									body: JSON.stringify({
 										firstName: signUp.firstName || '',
@@ -332,14 +313,13 @@ export const appleOAuth = async (startOAuthFlow: any) => {
 
 					// Check if user exists in our database and has completed onboarding
 					try {
-						const userCheckResponse = await fetch(`/(api)/user?clerkId=${signIn.userId}`, {
+						const userCheckResponse = await fetchAPI(`/api/user?clerkId=${signIn.userId}`, {
 							method: 'GET',
 						});
 
-						if (userCheckResponse.ok) {
+						if (userCheckResponse.success) {
 							// User exists in database, check if they need onboarding
-							const userCheck = await userCheckResponse.json();
-							const userData = userCheck.data;
+							const userData = userCheckResponse.data;
 							if (userData.weight && userData.height && userData.fitness_goal) {
 								// User has completed onboarding
 								return {
@@ -360,7 +340,7 @@ export const appleOAuth = async (startOAuthFlow: any) => {
 						} else {
 							// User doesn't exist in database, create them
 							try {
-								const userResponse = await fetchAPI('/(api)/user', {
+								const userResponse = await fetchAPI('/api/user', {
 									method: 'POST',
 									body: JSON.stringify({
 										firstName: signIn.firstName || '',

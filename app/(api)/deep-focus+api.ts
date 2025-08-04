@@ -76,8 +76,6 @@ export async function GET(request: Request) {
 			return Response.json({ success: false, error: 'Missing clerkId parameter' }, { status: 400 });
 		}
 
-		console.log('Fetching deep focus data for:', { clerkId, period });
-
 		let query;
 		let groupBy;
 

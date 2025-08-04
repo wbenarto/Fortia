@@ -125,19 +125,19 @@ export async function POST(request: Request) {
 			return Response.json({ error: 'Portion size is required' }, { status: 400 });
 		}
 
-		// Validate and convert data types
+		// Validate and convert data types with better error handling
 		const validatedData = {
 			clerkId: String(clerkId),
 			foodName: String(foodName).trim(),
 			portionSize: String(portionSize).trim(),
-			calories: Number(calories) || 0,
-			protein: Number(protein) || 0,
-			carbs: Number(carbs) || 0,
-			fats: Number(fats) || 0,
-			fiber: Number(fiber) || 0,
-			sugar: Number(sugar) || 0,
-			sodium: Number(sodium) || 0,
-			confidenceScore: Number(confidenceScore) || 0.5,
+			calories: Math.round(Number(calories) || 0), // Ensure integer for calories
+			protein: Number(protein) || 0, // Ensure decimal for protein
+			carbs: Number(carbs) || 0, // Ensure decimal for carbs
+			fats: Number(fats) || 0, // Ensure decimal for fats
+			fiber: Number(fiber) || 0, // Ensure decimal for fiber
+			sugar: Number(sugar) || 0, // Ensure decimal for sugar
+			sodium: Math.round(Number(sodium) || 0), // Ensure integer for sodium
+			confidenceScore: Number(confidenceScore) || 0.5, // Ensure decimal for confidence
 			mealType: String(mealType || 'snack'),
 		};
 
@@ -155,9 +155,55 @@ export async function POST(request: Request) {
 			);
 		}
 
-		console.log('Validated data:', validatedData);
+		// Additional validation for numeric fields
+		if (isNaN(validatedData.calories) || validatedData.calories < 0) {
+			console.error('Invalid calories value:', calories);
+			return Response.json({ error: 'Invalid calories value' }, { status: 400 });
+		}
 
-		console.log('Validating user exists in database for clerkId:', clerkId);
+		if (isNaN(validatedData.protein) || validatedData.protein < 0) {
+			console.error('Invalid protein value:', protein);
+			return Response.json({ error: 'Invalid protein value' }, { status: 400 });
+		}
+
+		if (isNaN(validatedData.carbs) || validatedData.carbs < 0) {
+			console.error('Invalid carbs value:', carbs);
+			return Response.json({ error: 'Invalid carbs value' }, { status: 400 });
+		}
+
+		if (isNaN(validatedData.fats) || validatedData.fats < 0) {
+			console.error('Invalid fats value:', fats);
+			return Response.json({ error: 'Invalid fats value' }, { status: 400 });
+		}
+
+		if (isNaN(validatedData.fiber) || validatedData.fiber < 0) {
+			console.error('Invalid fiber value:', fiber);
+			return Response.json({ error: 'Invalid fiber value' }, { status: 400 });
+		}
+
+		if (isNaN(validatedData.sugar) || validatedData.sugar < 0) {
+			console.error('Invalid sugar value:', sugar);
+			return Response.json({ error: 'Invalid sugar value' }, { status: 400 });
+		}
+
+		if (isNaN(validatedData.sodium) || validatedData.sodium < 0) {
+			console.error('Invalid sodium value:', sodium);
+			return Response.json({ error: 'Invalid sodium value' }, { status: 400 });
+		}
+
+		if (
+			isNaN(validatedData.confidenceScore) ||
+			validatedData.confidenceScore < 0 ||
+			validatedData.confidenceScore > 1
+		) {
+			console.error('Invalid confidence score:', confidenceScore);
+			return Response.json(
+				{ error: 'Invalid confidence score (must be between 0 and 1)' },
+				{ status: 400 }
+			);
+		}
+
+		console.log('Validated data:', validatedData);
 
 		// Check if user exists in database before creating meal
 		const userCheck = await sql`
@@ -176,7 +222,7 @@ export async function POST(request: Request) {
 			);
 		}
 
-		console.log('User found in database:', userCheck[0]);
+		console.log('User found in database');
 
 		// Log the exact data being inserted
 		const insertData = {
@@ -194,7 +240,7 @@ export async function POST(request: Request) {
 			meal_type: validatedData.mealType,
 		};
 
-		console.log('Inserting meal data:', insertData);
+		console.log('Inserting meal data (clerk_id hidden)');
 		console.log('Data types:', {
 			clerk_id: typeof validatedData.clerkId,
 			food_name: typeof validatedData.foodName,
@@ -220,7 +266,7 @@ export async function POST(request: Request) {
       ) RETURNING *
     `;
 
-		console.log('Meal created successfully:', newMeal[0]);
+		console.log('Meal created successfully');
 
 		return Response.json({ success: true, data: newMeal[0] });
 	} catch (error) {
