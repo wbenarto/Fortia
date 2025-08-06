@@ -152,12 +152,197 @@ export const getUserInitials = (userProfile: UserProfile): string => {
 	return 'U';
 };
 
+// Response codes for consistent handling
+export const RESPONSE_CODES = {
+	SUCCESS: 'success',
+	NEEDS_ONBOARDING: 'needs_onboarding',
+	USER_NOT_FOUND: 'user_not_found',
+	USER_CREATION_FAILED: 'user_creation_failed',
+	ERROR: 'error',
+	USER_FOUND: 'user_found',
+	USER_NEEDS_ONBOARDING: 'user_needs_onboarding',
+} as const;
+
+// User status interface
+export interface UserStatus {
+	success: boolean;
+	code: string;
+	data?: any;
+	needsOnboarding?: boolean;
+	message?: string;
+}
+
 /**
  * Check if user has completed onboarding
+ * Safe null-checking for onboarding completion
  */
-export const hasCompletedOnboarding = (userProfile: UserProfile): boolean => {
-	return !!(userProfile.weight && userProfile.height && userProfile.fitnessGoal);
-};
+export function hasCompletedOnboarding(userData: any): boolean {
+	if (!userData) return false;
+	return !!(userData.weight && userData.height && userData.fitness_goal);
+}
+
+/**
+ * Validate user data structure
+ */
+export function validateUserData(userData: any): boolean {
+	if (!userData) return false;
+	return !!(userData.clerk_id && userData.email);
+}
+
+/**
+ * Check user status in database with proper error handling
+ */
+export async function checkUserStatus(clerkId: string): Promise<UserStatus> {
+	try {
+		const result = await fetchAPI(`/api/user?clerkId=${clerkId}`, {
+			method: 'GET',
+		});
+
+		if (!result.success) {
+			return {
+				success: false,
+				code: RESPONSE_CODES.ERROR,
+				message: result.error || 'Failed to check user status',
+			};
+		}
+
+		// Handle different response codes
+		switch (result.code) {
+			case 'user_found':
+			case 'success':
+				return {
+					success: true,
+					code: RESPONSE_CODES.SUCCESS,
+					data: result.data,
+					needsOnboarding: false,
+				};
+
+			case 'needs_onboarding':
+			case 'user_needs_onboarding':
+				// If data is null, it means user doesn't exist
+				if (!result.data) {
+					return {
+						success: true,
+						code: RESPONSE_CODES.USER_NOT_FOUND,
+						data: null,
+						needsOnboarding: undefined,
+					};
+				}
+				// If data exists, user needs onboarding
+				return {
+					success: true,
+					code: RESPONSE_CODES.NEEDS_ONBOARDING,
+					data: result.data,
+					needsOnboarding: true,
+				};
+
+			case 'user_not_found':
+				return {
+					success: true,
+					code: RESPONSE_CODES.USER_NOT_FOUND,
+					data: null,
+					needsOnboarding: undefined,
+				};
+
+			default:
+				return {
+					success: false,
+					code: RESPONSE_CODES.ERROR,
+					message: `Unknown response code: ${result.code}`,
+				};
+		}
+	} catch (error) {
+		console.error('User status check failed:', error);
+		return {
+			success: false,
+			code: RESPONSE_CODES.ERROR,
+			message: 'Failed to check user status',
+		};
+	}
+}
+
+/**
+ * Create user in database with proper error handling
+ */
+export async function createUserInDatabase(userData: {
+	clerkId: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+}): Promise<UserStatus> {
+	try {
+		const response = await fetchAPI('/api/user', {
+			method: 'POST',
+			body: JSON.stringify(userData),
+		});
+
+		if (response.success) {
+			return {
+				success: true,
+				code: RESPONSE_CODES.NEEDS_ONBOARDING,
+				data: response.data,
+				needsOnboarding: true,
+				message: 'User created successfully',
+			};
+		} else {
+			return {
+				success: false,
+				code: RESPONSE_CODES.USER_CREATION_FAILED,
+				message: response.error || 'Failed to create user',
+			};
+		}
+	} catch (error) {
+		console.error('User creation failed:', error);
+		return {
+			success: false,
+			code: RESPONSE_CODES.USER_CREATION_FAILED,
+			message: 'Failed to create user profile',
+		};
+	}
+}
+
+/**
+ * Handle user status and create user if needed
+ */
+export async function handleUserStatus(
+	userStatus: UserStatus,
+	oauthData: any
+): Promise<UserStatus> {
+	switch (userStatus.code) {
+		case RESPONSE_CODES.SUCCESS:
+			// User exists and has completed onboarding
+			return {
+				success: true,
+				code: RESPONSE_CODES.SUCCESS,
+				data: userStatus.data,
+				needsOnboarding: false,
+				message: 'You have successfully authenticated',
+			};
+
+		case RESPONSE_CODES.NEEDS_ONBOARDING:
+			// User exists but needs onboarding
+			return {
+				success: true,
+				code: RESPONSE_CODES.NEEDS_ONBOARDING,
+				data: userStatus.data,
+				needsOnboarding: true,
+				message: 'Please complete your profile setup',
+			};
+
+		case RESPONSE_CODES.USER_NOT_FOUND:
+			// User doesn't exist, create them
+			return await createUserInDatabase({
+				clerkId: oauthData.clerkId,
+				firstName: oauthData.firstName || '',
+				lastName: oauthData.lastName || '',
+				email: oauthData.email,
+			});
+
+		default:
+			// Error case
+			return userStatus;
+	}
+}
 
 /**
  * Get user's last name with fallbacks

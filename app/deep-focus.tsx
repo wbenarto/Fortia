@@ -1,3 +1,4 @@
+import React from "react";
 import { View, Text, Animated, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';

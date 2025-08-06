@@ -138,7 +138,7 @@ const SignUp = () => {
 		}
 	};
 	return (
-		<ScrollView className="flex-1 bg-[#262135]">
+		<ScrollView className="flex-1 ">
 			<View className="flex-1">
 				<View className="bg-white w-full h-[250px] overflow-hidden relative">
 					<Image source={images.SignUp} className="z-0 h-[250px] object-fill w-full " />
@@ -156,7 +156,7 @@ const SignUp = () => {
 						icon={icons.Person}
 						value={form.firstName}
 						onChangeText={value => setForm({ ...form, firstName: value })}
-						labelStyle="text-white"
+						labelStyle="text-black"
 					/>
 					<InputField
 						label="Last Name"
@@ -164,7 +164,7 @@ const SignUp = () => {
 						icon={icons.Person}
 						value={form.lastName}
 						onChangeText={value => setForm({ ...form, lastName: value })}
-						labelStyle="text-white"
+						labelStyle="text-black"
 					/>
 					<InputField
 						label="Email"
@@ -172,7 +172,7 @@ const SignUp = () => {
 						icon={icons.Email}
 						value={form.email}
 						onChangeText={value => setForm({ ...form, email: value })}
-						labelStyle="text-white"
+						labelStyle="text-black"
 					/>
 					<InputField
 						label="Password"
@@ -181,14 +181,14 @@ const SignUp = () => {
 						secureTextEntry={true}
 						value={form.password}
 						onChangeText={value => setForm({ ...form, password: value })}
-						labelStyle="text-white"
+						labelStyle="text-black"
 					/>
 
 					<CustomButton title="Sign Up" onPress={onSignUpPress} className="mt-6" width="100%" />
 
 					<OAuth />
 
-					<Link href="/sign-in" className="text-lg text-center text-general-200 mt-10">
+					<Link href="/sign-in" className="text-base text-center text-general-200 mt-10">
 						<Text>Already have an account? </Text>
 						<Text className="text-primary-500">Log In</Text>
 					</Link>

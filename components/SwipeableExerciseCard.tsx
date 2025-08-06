@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated, Alert } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
@@ -15,17 +15,25 @@ interface ExerciseItem {
 
 interface SwipeableExerciseCardProps {
 	exercise: ExerciseItem;
+	isCompleted?: boolean;
 	onDelete: (exerciseId: string) => void;
 	onToggleCompletion?: (exerciseId: string, isCompleted: boolean) => void;
 }
 
 const SwipeableExerciseCard: React.FC<SwipeableExerciseCardProps> = ({
 	exercise,
+	isCompleted: initialIsCompleted = false,
 	onDelete,
 	onToggleCompletion,
 }) => {
 	const translateX = useRef(new Animated.Value(0)).current;
-	const [isCompleted, setIsCompleted] = useState(false);
+	const [isCompleted, setIsCompleted] = useState(initialIsCompleted);
+
+	// Sync local state with prop changes
+	useEffect(() => {
+		setIsCompleted(initialIsCompleted);
+	}, [initialIsCompleted]);
+
 	const deleteButtonWidth = 80;
 	const swipeThreshold = 50; // Threshold for swipe-right to toggle completion
 
@@ -151,7 +159,7 @@ const SwipeableExerciseCard: React.FC<SwipeableExerciseCardProps> = ({
 						transform: [{ translateX }],
 					}}
 					className={`w-full h-24 py-3 px-3 rounded-xl border-solid border-[1px] bg-white ${
-						isCompleted ? 'bg-green-200 border-green-300' : 'border-[#F1F5F9]'
+						isCompleted ? 'bg-green-100 border-gray-200' : 'border-[#E3BBA1]'
 					}`}
 				>
 					<View className="flex flex-row justify-between items-center">

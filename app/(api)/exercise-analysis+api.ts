@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { exerciseAnalysisRateLimiter } from '@/lib/rateLimiter';
+// import { exerciseAnalysisRateLimiter } from '@/lib/rateLimiter';
 
 // Load environment variables
 dotenv.config();
@@ -27,20 +27,21 @@ export async function POST(request: Request) {
 		return Response.json({ error: 'User ID is required for rate limiting' }, { status: 400 });
 	}
 
-	if (!exerciseAnalysisRateLimiter.canMakeRequest(userId)) {
-		const usageInfo = exerciseAnalysisRateLimiter.getUsageInfo(userId);
-		return Response.json(
-			{
-				error: 'Daily exercise analysis limit reached. You can analyze 20 exercises per day.',
-				rateLimitInfo: {
-					used: usageInfo.count,
-					remaining: usageInfo.remaining,
-					resetDate: usageInfo.date,
-				},
-			},
-			{ status: 429 }
-		);
-	}
+	// Rate limiting temporarily disabled for production build
+	// if (!exerciseAnalysisRateLimiter.canMakeRequest(userId)) {
+	// 	const usageInfo = exerciseAnalysisRateLimiter.getUsageInfo(userId);
+	// 	return Response.json(
+	// 		{
+	// 			error: 'Daily exercise analysis limit reached. You can analyze 20 exercises per day.',
+	// 			rateLimitInfo: {
+	// 				used: usageInfo.count,
+	// 				remaining: usageInfo.remaining,
+	// 				resetDate: usageInfo.date,
+	// 			},
+	// 		},
+	// 		{ status: 429 }
+	// 	);
+	// }
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
@@ -220,15 +221,15 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 			console.log('Validated exercise data:', validatedData);
 
 			// Record successful request for rate limiting
-			exerciseAnalysisRateLimiter.recordRequest(userId);
+			// exerciseAnalysisRateLimiter.recordRequest(userId);
 
 			return Response.json({
 				success: true,
 				data: validatedData,
 				tokens: data.usageMetadata?.totalTokenCount || 0,
 				rateLimitInfo: {
-					used: exerciseAnalysisRateLimiter.getUsageInfo(userId).count,
-					remaining: exerciseAnalysisRateLimiter.getUsageInfo(userId).remaining,
+					used: 0, // temporarily disabled
+					remaining: 20, // temporarily disabled
 				},
 			});
 		} catch (error) {

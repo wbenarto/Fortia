@@ -35,6 +35,8 @@ const getTextVariantStyle = (variant: ButtonProps['textVariant'], disabled?: boo
 			return 'text-green-100';
 		case 'danger':
 			return 'text-red-100';
+		case 'black':
+			return 'text-black';
 		default:
 			return 'text-white';
 	}
@@ -44,7 +46,7 @@ interface ButtonProps {
 	onPress: () => void;
 	title: string;
 	bgVariant?: 'primary' | 'secondary' | 'danger' | 'success' | 'outline';
-	textVariant?: 'default' | 'primary' | 'secondary' | 'success' | 'danger';
+	textVariant?: 'default' | 'primary' | 'secondary' | 'success' | 'danger' | 'black';
 	IconLeft?: React.ComponentType<any>;
 	IconRight?: React.ComponentType<any>;
 	textProp?: string;

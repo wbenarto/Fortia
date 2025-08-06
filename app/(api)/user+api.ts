@@ -7,7 +7,14 @@ export async function GET(request: Request) {
 		const clerkId = searchParams.get('clerkId');
 
 		if (!clerkId) {
-			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
+			return Response.json(
+				{
+					success: false,
+					error: 'Clerk ID is required',
+					code: 'missing_clerk_id',
+				},
+				{ status: 400 }
+			);
 		}
 
 		const result = await sql`
@@ -15,23 +22,37 @@ export async function GET(request: Request) {
       WHERE clerk_id = ${clerkId}
     `;
 
+		// Always return consistent structure
 		if (result.length === 0) {
-			return Response.json(
-				{
-					error: 'User not found',
-					needsSetup: true,
-				},
-				{ status: 404 }
-			);
+			return Response.json({
+				success: true,
+				data: null,
+				code: 'user_not_found',
+				needsOnboarding: undefined,
+			});
 		}
+
+		const userData = result[0];
+
+		// Check if user has completed onboarding
+		const hasCompletedOnboarding = !!(userData.weight && userData.height && userData.fitness_goal);
 
 		return Response.json({
 			success: true,
-			data: result[0],
+			data: userData,
+			code: hasCompletedOnboarding ? 'user_found' : 'user_needs_onboarding',
+			needsOnboarding: !hasCompletedOnboarding,
 		});
 	} catch (error) {
 		console.error('Get user error:', error);
-		return Response.json({ error: 'Failed to get user' }, { status: 500 });
+		return Response.json(
+			{
+				success: false,
+				error: 'Failed to get user',
+				code: 'database_error',
+			},
+			{ status: 500 }
+		);
 	}
 }
 

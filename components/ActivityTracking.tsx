@@ -4,6 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import ReactNativeModal from 'react-native-modal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
 import { fetchDataConsent, hasDataCollectionConsent } from '@/lib/consentUtils';
@@ -26,7 +27,37 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	const [healthKitStatus, setHealthKitStatus] = useState<any>(null);
 	const [activities, setActivities] = useState<any[]>([]);
 	const [scheduledExercises, setScheduledExercises] = useState<any[]>([]);
+	const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
 	const [isLoading, setIsLoading] = useState(false);
+
+	// Save completion status to AsyncStorage
+	const saveCompletionStatus = async (completedSet: Set<string>) => {
+		if (!user?.id) return;
+		try {
+			const today = getTodayDate();
+			const key = `completed_exercises_${user.id}_${today}`;
+			const completedArray = Array.from(completedSet);
+			await AsyncStorage.setItem(key, JSON.stringify(completedArray));
+		} catch (error) {
+			console.error('Failed to save completion status:', error);
+		}
+	};
+
+	// Load completion status from AsyncStorage
+	const loadCompletionStatus = async () => {
+		if (!user?.id) return;
+		try {
+			const today = getTodayDate();
+			const key = `completed_exercises_${user.id}_${today}`;
+			const savedData = await AsyncStorage.getItem(key);
+			if (savedData) {
+				const completedArray = JSON.parse(savedData);
+				setCompletedExercises(new Set(completedArray));
+			}
+		} catch (error) {
+			console.error('Failed to load completion status:', error);
+		}
+	};
 	const [workoutModal, setWorkoutModal] = useState(false);
 	const [exerciseName, setExerciseName] = useState('');
 	const [exerciseDuration, setExerciseDuration] = useState('');
@@ -218,6 +249,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 			fetchActivities();
 			fetchScheduledExercises();
 			fetchUserConsent();
+			loadCompletionStatus();
 		}
 	}, [user?.id]);
 
@@ -251,6 +283,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 				fetchNutritionGoals();
 				fetchActivities();
 				fetchScheduledExercises();
+				loadCompletionStatus(); // Reload completion status
 				if (hasDataCollectionConsent(userConsentData)) {
 					fetchStepDataFromBackend();
 				}
@@ -380,6 +413,13 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	};
 
 	const exercisesCalories = getExercisesCalories();
+
+	// Get count of completed exercises
+	const getCompletedExercisesCount = () => {
+		return completedExercises.size;
+	};
+
+	const completedExercisesCount = getCompletedExercisesCount();
 	const totalCaloriesBurned = storedBMR + stepCalories + activitiesCalories + exercisesCalories;
 
 	const handleWorkoutModal = () => {
@@ -488,9 +528,40 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	};
 
 	const toggleExerciseCompletion = async (exerciseId: string, isCompleted: boolean) => {
-		console.log('Toggling exercise completion');
-		// TODO: Implement API call to update exercise completion status
-		// For now, just log the action
+		console.log('Toggling exercise completion for:', exerciseId, 'to:', isCompleted);
+
+		// Update local state immediately for responsive UI
+		setCompletedExercises(prev => {
+			const newSet = new Set(prev);
+			if (isCompleted) {
+				newSet.add(exerciseId);
+			} else {
+				newSet.delete(exerciseId);
+			}
+			// Save to AsyncStorage
+			saveCompletionStatus(newSet);
+			return newSet;
+		});
+
+		// TODO: Implement API call to persist completion status to backend
+		// For now, we're just managing local state with AsyncStorage
+		// When you're ready to persist to backend, you can add:
+		// try {
+		//   const response = await fetchAPI('/api/exercise-completion', {
+		//     method: 'POST',
+		//     body: JSON.stringify({
+		//       clerkId: user?.id,
+		//       exerciseId: exerciseId,
+		//       isCompleted: isCompleted,
+		//       date: getTodayDate()
+		//     })
+		//   });
+		//   if (!response.success) {
+		//     console.error('Failed to update exercise completion:', response.error);
+		//   }
+		// } catch (error) {
+		//   console.error('Error updating exercise completion:', error);
+		// }
 	};
 
 	const deleteScheduledExercise = async (exerciseId: string) => {
@@ -684,6 +755,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 							<SwipeableExerciseCard
 								key={exercise.id}
 								exercise={exercise}
+								isCompleted={completedExercises.has(exercise.id)}
 								onDelete={deleteScheduledExercise}
 								onToggleCompletion={toggleExerciseCompletion}
 							/>
@@ -693,14 +765,25 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 							<View className="flex flex-row gap-2 mb-2 items-center">
 								<Ionicons name="calendar-outline" size={14} color="#5A556B" />
 								<Text className="text-xs text-[#64748B]">Scheduled Exercises</Text>
+								{scheduledExercises.length > 0 && (
+									<View className="bg-green-100 px-2 py-1 rounded-lg">
+										<Text className="text-xs text-green-700 font-JakartaSemiBold">
+											{completedExercisesCount}/{scheduledExercises.length} completed
+										</Text>
+									</View>
+								)}
 							</View>
 							<View className="flex flex-row justify-between items-center">
 								<Text className="text-lg font-JakartaBold text-[#64748B]">
-									No exercises scheduled
+									{scheduledExercises.length > 0
+										? `${scheduledExercises.length} exercises scheduled`
+										: 'No exercises scheduled'}
 								</Text>
 								<View className="flex flex-row gap-2">
 									<Ionicons name="time-outline" size={14} color="#5A556B" />
-									<Text className="text-[#64748B]">--</Text>
+									<Text className="text-[#64748B]">
+										{scheduledExercises.length > 0 ? `${completedExercisesCount} done` : '--'}
+									</Text>
 								</View>
 							</View>
 						</View>

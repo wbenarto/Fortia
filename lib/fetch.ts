@@ -17,31 +17,29 @@ export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
 		const baseURL = getBaseURL();
 		const url = `${baseURL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-		console.log(`🌐 API Call: ${url}`); // Development logging
-		console.log(`🌐 Base URL: ${baseURL}`);
-		console.log(`🌐 Endpoint: ${endpoint}`);
-		console.log(`🌐 Full URL: ${url}`);
-		console.log(`🌐 Request options:`, options);
+		console.log(`API Call: ${endpoint}`); // Development logging
+		console.log(`Base URL: ${baseURL}`);
+		console.log(`Full URL: ${url}`);
+		console.log(`Request method:`, options?.method || 'GET');
 
 		const response = await fetch(url, options);
 
-		console.log(`📡 Response status: ${response.status}`);
-		console.log(`📡 Response headers:`, Object.fromEntries(response.headers.entries()));
+		console.log(`Response status: ${response.status}`);
 
 		if (!response.ok) {
-			console.error(`❌ HTTP error! status: ${response.status}`);
+			console.error(`HTTP error! status: ${response.status}`);
 			const errorText = await response.text();
-			console.error(`❌ Error response body:`, errorText);
+			console.error(`Error response body:`, errorText);
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 
 		const data = await response.json();
-		console.log(`✅ Response data:`, data);
+		console.log(`Response data:`, data);
 		return data;
 	} catch (error) {
-		console.error('❌ Fetch error:', error);
-		console.error('❌ Error type:', typeof error);
-		console.error('❌ Error constructor:', error?.constructor?.name);
+		console.error('Fetch error:', error);
+		console.error('Error type:', typeof error);
+		console.error('Error constructor:', error?.constructor?.name);
 		throw error;
 	}
 };

@@ -371,7 +371,7 @@ const AccountSettings = () => {
 									</View>
 									<View className="flex flex-row justify-between">
 										<Text className="text-gray-400">Weight</Text>
-										<Text className="text-white">{convertKgToLbs(nutritionGoals.weight)} lbs</Text>
+										<Text className="text-white">{Math.round(nutritionGoals.weight)} lbs</Text>
 									</View>
 									<View className="flex flex-row justify-between">
 										<Text className="text-gray-400">Height</Text>
@@ -383,7 +383,7 @@ const AccountSettings = () => {
 									<View className="flex flex-row justify-between">
 										<Text className="text-gray-400">Target Weight</Text>
 										<Text className="text-white">
-											{convertKgToLbs(nutritionGoals.target_weight)} lbs
+											{Math.round(nutritionGoals.target_weight)} lbs
 										</Text>
 									</View>
 									<View className="flex flex-row justify-between">
@@ -409,15 +409,17 @@ const AccountSettings = () => {
 										</View>
 										<View className="flex flex-row justify-between">
 											<Text className="text-gray-400">Protein</Text>
-											<Text className="text-white">{nutritionGoals.daily_protein}g</Text>
+											<Text className="text-white">
+												{Math.round(nutritionGoals.daily_protein)}g
+											</Text>
 										</View>
 										<View className="flex flex-row justify-between">
 											<Text className="text-gray-400">Carbs</Text>
-											<Text className="text-white">{nutritionGoals.daily_carbs}g</Text>
+											<Text className="text-white">{Math.round(nutritionGoals.daily_carbs)}g</Text>
 										</View>
 										<View className="flex flex-row justify-between">
 											<Text className="text-gray-400">Fats</Text>
-											<Text className="text-white">{nutritionGoals.daily_fats}g</Text>
+											<Text className="text-white">{Math.round(nutritionGoals.daily_fats)}g</Text>
 										</View>
 									</View>
 								</View>

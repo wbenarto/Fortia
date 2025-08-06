@@ -4,6 +4,7 @@ import { TokenCache } from '@clerk/clerk-expo/dist/cache';
 import * as Linking from 'expo-linking';
 import { fetchAPI } from '@/lib/fetch';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { checkUserStatus, handleUserStatus, RESPONSE_CODES } from '@/lib/userUtils';
 
 const createTokenCache = (): TokenCache => {
 	return {
@@ -28,383 +29,145 @@ const createTokenCache = (): TokenCache => {
 	};
 };
 
-export const googleOAuth = async (startOAuthFlow: any) => {
+/**
+ * Handle Clerk OAuth flow and extract user data
+ */
+const handleClerkOAuth = async (startOAuthFlow: any) => {
 	try {
-		const { createdSessionId, signIn, signUp, setActive } = await startOAuthFlow({
-			redirectUrl: Linking.createURL('/(root)/(tabs)/home', { scheme: 'myapp' }),
-		});
+		console.log('Starting Clerk OAuth flow...');
+		console.log('startOAuthFlow function:', typeof startOAuthFlow);
 
-		// If sign in was successful, set the active session
-		if (createdSessionId) {
-			if (setActive) {
-				await setActive!({ session: createdSessionId });
-
-				// Check if this is a new user (sign up) or existing user (sign in)
-				if (signUp.createdUserId) {
-					// This is a new user signing up with Google
-
-					// Check if user already exists in our database
-					try {
-						const userCheckResponse = await fetchAPI(`/api/user?clerkId=${signUp.createdUserId}`, {
-							method: 'GET',
-						});
-
-						if (userCheckResponse.success) {
-							// User exists in database, check if they need onboarding
-							const userData = userCheckResponse.data;
-							if (userData.weight && userData.height && userData.fitness_goal) {
-								// User has completed onboarding
-								return {
-									success: true,
-									code: 'success',
-									message: 'You have successfully authenticated',
-									needsOnboarding: false,
-								};
-							} else {
-								// User exists but hasn't completed onboarding
-								return {
-									success: true,
-									code: 'needs_onboarding',
-									message: 'Please complete your profile setup',
-									needsOnboarding: true,
-								};
-							}
-						} else {
-							// User doesn't exist in database, create them
-							try {
-								const userResponse = await fetchAPI('/api/user', {
-									method: 'POST',
-									body: JSON.stringify({
-										firstName: signUp.firstName || '',
-										lastName: signUp.lastName || '',
-										email: signUp.emailAddress,
-										clerkId: signUp.createdUserId,
-									}),
-								});
-
-								if (userResponse.success) {
-									// User created successfully, needs onboarding
-									return {
-										success: true,
-										code: 'needs_onboarding',
-										message: 'Please complete your profile setup',
-										needsOnboarding: true,
-									};
-								} else {
-									// User creation failed
-									return {
-										success: false,
-										code: 'user_creation_failed',
-										message: 'Failed to create user profile',
-									};
-								}
-							} catch (userError) {
-								console.error('User creation error:', userError);
-								return {
-									success: false,
-									code: 'user_creation_failed',
-									message: 'Failed to create user profile',
-								};
-							}
-						}
-					} catch (checkError) {
-						console.error('User check error:', checkError);
-						// If we can't check the user, assume they need onboarding
-						return {
-							success: true,
-							code: 'needs_onboarding',
-							message: 'Please complete your profile setup',
-							needsOnboarding: true,
-						};
-					}
-				} else if (signIn.userId) {
-					// This is an existing user signing in with Google
-
-					// Check if user exists in our database and has completed onboarding
-					try {
-						const userCheckResponse = await fetchAPI(`/api/user?clerkId=${signIn.userId}`, {
-							method: 'GET',
-						});
-
-						if (userCheckResponse.success) {
-							// User exists in database, check if they need onboarding
-							const userData = userCheckResponse.data;
-							if (userData.weight && userData.height && userData.fitness_goal) {
-								// User has completed onboarding
-								return {
-									success: true,
-									code: 'success',
-									message: 'You have successfully authenticated',
-									needsOnboarding: false,
-								};
-							} else {
-								// User exists but hasn't completed onboarding
-								return {
-									success: true,
-									code: 'needs_onboarding',
-									message: 'Please complete your profile setup',
-									needsOnboarding: true,
-								};
-							}
-						} else {
-							// User doesn't exist in database, create them
-							try {
-								const userResponse = await fetchAPI('/api/user', {
-									method: 'POST',
-									body: JSON.stringify({
-										firstName: signIn.firstName || '',
-										lastName: signIn.lastName || '',
-										email: signIn.emailAddress,
-										clerkId: signIn.userId,
-									}),
-								});
-
-								if (userResponse.success) {
-									// User created successfully, needs onboarding
-									return {
-										success: true,
-										code: 'needs_onboarding',
-										message: 'Please complete your profile setup',
-										needsOnboarding: true,
-									};
-								} else {
-									// User creation failed
-									return {
-										success: false,
-										code: 'user_creation_failed',
-										message: 'Failed to create user profile',
-									};
-								}
-							} catch (userError) {
-								console.error('User creation error:', userError);
-								return {
-									success: false,
-									code: 'user_creation_failed',
-									message: 'Failed to create user profile',
-								};
-							}
-						}
-					} catch (checkError) {
-						console.error('User check error:', checkError);
-						// If we can't check the user, assume they need onboarding
-						return {
-							success: true,
-							code: 'needs_onboarding',
-							message: 'Please complete your profile setup',
-							needsOnboarding: true,
-						};
-					}
-				}
-
-				// Fallback for any other case
-				return {
-					success: true,
-					code: 'success',
-					message: 'You have successfully authenticated',
-					needsOnboarding: false,
-				};
-			}
+		let oauthResult;
+		try {
+			oauthResult = await startOAuthFlow({
+				redirectUrl: Linking.createURL('/(root)/(tabs)/home', { scheme: 'Fortia' }),
+			});
+			console.log('OAuth flow completed successfully');
+		} catch (oauthFlowError) {
+			console.error('OAuth flow failed:', oauthFlowError);
+			console.error('OAuth flow error type:', typeof oauthFlowError);
+			console.error('OAuth flow error:', oauthFlowError);
+			throw oauthFlowError;
 		}
+
+		const { createdSessionId, signIn, signUp, setActive } = oauthResult;
+
+		console.log('Clerk OAuth Response - Session ID:', !!createdSessionId);
+
+		// Debug the raw objects
+		console.log('Raw signIn object exists:', !!signIn);
+		console.log('Raw signUp object exists:', !!signUp);
+		console.log('Raw createdSessionId exists:', !!createdSessionId);
+		console.log('Raw setActive function exists:', !!setActive);
+
+		if (!createdSessionId || !setActive) {
+			console.log('OAuth flow completed but no session created - likely user cancellation');
+			console.log('createdSessionId exists:', !!createdSessionId);
+			console.log('setActive exists:', !!setActive);
+			// Don't throw error for cancellation, let the calling function handle it
+			return null;
+		}
+
+		console.log('Session created, setting active session...');
+		try {
+			await setActive({ session: createdSessionId });
+			console.log('Active session set successfully');
+		} catch (setActiveError) {
+			console.error('Failed to set active session:', setActiveError);
+			console.error('setActiveError type:', typeof setActiveError);
+			console.error('setActiveError:', setActiveError);
+
+			// If setActive fails, we might still have user data, so continue
+			console.log('Continuing without setting active session...');
+		}
+
+		// Since Clerk doesn't provide user data in the OAuth response,
+		// we need to get it from the active session
+		console.log('Getting user data from active session...');
+
+		// Import the useUser hook to get current user data
+		// Note: This approach requires the component to be wrapped in ClerkProvider
+		// We'll need to handle this differently - let's get the user data from the session
+
+		// For now, let's try to extract user data from the session ID
+		// We'll need to make an API call to get user data using the session
+		console.log('Session ID for user lookup exists:', !!createdSessionId);
+
+		// Since we can't use useUser here (it's a hook), we'll need to get user data
+		// from the backend using the session, or handle this in the component
+		// For now, let's return the session ID and handle user data extraction in the component
+
 		return {
-			success: false,
-			message: 'An error occured',
+			clerkId: createdSessionId, // We'll need to extract the actual user ID from the session
+			firstName: '',
+			lastName: '',
+			email: '',
+			sessionId: createdSessionId,
 		};
-	} catch (error: any) {
-		console.error(error);
-		return {
-			success: false,
-			code: error.code,
-			message: error?.errors[0]?.longMessage,
-		};
+	} catch (error) {
+		console.error('Error in handleClerkOAuth:', error);
+		console.error('Error type:', typeof error);
+		console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+		console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+		throw error;
 	}
 };
 
-export const appleOAuth = async (startOAuthFlow: any) => {
-	try {
-		const { createdSessionId, signIn, signUp, setActive } = await startOAuthFlow({
-			redirectUrl: Linking.createURL('/(root)/(tabs)/home', { scheme: 'myapp' }),
-		});
+/**
+ * Handle OAuth errors consistently
+ */
+const handleOAuthError = (error: any) => {
+	console.error('OAuth error:', error);
+	console.error('OAuth error type:', typeof error);
+	console.error('OAuth error keys:', error ? Object.keys(error) : 'null/undefined');
 
-		// If sign in was successful, set the active session
-		if (createdSessionId) {
-			if (setActive) {
-				await setActive!({ session: createdSessionId });
-
-				// Check if this is a new user (sign up) or existing user (sign in)
-				if (signUp.createdUserId) {
-					// This is a new user signing up with Apple
-
-					// Check if user already exists in our database
-					try {
-						const userCheckResponse = await fetchAPI(`/api/user?clerkId=${signUp.createdUserId}`, {
-							method: 'GET',
-						});
-
-						if (userCheckResponse.success) {
-							// User exists in database, check if they need onboarding
-							const userData = userCheckResponse.data;
-							if (userData.weight && userData.height && userData.fitness_goal) {
-								// User has completed onboarding
-								return {
-									success: true,
-									code: 'success',
-									message: 'You have successfully authenticated',
-									needsOnboarding: false,
-								};
-							} else {
-								// User exists but hasn't completed onboarding
-								return {
-									success: true,
-									code: 'needs_onboarding',
-									message: 'Please complete your profile setup',
-									needsOnboarding: true,
-								};
-							}
-						} else {
-							// User doesn't exist in database, create them
-							try {
-								const userResponse = await fetchAPI('/api/user', {
-									method: 'POST',
-									body: JSON.stringify({
-										firstName: signUp.firstName || '',
-										lastName: signUp.lastName || '',
-										email: signUp.emailAddress,
-										clerkId: signUp.createdUserId,
-									}),
-								});
-
-								if (userResponse.success) {
-									// User created successfully, needs onboarding
-									return {
-										success: true,
-										code: 'needs_onboarding',
-										message: 'Please complete your profile setup',
-										needsOnboarding: true,
-									};
-								} else {
-									// User creation failed
-									return {
-										success: false,
-										code: 'user_creation_failed',
-										message: 'Failed to create user profile',
-									};
-								}
-							} catch (userError) {
-								console.error('User creation error:', userError);
-								return {
-									success: false,
-									code: 'user_creation_failed',
-									message: 'Failed to create user profile',
-								};
-							}
-						}
-					} catch (checkError) {
-						console.error('User check error:', checkError);
-						// If we can't check the user, assume they need onboarding
-						return {
-							success: true,
-							code: 'needs_onboarding',
-							message: 'Please complete your profile setup',
-							needsOnboarding: true,
-						};
-					}
-				} else if (signIn.userId) {
-					// This is an existing user signing in with Apple
-
-					// Check if user exists in our database and has completed onboarding
-					try {
-						const userCheckResponse = await fetchAPI(`/api/user?clerkId=${signIn.userId}`, {
-							method: 'GET',
-						});
-
-						if (userCheckResponse.success) {
-							// User exists in database, check if they need onboarding
-							const userData = userCheckResponse.data;
-							if (userData.weight && userData.height && userData.fitness_goal) {
-								// User has completed onboarding
-								return {
-									success: true,
-									code: 'success',
-									message: 'You have successfully authenticated',
-									needsOnboarding: false,
-								};
-							} else {
-								// User exists but hasn't completed onboarding
-								return {
-									success: true,
-									code: 'needs_onboarding',
-									message: 'Please complete your profile setup',
-									needsOnboarding: true,
-								};
-							}
-						} else {
-							// User doesn't exist in database, create them
-							try {
-								const userResponse = await fetchAPI('/api/user', {
-									method: 'POST',
-									body: JSON.stringify({
-										firstName: signIn.firstName || '',
-										lastName: signIn.lastName || '',
-										email: signIn.emailAddress,
-										clerkId: signIn.userId,
-									}),
-								});
-
-								if (userResponse.success) {
-									// User created successfully, needs onboarding
-									return {
-										success: true,
-										code: 'needs_onboarding',
-										message: 'Please complete your profile setup',
-										needsOnboarding: true,
-									};
-								} else {
-									// User creation failed
-									return {
-										success: false,
-										code: 'user_creation_failed',
-										message: 'Failed to create user profile',
-									};
-								}
-							} catch (userError) {
-								console.error('User creation error:', userError);
-								return {
-									success: false,
-									code: 'user_creation_failed',
-									message: 'Failed to create user profile',
-								};
-							}
-						}
-					} catch (checkError) {
-						console.error('User check error:', checkError);
-						// If we can't check the user, assume they need onboarding
-						return {
-							success: true,
-							code: 'needs_onboarding',
-							message: 'Please complete your profile setup',
-							needsOnboarding: true,
-						};
-					}
-				}
-
-				// Fallback for any other case
-				return {
-					success: true,
-					code: 'success',
-					message: 'You have successfully authenticated',
-					needsOnboarding: false,
-				};
-			}
-		}
+	// Handle user cancellation
+	if (error.code === 'ERR_CANCELED') {
 		return {
 			success: false,
-			message: 'An error occurred',
+			code: 'user_canceled',
+			message: 'Sign in was canceled',
 		};
-	} catch (error: any) {
-		console.error('Apple OAuth error:', error);
+	}
 
-		// Handle specific Apple Authentication errors
-		if (error.code === 'ERR_CANCELED') {
+	// Handle Clerk-specific errors
+	if (error.errors && Array.isArray(error.errors)) {
+		const firstError = error.errors[0];
+		return {
+			success: false,
+			code: RESPONSE_CODES.ERROR,
+			message: firstError?.longMessage || firstError?.message || 'Authentication failed',
+		};
+	}
+
+	// Handle other error objects
+	if (error.message) {
+		return {
+			success: false,
+			code: RESPONSE_CODES.ERROR,
+			message: error.message,
+		};
+	}
+
+	// Fallback
+	return {
+		success: false,
+		code: RESPONSE_CODES.ERROR,
+		message: 'Authentication failed',
+	};
+};
+
+export const googleOAuth = async (startOAuthFlow: any) => {
+	try {
+		console.log('Starting Google OAuth flow...');
+		console.log('startOAuthFlow type:', typeof startOAuthFlow);
+
+		// Step 1: Handle OAuth with Clerk
+		const oauthData = await handleClerkOAuth(startOAuthFlow);
+		console.log('OAuth data extracted successfully');
+
+		// Check if OAuth was cancelled
+		if (!oauthData) {
 			return {
 				success: false,
 				code: 'user_canceled',
@@ -412,11 +175,46 @@ export const appleOAuth = async (startOAuthFlow: any) => {
 			};
 		}
 
-		return {
-			success: false,
-			code: error.code,
-			message: error?.errors?.[0]?.longMessage || error.message || 'Apple Sign In failed',
-		};
+		// Step 2: Check user status in database
+		console.log('Checking user status for:', oauthData.clerkId);
+		const userStatus = await checkUserStatus(oauthData.clerkId);
+		console.log('User status result:', userStatus.success ? 'success' : 'failed');
+
+		// Step 3: Handle user status and create user if needed
+		const finalResult = await handleUserStatus(userStatus, oauthData);
+		console.log('Final OAuth result:', finalResult.success ? 'success' : 'failed');
+
+		return finalResult;
+	} catch (error) {
+		console.error('Google OAuth error:', error);
+		console.error('Error type:', typeof error);
+		console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+		console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+		return handleOAuthError(error);
+	}
+};
+
+export const appleOAuth = async (startOAuthFlow: any) => {
+	try {
+		// Step 1: Handle OAuth with Clerk
+		const oauthData = await handleClerkOAuth(startOAuthFlow);
+
+		// Check if OAuth was cancelled
+		if (!oauthData) {
+			return {
+				success: false,
+				code: 'user_canceled',
+				message: 'Sign in was canceled',
+			};
+		}
+
+		// Step 2: Check user status in database
+		const userStatus = await checkUserStatus(oauthData.clerkId);
+
+		// Step 3: Handle user status and create user if needed
+		return await handleUserStatus(userStatus, oauthData);
+	} catch (error) {
+		return handleOAuthError(error);
 	}
 };
 

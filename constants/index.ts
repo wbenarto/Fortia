@@ -13,6 +13,7 @@ import Calendar from '@/assets/icons/calendar.png';
 import Logo from '@/assets/images/logo-main.png';
 import Onboarding1 from '@/assets/images/onboarding-1.png';
 import Onboarding2 from '@/assets/images/onboarding-2.png';
+import FortiaLogo from '@/assets/images/logo-main-fortia.png';
 
 export const images = {
 	Icon,
@@ -22,6 +23,7 @@ export const images = {
 	Logo,
 	Onboarding1,
 	Onboarding2,
+	FortiaLogo,
 };
 
 export const icons = {
@@ -41,7 +43,7 @@ export const onboardingPages = [
 		id: 1,
 		title: '',
 		description: '',
-		image: images.Logo,
+		image: images.FortiaLogo,
 	},
 	{
 		id: 2,

@@ -110,7 +110,7 @@ export default function Page() {
 		return (
 			<View className="flex-1 bg-[#E3BBA1] justify-center items-center">
 				<ActivityIndicator size="large" color="black" />
-				<Image source={require('@/assets/images/logo-main-fortia-1.png')} className="w-10 h-10" />
+				<Image source={require('@/assets/images/logo-main-fortia.svg')} className="w-full h-10" />
 				<Text className="text-black mt-4 text-lg">Setting up your experience...</Text>
 			</View>
 		);

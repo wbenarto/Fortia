@@ -47,7 +47,7 @@ const SignIn = () => {
 	}, [isLoaded, form.email, form.password]);
 
 	return (
-		<ScrollView className="flex-1 bg-[#262135]">
+		<ScrollView className="flex-1 ">
 			<View className="flex-1">
 				<View className="bg-white w-full h-[250px] overflow-hidden relative">
 					<Image source={images.SignUp} className="z-0 h-[250px] object-fill w-full " />
@@ -63,7 +63,7 @@ const SignIn = () => {
 						icon={icons.Email}
 						value={form.email}
 						onChangeText={value => setForm({ ...form, email: value })}
-						labelStyle="text-white"
+						labelStyle="text-black"
 					/>
 					<InputField
 						label="Password"
@@ -72,14 +72,14 @@ const SignIn = () => {
 						secureTextEntry={true}
 						value={form.password}
 						onChangeText={value => setForm({ ...form, password: value })}
-						labelStyle="text-white"
+						labelStyle="text-black"
 					/>
 
 					<CustomButton title="Sign In" onPress={onSignInPress} className="mt-6" width="100%" />
 
 					<OAuth />
 
-					<Link href="/sign-up" className="text-lg text-center text-general-200 mt-10">
+					<Link href="/sign-up" className="text-base text-center text-general-200 mt-10">
 						<Text>Don't have an account? </Text>
 						<Text className="text-primary-500">Sign Up</Text>
 					</Link>

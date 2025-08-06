@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { mealAnalysisRateLimiter } from '@/lib/rateLimiter';
+// import { mealAnalysisRateLimiter } from '@/lib/rateLimiter';
 
 // Load environment variables
 dotenv.config();
@@ -26,20 +26,21 @@ export async function POST(request: Request) {
 		return Response.json({ error: 'User ID is required for rate limiting' }, { status: 400 });
 	}
 
-	if (!mealAnalysisRateLimiter.canMakeRequest(userId)) {
-		const usageInfo = mealAnalysisRateLimiter.getUsageInfo(userId);
-		return Response.json(
-			{
-				error: 'Daily meal analysis limit reached. You can analyze 20 meals per day.',
-				rateLimitInfo: {
-					used: usageInfo.count,
-					remaining: usageInfo.remaining,
-					resetDate: usageInfo.date,
-				},
-			},
-			{ status: 429 }
-		);
-	}
+	// Rate limiting temporarily disabled for production build
+	// if (!mealAnalysisRateLimiter.canMakeRequest(userId)) {
+	// 	const usageInfo = mealAnalysisRateLimiter.getUsageInfo(userId);
+	// 	return Response.json(
+	// 		{
+	// 			error: 'Daily meal analysis limit reached. You can analyze 20 meals per day.',
+	// 			rateLimitInfo: {
+	// 				used: usageInfo.count,
+	// 				remaining: usageInfo.remaining,
+	// 				resetDate: usageInfo.date,
+	// 			},
+	// 		},
+	// 		{ status: 429 }
+	// 	);
+	// }
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
@@ -256,15 +257,15 @@ Be accurate and realistic with the values. Do not include any text before or aft
 			console.log('Validated nutrition data:', validatedData);
 
 			// Record successful request for rate limiting
-			mealAnalysisRateLimiter.recordRequest(userId);
+			// mealAnalysisRateLimiter.recordRequest(userId);
 
 			return Response.json({
 				success: true,
 				data: validatedData,
 				tokens: data.usageMetadata?.totalTokenCount || 0,
 				rateLimitInfo: {
-					used: mealAnalysisRateLimiter.getUsageInfo(userId).count,
-					remaining: mealAnalysisRateLimiter.getUsageInfo(userId).remaining,
+					used: 0, // temporarily disabled
+					remaining: 20, // temporarily disabled
 				},
 			});
 		} catch (error) {

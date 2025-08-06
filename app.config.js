@@ -10,6 +10,7 @@ export default {
 		platforms: ['ios', 'web'],
 		entryPoint: 'app/index.tsx',
 		version: '1.0.0',
+		buildNumber: '1',
 		orientation: 'portrait',
 		icon: './assets/icons/fortia-app-icon-main.png',
 		scheme: 'Fortia',
@@ -22,21 +23,19 @@ export default {
 		newArchEnabled: true,
 		ios: {
 			supportsTablet: true,
+			buildNumber: '1',
 			infoPlist: {
 				ITSAppUsesNonExemptEncryption: false,
 				NSMotionUsageDescription:
 					'Fortia needs access to motion and fitness data to track your daily steps for better fitness insights.',
 				NSMicrophoneUsageDescription:
 					'Fortia needs access to your microphone for audio recording features.',
+				NSHealthShareUsageDescription:
+					'Fortia needs access to your health data to track steps and provide accurate fitness insights.',
+				NSHealthUpdateUsageDescription:
+					'Fortia needs permission to update your health data with your fitness activities.',
 				NSAppTransportSecurity: {
-					NSAllowsArbitraryLoads: true,
-					NSExceptionDomains: {
-						'10.0.0.19': {
-							NSExceptionAllowsInsecureHTTPLoads: true,
-							NSExceptionMinimumTLSVersion: '1.0',
-							NSExceptionRequiresForwardSecrecy: false,
-						},
-					},
+					NSAllowsArbitraryLoads: false,
 				},
 			},
 			bundleIdentifier: 'com.fortia.app',

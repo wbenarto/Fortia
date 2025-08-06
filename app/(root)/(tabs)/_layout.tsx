@@ -17,7 +17,7 @@ const TabIcon = ({
 		className={`flex flex-row justify-center overflow-hidden items-center rounded-full ${focused ? 'bg-general-300 w-12 h-12' : 'w-10 h-10'}`}
 	>
 		<View
-			className={`rounded-full items-center justify-center ${focused ? 'bg-white w-12 h-12' : 'w-10 h-10'}`}
+			className={`rounded-full items-center justify-center ${focused ? 'bg-white w-12 h-12 border-2 border-[#E3BBA1]' : 'w-10 h-10'}`}
 		>
 			{iconName ? (
 				<Ionicons
