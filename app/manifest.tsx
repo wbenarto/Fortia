@@ -73,7 +73,7 @@ export default function ManifestPage() {
 	}, []);
 
 	useEffect(() => {
-		let interval: NodeJS.Timeout;
+		let interval: number;
 		if (isTimerRunning && timeLeft > 0) {
 			interval = setInterval(async () => {
 				setTimeLeft(prev => {

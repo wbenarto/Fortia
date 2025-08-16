@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { TokenCache } from '@clerk/clerk-expo/dist/cache';
+import { TokenCache } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
 import { fetchAPI } from '@/lib/fetch';
 import * as AppleAuthentication from 'expo-apple-authentication';

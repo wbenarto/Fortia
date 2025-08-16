@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo';
-import { CartesianChart, Line } from 'victory-native';
+// import { CartesianChart, Line } from 'victory-native';
 import { Link, useFocusEffect, useRouter } from 'expo-router';
 import {
 	View,

@@ -54,10 +54,10 @@ export default function OAuth() {
 						const firstName = payload.first_name || '';
 						const lastName = payload.last_name || '';
 
-						console.log('User data extracted from token - ID:', userId);
+						console.log('User data extracted from token successfully');
 
 						// Step 3: Check user status in database using actual user ID
-						console.log('Checking user status for:', userId);
+						console.log('Checking user status');
 						const userStatus = await checkUserStatus(userId);
 						console.log('User status result:', userStatus.success ? 'success' : 'failed');
 
@@ -113,7 +113,13 @@ export default function OAuth() {
 			console.error('OAuth component error:', err);
 			console.error('Error type:', typeof err);
 			console.error('Error message:', err instanceof Error ? err.message : 'Unknown error');
-			Alert.alert('Error', 'An unexpected error occurred during sign in');
+
+			// TestFlight debugging - show detailed error
+			const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+			Alert.alert(
+				'TestFlight Debug - OAuth Error',
+				`Error: ${errorMessage}\n\nType: ${typeof err}\n\nPlease report this error.`
+			);
 		}
 	}, [user]);
 

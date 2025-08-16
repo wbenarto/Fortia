@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import { View, Text, Animated, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
@@ -19,7 +19,7 @@ const DeepFocus = () => {
 	const [isRunning, setIsRunning] = useState(false);
 	const [isComplete, setIsComplete] = useState(false);
 	const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-	const intervalRef = useRef<NodeJS.Timeout | null>(null);
+	const intervalRef = useRef<number | null>(null);
 
 	const { user } = useUser();
 	const { getToken } = useAuth();

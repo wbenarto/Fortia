@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import { View, Text, Animated, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
@@ -15,7 +15,7 @@ const AwarenessSurrender = () => {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [timeRemaining, setTimeRemaining] = useState(300); // 5 minutes in seconds
 	const [isComplete, setIsComplete] = useState(false);
-	const intervalRef = useRef<NodeJS.Timeout | null>(null);
+	const intervalRef = useRef<number | null>(null);
 	const soundRef = useRef<Audio.Sound | null>(null);
 
 	useEffect(() => {

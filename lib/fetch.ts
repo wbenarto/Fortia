@@ -13,10 +13,10 @@ const getBaseURL = () => {
 };
 
 export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
-	try {
-		const baseURL = getBaseURL();
-		const url = `${baseURL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+	const baseURL = getBaseURL();
+	const url = `${baseURL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
+	try {
 		console.log(`API Call: ${endpoint}`); // Development logging
 		console.log(`Base URL: ${baseURL}`);
 		console.log(`Full URL: ${url}`);
@@ -40,6 +40,14 @@ export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
 		console.error('Fetch error:', error);
 		console.error('Error type:', typeof error);
 		console.error('Error constructor:', error?.constructor?.name);
+
+		// TestFlight debugging - log more details
+		if (error instanceof TypeError && error.message.includes('Network request failed')) {
+			console.error('Network request failed - possible connectivity issue');
+			console.error('Base URL:', baseURL);
+			console.error('Full URL:', url);
+		}
+
 		throw error;
 	}
 };
