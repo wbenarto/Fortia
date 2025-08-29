@@ -37,10 +37,11 @@ export async function GET(request: Request) {
 		// Check if user has completed onboarding
 		const hasCompletedOnboarding = !!(userData.weight && userData.height && userData.fitness_goal);
 
+		// In the GET function, standardize the response codes
 		return Response.json({
 			success: true,
 			data: userData,
-			code: hasCompletedOnboarding ? 'user_found' : 'user_needs_onboarding',
+			code: hasCompletedOnboarding ? 'user_found' : 'needs_onboarding', // Use consistent naming
 			needsOnboarding: !hasCompletedOnboarding,
 		});
 	} catch (error) {
@@ -62,7 +63,28 @@ export async function POST(request: Request) {
 		clerkId: string = '';
 
 	try {
-		const { firstName, lastName, email: emailParam, clerkId: clerkIdParam } = await request.json();
+		const {
+			firstName,
+			lastName,
+			email: emailParam,
+			clerkId: clerkIdParam,
+			dob,
+			age,
+			weight,
+			startingWeight,
+			targetWeight,
+			height,
+			gender,
+			activityLevel,
+			fitnessGoal,
+			dailyCalories,
+			dailyProtein,
+			dailyCarbs,
+			dailyFats,
+			bmr,
+			tdee,
+		} = await request.json();
+
 		email = emailParam;
 		clerkId = clerkIdParam;
 
@@ -87,18 +109,49 @@ export async function POST(request: Request) {
 			);
 		}
 
+		// Create complete user with all onboarding information
 		const response = await sql`
         INSERT INTO users (
             first_name,
             last_name,
             email,
-            clerk_id
+            clerk_id,
+            dob,
+            age,
+            weight,
+            starting_weight,
+            target_weight,
+            height,
+            gender,
+            activity_level,
+            fitness_goal,
+            daily_calories,
+            daily_protein,
+            daily_carbs,
+            daily_fats,
+            bmr,
+            tdee
         )
         VALUES (
             ${firstName},
             ${lastName},
             ${email},
-            ${clerkId}
+            ${clerkId},
+            ${dob},
+            ${age},
+            ${weight},
+            ${startingWeight},
+            ${targetWeight},
+            ${height},
+            ${gender},
+            ${activityLevel},
+            ${fitnessGoal},
+            ${dailyCalories},
+            ${dailyProtein},
+            ${dailyCarbs},
+            ${dailyFats},
+            ${bmr},
+            ${tdee}
         )
         RETURNING *
         `;

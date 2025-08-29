@@ -4,7 +4,7 @@ import { TokenCache } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
 import { fetchAPI } from '@/lib/fetch';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { checkUserStatus, handleUserStatus, RESPONSE_CODES } from '@/lib/userUtils';
+import { checkUserStatus, RESPONSE_CODES } from '@/lib/userUtils';
 
 const createTokenCache = (): TokenCache => {
 	return {
@@ -159,12 +159,8 @@ const handleOAuthError = (error: any) => {
 
 export const googleOAuth = async (startOAuthFlow: any) => {
 	try {
-		console.log('Starting Google OAuth flow...');
-		console.log('startOAuthFlow type:', typeof startOAuthFlow);
-
 		// Step 1: Handle OAuth with Clerk
 		const oauthData = await handleClerkOAuth(startOAuthFlow);
-		console.log('OAuth data extracted successfully');
 
 		// Check if OAuth was cancelled
 		if (!oauthData) {
@@ -175,16 +171,12 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 			};
 		}
 
-		// Step 2: Check user status in database
-		console.log('Checking user status for:', oauthData.clerkId);
+		// Step 2: Check user status in database (ONLY CHECK, NO CREATION)
+
 		const userStatus = await checkUserStatus(oauthData.clerkId);
-		console.log('User status result:', userStatus.success ? 'success' : 'failed');
 
-		// Step 3: Handle user status and create user if needed
-		const finalResult = await handleUserStatus(userStatus, oauthData);
-		console.log('Final OAuth result:', finalResult.success ? 'success' : 'failed');
-
-		return finalResult;
+		// Return the user status directly - no user creation during OAuth
+		return userStatus;
 	} catch (error) {
 		console.error('Google OAuth error:', error);
 		console.error('Error type:', typeof error);
@@ -208,11 +200,11 @@ export const appleOAuth = async (startOAuthFlow: any) => {
 			};
 		}
 
-		// Step 2: Check user status in database
+		// Step 2: Check user status in database (ONLY CHECK, NO CREATION)
 		const userStatus = await checkUserStatus(oauthData.clerkId);
 
-		// Step 3: Handle user status and create user if needed
-		return await handleUserStatus(userStatus, oauthData);
+		// Return the user status directly - no user creation during OAuth
+		return userStatus;
 	} catch (error) {
 		return handleOAuthError(error);
 	}

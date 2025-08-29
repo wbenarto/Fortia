@@ -24,6 +24,7 @@ export default {
 		ios: {
 			supportsTablet: true,
 			buildNumber: '1',
+			icon: './assets/icons/fortia-app-icon-main.png',
 			infoPlist: {
 				ITSAppUsesNonExemptEncryption: false,
 				NSMotionUsageDescription:

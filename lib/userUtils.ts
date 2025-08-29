@@ -218,7 +218,6 @@ export async function checkUserStatus(clerkId: string): Promise<UserStatus> {
 				};
 
 			case 'needs_onboarding':
-			case 'user_needs_onboarding':
 				// If data is null, it means user doesn't exist
 				if (!result.data) {
 					return {
@@ -245,6 +244,7 @@ export async function checkUserStatus(clerkId: string): Promise<UserStatus> {
 				};
 
 			default:
+				console.error('Unknown response code from API:', result.code, result);
 				return {
 					success: false,
 					code: RESPONSE_CODES.ERROR,
@@ -277,12 +277,19 @@ export async function createUserInDatabase(userData: {
 		});
 
 		if (response.success) {
+			// Check if this is an existing user or a new user
+			const isExistingUser = response.message === 'User already exists';
+
+			// Check if user has completed onboarding
+			const hasCompletedOnboarding =
+				response.data && response.data.weight && response.data.height && response.data.fitness_goal;
+
 			return {
 				success: true,
-				code: RESPONSE_CODES.NEEDS_ONBOARDING,
+				code: hasCompletedOnboarding ? RESPONSE_CODES.SUCCESS : RESPONSE_CODES.NEEDS_ONBOARDING,
 				data: response.data,
-				needsOnboarding: true,
-				message: 'User created successfully',
+				needsOnboarding: !hasCompletedOnboarding,
+				message: isExistingUser ? 'User already exists' : 'User created successfully',
 			};
 		} else {
 			return {
@@ -304,45 +311,45 @@ export async function createUserInDatabase(userData: {
 /**
  * Handle user status and create user if needed
  */
-export async function handleUserStatus(
-	userStatus: UserStatus,
-	oauthData: any
-): Promise<UserStatus> {
-	switch (userStatus.code) {
-		case RESPONSE_CODES.SUCCESS:
-			// User exists and has completed onboarding
-			return {
-				success: true,
-				code: RESPONSE_CODES.SUCCESS,
-				data: userStatus.data,
-				needsOnboarding: false,
-				message: 'You have successfully authenticated',
-			};
+// export async function handleUserStatus(
+// 	userStatus: UserStatus,
+// 	oauthData: any
+// ): Promise<UserStatus> {
+// 	switch (userStatus.code) {
+// 		case RESPONSE_CODES.SUCCESS:
+// 			// User exists and has completed onboarding
+// 			return {
+// 				success: true,
+// 				code: RESPONSE_CODES.SUCCESS,
+// 				data: userStatus.data,
+// 				needsOnboarding: false,
+// 				message: 'You have successfully authenticated',
+// 			};
 
-		case RESPONSE_CODES.NEEDS_ONBOARDING:
-			// User exists but needs onboarding
-			return {
-				success: true,
-				code: RESPONSE_CODES.NEEDS_ONBOARDING,
-				data: userStatus.data,
-				needsOnboarding: true,
-				message: 'Please complete your profile setup',
-			};
+// 		case RESPONSE_CODES.NEEDS_ONBOARDING:
+// 			// User exists but needs onboarding
+// 			return {
+// 				success: true,
+// 				code: RESPONSE_CODES.NEEDS_ONBOARDING,
+// 				data: userStatus.data,
+// 				needsOnboarding: true,
+// 				message: 'Please complete your profile setup',
+// 			};
 
-		case RESPONSE_CODES.USER_NOT_FOUND:
-			// User doesn't exist, create them
-			return await createUserInDatabase({
-				clerkId: oauthData.clerkId,
-				firstName: oauthData.firstName || '',
-				lastName: oauthData.lastName || '',
-				email: oauthData.email,
-			});
+// 		case RESPONSE_CODES.USER_NOT_FOUND:
+// 			// User doesn't exist, create them
+// 			return await createUserInDatabase({
+// 				clerkId: oauthData.clerkId,
+// 				firstName: oauthData.firstName || '',
+// 				lastName: oauthData.lastName || '',
+// 				email: oauthData.email,
+// 			});
 
-		default:
-			// Error case
-			return userStatus;
-	}
-}
+// 		default:
+// 			// Error case
+// 			return userStatus;
+// 	}
+// }
 
 /**
  * Get user's last name with fallbacks
@@ -352,3 +359,80 @@ export const getUserLastName = (userProfile: UserProfile): string => {
 	if (!userProfile.isSignedIn) return '';
 	return userProfile.lastName || '';
 };
+
+/**
+ * Complete user authentication flow
+ * Checks if user exists, creates if needed, returns final status
+ */
+export async function authenticateUser(oauthData: {
+	clerkId: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+}): Promise<UserStatus> {
+	try {
+		// Step 1: Check if user exists in database
+		const result = await fetchAPI(`/api/user?clerkId=${oauthData.clerkId}`, {
+			method: 'GET',
+		});
+
+		if (!result.success) {
+			return {
+				success: false,
+				code: RESPONSE_CODES.ERROR,
+				message: result.error || 'Failed to check user status',
+			};
+		}
+
+		// Step 2: Handle different user states
+		switch (result.code) {
+			case 'user_found':
+			case 'success':
+				// User exists and has completed onboarding
+				return {
+					success: true,
+					code: RESPONSE_CODES.SUCCESS,
+					data: result.data,
+					needsOnboarding: false,
+					message: 'You have successfully authenticated',
+				};
+
+			case 'needs_onboarding':
+				// User exists but needs onboarding
+				if (!result.data) {
+					// This shouldn't happen, but handle it gracefully
+					return {
+						success: false,
+						code: RESPONSE_CODES.ERROR,
+						message: 'User data is missing',
+					};
+				}
+				return {
+					success: true,
+					code: RESPONSE_CODES.NEEDS_ONBOARDING,
+					data: result.data,
+					needsOnboarding: true,
+					message: 'Please complete your profile setup',
+				};
+
+			case 'user_not_found':
+				// User doesn't exist, create them
+				return await createUserInDatabase(oauthData);
+
+			default:
+				console.error('Unknown response code from API:', result.code, result);
+				return {
+					success: false,
+					code: RESPONSE_CODES.ERROR,
+					message: `Unknown response code: ${result.code}`,
+				};
+		}
+	} catch (error) {
+		console.error('User authentication failed:', error);
+		return {
+			success: false,
+			code: RESPONSE_CODES.ERROR,
+			message: 'Failed to authenticate user',
+		};
+	}
+}

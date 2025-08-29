@@ -36,6 +36,7 @@ GEMINI_API_KEY=your_production_key
 - [ ] Production backend URL set
 - [ ] All API keys are production-ready
 - [ ] Database connection is production
+      cd
 
 ### ✅ App Store Requirements
 

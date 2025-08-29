@@ -256,8 +256,6 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			setError('');
 
 			try {
-				console.log('Analyzing food:', { foodName, portionSize });
-
 				// Use fetchAPI utility to get the correct base URL
 				const data = await fetchAPI('/api/meal-analysis', {
 					method: 'POST',
@@ -307,7 +305,6 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				const data = await fetchAPI(`/api/user?clerkId=${user.id}`);
 
 				const userExists = data.success && data.data;
-				console.log('User exists in database:', userExists);
 
 				return userExists;
 			} catch (error) {

@@ -222,8 +222,6 @@ export async function POST(request: Request) {
 			);
 		}
 
-		console.log('User found in database');
-
 		// Log the exact data being inserted
 		const insertData = {
 			clerk_id: validatedData.clerkId,

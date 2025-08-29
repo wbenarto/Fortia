@@ -108,9 +108,27 @@ const AccountSettings = () => {
 		setGoalSetupModal(false);
 	};
 
-	const handleSignOut = () => {
-		signOut();
-		router.replace('/(auth)/sign-in');
+	const handleSignOut = async () => {
+		try {
+			// Close all modals first to prevent cleanup issues
+			setGoalSetupModal(false);
+			setDeleteAccountModal(false);
+			setPrivacyPolicyModal(false);
+			setTermsAndConditionsModal(false);
+
+			// Add a small delay to allow modals to close properly
+			await new Promise(resolve => setTimeout(resolve, 100));
+
+			// First, sign out from Clerk
+			await signOut();
+
+			// Use router.push instead of replace to avoid cleanup issues
+			router.push('/(auth)/sign-in');
+		} catch (error) {
+			console.error('Sign out error:', error);
+			// Even if signOut fails, try to navigate to sign-in
+			router.push('/(auth)/sign-in');
+		}
 	};
 
 	const handleDeleteAccount = () => {
@@ -164,7 +182,7 @@ const AccountSettings = () => {
 
 		try {
 			// Step 1: Delete all data from our database
-			console.log('Deleting user data from database...');
+
 			const dbResponse = await fetchAPI(`/api/delete-account?clerkId=${user.id}`, {
 				method: 'DELETE',
 			});
@@ -178,7 +196,7 @@ const AccountSettings = () => {
 			console.log('Database deletion successful');
 
 			// Step 2: Delete user from Clerk
-			console.log('Deleting user from Clerk...');
+
 			await user.delete();
 
 			console.log('Clerk deletion successful');
@@ -190,31 +208,31 @@ const AccountSettings = () => {
 				[
 					{
 						text: 'OK',
-						onPress: () => {
-							// Sign out and redirect to sign-in
-							signOut();
-							router.replace('/(auth)/sign-in');
+						onPress: async () => {
+							try {
+								// Close all modals first
+								setGoalSetupModal(false);
+								setDeleteAccountModal(false);
+								setPrivacyPolicyModal(false);
+								setTermsAndConditionsModal(false);
+
+								// Add a small delay to allow modals to close properly
+								await new Promise(resolve => setTimeout(resolve, 100));
+
+								// Sign out and redirect to sign-in
+								await signOut();
+								router.push('/(auth)/sign-in');
+							} catch (error) {
+								console.error('Sign out error:', error);
+								router.push('/(auth)/sign-in');
+							}
 						},
 					},
 				]
 			);
 		} catch (error) {
 			console.error('Account deletion error:', error);
-
-			// Check if it's a Clerk error
-			if (error instanceof Error && error.message.includes('clerk')) {
-				Alert.alert(
-					'Deletion Error',
-					'Failed to delete account from authentication service. Please contact support.',
-					[{ text: 'OK' }]
-				);
-			} else {
-				Alert.alert(
-					'Deletion Error',
-					'Failed to delete account. Please try again or contact support.',
-					[{ text: 'OK' }]
-				);
-			}
+			Alert.alert('Error', 'Failed to delete account. Please try again.');
 		}
 	};
 

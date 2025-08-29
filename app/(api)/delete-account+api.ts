@@ -68,7 +68,7 @@ export async function DELETE(request: Request) {
 		`;
 
 		// 8. Finally, delete the user record
-		console.log('Deleting user record...');
+
 		const userResult = await sql`
 			DELETE FROM users 
 			WHERE clerk_id = ${clerkId}
@@ -76,7 +76,6 @@ export async function DELETE(request: Request) {
 		`;
 
 		if (userResult.length === 0) {
-			console.log('No user record found to delete');
 		} else {
 		}
 

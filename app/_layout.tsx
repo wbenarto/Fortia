@@ -14,7 +14,7 @@ const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-LogBox.ignoreLogs(['Clerk:']);
+LogBox.ignoreLogs(['Clerk:', '[clerk/telemetry]']);
 
 export default function RootLayout() {
 	const [loaded] = useFonts({
@@ -45,7 +45,7 @@ export default function RootLayout() {
 
 	return (
 		<GestureHandlerRootView style={{ flex: 1 }}>
-			<ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+			<ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey} telemetry={false}>
 				<ClerkLoaded>
 					<Stack>
 						<Stack.Screen name="index" options={{ headerShown: false }} />

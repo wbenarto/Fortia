@@ -36,7 +36,6 @@ const DebugUser = () => {
 				mealsAPI: mealsResponse,
 			};
 
-			console.log('Debug Info:', JSON.stringify(debugInfo, null, 2));
 			Alert.alert('Debug Info', 'Check console for detailed debug information');
 		} catch (error) {
 			console.error('Debug error:', error);
@@ -57,7 +56,7 @@ const DebugUser = () => {
 					{isLoading ? 'Debugging...' : 'Debug User (Check Console)'}
 				</Text>
 			</TouchableOpacity>
-			<Text className="text-white text-xs mt-2">User ID: {user?.id || 'Not available'}</Text>
+			<Text className="text-white text-xs mt-2">User ID: [REDACTED]</Text>
 		</View>
 	);
 };

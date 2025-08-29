@@ -44,22 +44,43 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 	const [dataConsentModal, setDataConsentModal] = useState(false);
 	const [userConsentData, setUserConsentData] = useState<any>(null);
 	const [consentChecked, setConsentChecked] = useState(false);
+	const [isCheckingUserStatus, setIsCheckingUserStatus] = useState(true);
 
 	const { user } = useUser();
 	const { triggerGoalsUpdate } = useGoalsStore();
 	const router = useRouter();
 
-	// Check user's existing consent on component mount
+	// Check user's existing consent and onboarding status on component mount
 	useEffect(() => {
 		if (user?.id && !consentChecked) {
-			checkExistingConsent();
+			checkUserStatusAndConsent();
 		}
 	}, [user?.id, consentChecked]);
 
-	const checkExistingConsent = async () => {
+	const checkUserStatusAndConsent = async () => {
 		if (!user?.id) return;
 
 		try {
+			// First check if user is already onboarded
+			const userResponse = await fetchAPI(`/api/user?clerkId=${user.id}`, {
+				method: 'GET',
+			});
+
+			if (userResponse.success && userResponse.data) {
+				// Check if user has completed onboarding (has weight, height, fitness_goal)
+				const hasCompletedOnboarding = !!(
+					userResponse.data.weight &&
+					userResponse.data.height &&
+					userResponse.data.fitness_goal
+				);
+
+				if (hasCompletedOnboarding) {
+					router.push('/(root)/(tabs)/home');
+					return;
+				}
+			}
+
+			// If not onboarded, check consent
 			const consentData = await fetchDataConsent(user.id);
 			setUserConsentData(consentData);
 			setConsentChecked(true);
@@ -69,10 +90,21 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 				setDataConsentModal(true);
 			}
 		} catch (error) {
-			console.error('Failed to check existing consent:', error);
+			console.error('Failed to check user status and consent:', error);
 			setConsentChecked(true);
+		} finally {
+			setIsCheckingUserStatus(false);
 		}
 	};
+
+	// Show loading state while checking user status
+	if (isCheckingUserStatus) {
+		return (
+			<View className="flex-1 justify-center items-center bg-[#262135]">
+				<Text className="text-white text-lg">Loading...</Text>
+			</View>
+		);
+	}
 
 	const fitnessGoals = [
 		{
@@ -324,9 +356,12 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 			// Format date as YYYY-MM-DD
 			const dob = `${formData.dobYear}-${formData.dobMonth.padStart(2, '0')}-${formData.dobDay.padStart(2, '0')}`;
 
-			// Update user with onboarding information
+			// Create complete user with all information
 			const requestBody = {
 				clerkId: user.id,
+				firstName: user.firstName || '',
+				lastName: user.lastName || '',
+				email: user.emailAddresses[0]?.emailAddress || '',
 				dob,
 				age,
 				weight,
@@ -344,8 +379,9 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 				tdee,
 			};
 
+			// Create user with complete information
 			const response = await fetchAPI('/api/user', {
-				method: 'PUT',
+				method: 'POST',
 				body: JSON.stringify(requestBody),
 			});
 
@@ -368,21 +404,30 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 							console.warn('Weight logging failed, but onboarding completed');
 						}
 					} catch (weightError) {
-						console.error('Error logging weight:', weightError);
-						// Don't fail onboarding if weight logging fails
+						console.error('Failed to log initial weight:', weightError);
 					}
 				}
 
+				// Update goals store
 				triggerGoalsUpdate();
-				onComplete();
-				router.replace('/(root)/(tabs)/home');
+
+				// Navigate to home immediately after successful creation
+
+				router.push('/(root)/(tabs)/home');
+
+				// Show success message after navigation
+				setTimeout(() => {
+					Alert.alert(
+						'Welcome to Fortia!',
+						'Your profile has been set up successfully. You can now start tracking your fitness journey.'
+					);
+				}, 500);
 			} else {
-				console.error('Onboarding failed:', response.error);
-				Alert.alert('Error', response.error || 'Failed to save your information');
+				Alert.alert('Error', response.error || 'Failed to create user profile. Please try again.');
 			}
 		} catch (error) {
 			console.error('Onboarding form error:', error);
-			Alert.alert('Error', 'Failed to save your information. Please try again.');
+			Alert.alert('Error', 'Failed to create user profile. Please try again.');
 		} finally {
 			setIsSubmitting(false);
 		}

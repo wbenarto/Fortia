@@ -45,7 +45,6 @@ export async function POST(request: Request) {
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
 			console.log(`=== MEAL ANALYSIS API CALLED (Attempt ${attempt}/${maxRetries}) ===`);
-			console.log('Processing meal analysis request');
 
 			if (!foodDescription) {
 				return Response.json({ error: 'Food description is required' }, { status: 400 });
@@ -119,8 +118,6 @@ Be accurate and realistic with the values. Do not include any text before or aft
 				},
 			};
 
-			console.log('Sending request to Gemini API...');
-
 			const response = await fetch(
 				`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
 				{
@@ -176,7 +173,6 @@ Be accurate and realistic with the values. Do not include any text before or aft
 					const jsonMatch = content.match(/\{[\s\S]*\}/);
 					if (jsonMatch) {
 						extractedJson = JSON.parse(jsonMatch[0]);
-						console.log('Successfully extracted JSON with regex:', extractedJson);
 					}
 				} catch (regexError) {
 					console.error('Regex extraction failed:', regexError);
@@ -188,7 +184,6 @@ Be accurate and realistic with the values. Do not include any text before or aft
 						const codeBlockMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
 						if (codeBlockMatch) {
 							extractedJson = JSON.parse(codeBlockMatch[1]);
-							console.log('Successfully extracted JSON from code block:', extractedJson);
 						}
 					} catch (codeBlockError) {
 						console.error('Code block extraction failed:', codeBlockError);
@@ -201,7 +196,6 @@ Be accurate and realistic with the values. Do not include any text before or aft
 						const prefixMatch = content.match(/(?:JSON|json|Response|response):\s*(\{[\s\S]*\})/);
 						if (prefixMatch) {
 							extractedJson = JSON.parse(prefixMatch[1]);
-							console.log('Successfully extracted JSON after prefix:', extractedJson);
 						}
 					} catch (prefixError) {
 						console.error('Prefix extraction failed:', prefixError);
@@ -217,7 +211,7 @@ Be accurate and realistic with the values. Do not include any text before or aft
 							const trimmed = line.trim();
 							if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
 								extractedJson = JSON.parse(trimmed);
-								console.log('Successfully extracted JSON from line:', extractedJson);
+
 								break;
 							}
 						}
@@ -238,7 +232,6 @@ Be accurate and realistic with the values. Do not include any text before or aft
 			}
 
 			// Validate the nutrition data structure
-			console.log('Parsed nutrition data:', nutritionData);
 
 			// Ensure all required fields exist with fallbacks
 			const validatedData = {
@@ -253,8 +246,6 @@ Be accurate and realistic with the values. Do not include any text before or aft
 				suggestions: nutritionData.suggestions || [],
 				notes: nutritionData.notes || '',
 			};
-
-			console.log('Validated nutrition data:', validatedData);
 
 			// Record successful request for rate limiting
 			// mealAnalysisRateLimiter.recordRequest(userId);

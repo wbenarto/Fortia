@@ -46,7 +46,6 @@ export async function POST(request: Request) {
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
 			console.log(`=== EXERCISE ANALYSIS API CALLED (Attempt ${attempt}/${maxRetries}) ===`);
-			console.log('Processing exercise analysis request');
 
 			if (!exerciseDescription) {
 				return Response.json({ error: 'Exercise description is required' }, { status: 400 });
@@ -86,8 +85,6 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 					maxOutputTokens: 300,
 				},
 			};
-
-			console.log('Sending request to Gemini API...');
 
 			const response = await fetch(
 				`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -147,7 +144,6 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 					const jsonMatch = content.match(/\{[\s\S]*\}/);
 					if (jsonMatch) {
 						extractedJson = JSON.parse(jsonMatch[0]);
-						console.log('Successfully extracted JSON with regex:', extractedJson);
 					}
 				} catch (regexError) {
 					console.error('Regex extraction failed:', regexError);
@@ -159,7 +155,6 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 						const codeBlockMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
 						if (codeBlockMatch) {
 							extractedJson = JSON.parse(codeBlockMatch[1]);
-							console.log('Successfully extracted JSON from code block:', extractedJson);
 						}
 					} catch (codeBlockError) {
 						console.error('Code block extraction failed:', codeBlockError);
@@ -172,7 +167,6 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 						const prefixMatch = content.match(/(?:JSON|json|Response|response):\s*(\{[\s\S]*\})/);
 						if (prefixMatch) {
 							extractedJson = JSON.parse(prefixMatch[1]);
-							console.log('Successfully extracted JSON after prefix:', extractedJson);
 						}
 					} catch (prefixError) {
 						console.error('Prefix extraction failed:', prefixError);
@@ -188,7 +182,7 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 							const trimmed = line.trim();
 							if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
 								extractedJson = JSON.parse(trimmed);
-								console.log('Successfully extracted JSON from line:', extractedJson);
+
 								break;
 							}
 						}
