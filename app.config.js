@@ -12,7 +12,7 @@ export default {
 		version: '1.0.0',
 		buildNumber: '1',
 		orientation: 'portrait',
-		icon: './assets/icons/fortia-app-icon-main.png',
+		icon: './assets/icons/fortia-white-icon.png',
 		scheme: 'Fortia',
 		userInterfaceStyle: 'automatic',
 		splash: {
@@ -24,17 +24,17 @@ export default {
 		ios: {
 			supportsTablet: true,
 			buildNumber: '1',
-			icon: './assets/icons/fortia-app-icon-main.png',
+			icon: './assets/icons/fortia-white-icon.png',
 			infoPlist: {
 				ITSAppUsesNonExemptEncryption: false,
 				NSMotionUsageDescription:
-					'Fortia needs access to motion and fitness data to track your daily steps for better fitness insights.',
+					'Fortia uses Apple HealthKit and motion sensors to track your daily steps and physical activity for accurate fitness insights.',
 				NSMicrophoneUsageDescription:
 					'Fortia needs access to your microphone for audio recording features.',
 				NSHealthShareUsageDescription:
-					'Fortia needs access to your health data to track steps and provide accurate fitness insights.',
+					'Fortia uses Apple HealthKit to securely access your step count and activity data for personalized fitness tracking and calorie burn calculations.',
 				NSHealthUpdateUsageDescription:
-					'Fortia needs permission to update your health data with your fitness activities.',
+					'Fortia uses Apple HealthKit to record your fitness activities and workouts in your Health app for comprehensive health tracking.',
 				NSAppTransportSecurity: {
 					NSAllowsArbitraryLoads: false,
 				},

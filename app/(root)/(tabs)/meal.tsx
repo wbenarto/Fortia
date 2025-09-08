@@ -35,6 +35,7 @@ interface FoodItem {
 	protein: number;
 	carbs: number;
 	fats: number;
+	mealType: string;
 }
 
 const Meal = () => {
@@ -82,7 +83,9 @@ const Meal = () => {
 
 	// Transform database meals to Food component format
 	const transformMealsToFoodItems = (meals: Meal[]): FoodItem[] => {
-		return meals.map(meal => {
+		console.log(meals, 'meals here');
+		const mealTypeOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
+		const foodList = meals.map(meal => {
 			return {
 				name: meal.food_name,
 				weight: meal.portion_size,
@@ -90,7 +93,18 @@ const Meal = () => {
 				protein: meal.protein,
 				carbs: meal.carbs,
 				fats: meal.fats,
+				mealType: meal.meal_type,
 			};
+		});
+
+		return foodList.sort((a, b) => {
+			const aIndex = mealTypeOrder.indexOf(a.mealType);
+			const bIndex = mealTypeOrder.indexOf(b.mealType);
+
+			const aOrder = aIndex === -1 ? mealTypeOrder.length : aIndex;
+			const bOrder = bIndex === -1 ? mealTypeOrder.length : bIndex;
+
+			return aOrder - bOrder;
 		});
 	};
 
@@ -145,7 +159,7 @@ const Meal = () => {
 							<View className="flex flex-row justify-between items-center px-4">
 								<Text className="font-JakartaSemiBold text-lg">Today's Food Log</Text>
 							</View>
-							<View className="px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
+							<View className="px-4   ">
 								{isLoadingMeals ? (
 									<View className="py-8 flex items-center justify-center">
 										<ActivityIndicator size="large" color="#E3BBA1" />

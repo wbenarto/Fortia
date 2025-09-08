@@ -63,6 +63,12 @@ const HelpSupport = () => {
 			answer:
 				"First, ensure you've granted the necessary permissions in your device settings. For iOS, check that HealthKit permissions are enabled. For Android, verify that the app has access to your fitness data. Try restarting the app if issues persist.",
 		},
+		{
+			id: 9,
+			question: 'What is HealthKit and how does Fortia use it?',
+			answer:
+				"HealthKit is Apple's secure framework for health data. Fortia uses HealthKit to access your step count and activity data to provide accurate fitness tracking and personalized recommendations. Your data is encrypted and never shared without your consent.",
+		},
 	];
 
 	const toggleFAQ = (id: number) => {

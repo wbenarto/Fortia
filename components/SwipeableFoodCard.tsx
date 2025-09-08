@@ -10,6 +10,7 @@ interface FoodItem {
 	protein: number;
 	carbs: number;
 	fats: number;
+	mealType: string;
 }
 
 interface SwipeableFoodCardProps {
@@ -75,7 +76,7 @@ const SwipeableFoodCard: React.FC<SwipeableFoodCardProps> = ({ food, mealId, onD
 	};
 
 	return (
-		<View className="relative my-2">
+		<View className="relative my-1">
 			{/* Delete Button (Background) */}
 			<View className="absolute right-0 top-0 bottom-0 w-20 bg-red-500 rounded-xl justify-center items-center">
 				<TouchableOpacity
@@ -95,17 +96,22 @@ const SwipeableFoodCard: React.FC<SwipeableFoodCardProps> = ({ food, mealId, onD
 					style={{
 						transform: [{ translateX }],
 					}}
-					className="w-full h-24 py-4 px-3 rounded-xl border-solid border-[1px] border-[#F1F5F9] bg-white"
+					className="w-full bg-white py-2 px-3 rounded-xl border-solid border-[1px] border-[#F1F5F9] "
 				>
-					<View className="flex flex-row justify-between items-center">
-						<Text className="font-JakartaSemiBold">{food.name}</Text>
+					<View className="flex flex-row items-center justify-between my-1 ">
+						<Text className="font-JakartaSemiBold min-w-[170px]  ">{food.name} </Text>
+						<Text className="text-[12px] text-[#64748B] ">• {food.weight}</Text>
+						<View className="border-solid border-black border-[.5px] px-2 rounded-xl">
+							<Text className="text-[10px] text-[#64748B] text-gray-800 capitalize">
+								{food.mealType}
+							</Text>
+						</View>
 					</View>
-					<Text className="text-xs my-1 text-[#64748B]">{food.weight}</Text>
 					<View className="flex flex-row justify-between items-center">
-						<Text className="text-[#64748B]">{food.calories} cal</Text>
-						<Text className="text-[#64748B]">{Math.round(food.protein)}g protein</Text>
-						<Text className="text-[#64748B]">{Math.round(food.carbs)}g carbs</Text>
-						<Text className="text-[#64748B]">{Math.round(food.fats)}g fats</Text>
+						<Text className="text-[12px] text-[#64748B]">{food.calories} cal</Text>
+						<Text className="text-[12px] text-[#64748B]">{Math.round(food.protein)}g protein</Text>
+						<Text className="text-[12px] text-[#64748B]">{Math.round(food.carbs)}g carbs</Text>
+						<Text className="text-[12px] text-[#64748B]">{Math.round(food.fats)}g fats</Text>
 					</View>
 				</Animated.View>
 			</PanGestureHandler>

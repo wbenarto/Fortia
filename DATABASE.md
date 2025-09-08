@@ -68,7 +68,7 @@ npm run db:status
 npm run db:migrate
 ```
 
-⚠️ **Never use `npm run db:setup` in production** - it will delete all data!
+**Never use `npm run db:setup` in production** - it will delete all data!
 
 ## Adding New Migrations
 
@@ -93,7 +93,7 @@ To add a new migration:
     `;
 
     if (tableExists[0].exists) {
-      console.log('✅ Table already exists, skipping...');
+      console.log('Table already exists, skipping...');
       return;
     }
 
@@ -104,23 +104,6 @@ To add a new migration:
 ```
 
 3. **Run the migration**: `npm run db:migrate`
-
-## Migration Best Practices
-
-### ✅ Do's
-
-- **Check before creating**: Always check if tables/columns exist before creating them
-- **Use descriptive IDs**: Migration IDs should clearly describe the change
-- **Test migrations**: Test migrations on a copy of production data
-- **Backup first**: Always backup production data before running migrations
-- **Use transactions**: Wrap complex migrations in transactions when possible
-
-### ❌ Don'ts
-
-- **Don't drop tables**: Unless absolutely necessary and you have backups
-- **Don't modify existing data**: Without careful consideration
-- **Don't skip testing**: Always test migrations before production
-- **Don't use setup script**: In production environments
 
 ## Current Schema
 
@@ -160,27 +143,3 @@ npm run db:status
 # If migrations table is corrupted, recreate it
 # (This will reset migration tracking)
 ```
-
-### Data Loss Prevention
-
-- **Always backup** before running migrations
-- **Test migrations** on development data first
-- **Use migrations** instead of setup script for schema changes
-- **Monitor logs** during migration execution
-
-## Environment Variables
-
-Ensure these are set in your `.env` file:
-
-```env
-DATABASE_URL=postgresql://username:password@host:port/database
-```
-
-## Support
-
-If you encounter issues with database migrations:
-
-1. Check the migration logs for specific errors
-2. Verify your database connection
-3. Ensure you have the necessary permissions
-4. Consider rolling back to a backup if data loss occurs

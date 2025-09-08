@@ -2,7 +2,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import ReactNativeModal from 'react-native-modal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -29,6 +29,7 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	const [scheduledExercises, setScheduledExercises] = useState<any[]>([]);
 	const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
 	const [isLoading, setIsLoading] = useState(false);
+	const [showHealthKitInfo, setShowHealthKitInfo] = useState(false);
 
 	// Save completion status to AsyncStorage
 	const saveCompletionStatus = async (completedSet: Set<string>) => {
@@ -703,6 +704,15 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 						<View className="flex flex-row gap-2 mb-2 items-center">
 							<Ionicons name="footsteps-outline" size={14} color="#5A556B" />
 							<Text className="text-xs text-[#64748B]">Steps</Text>
+
+							<TouchableOpacity
+								onPress={() => setShowHealthKitInfo(true)}
+								className="flex-row items-center"
+							>
+								<Ionicons name="medical" size={12} color="#E3BBA1" />
+								<Text className="text-xs text-[#E3BBA1] ml-1">HealthKit</Text>
+							</TouchableOpacity>
+
 							{!hasDataCollectionConsent(userConsentData) ? (
 								<TouchableOpacity
 									onPress={() =>
@@ -910,6 +920,77 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 							</TouchableOpacity>
 						)}
 					</View>
+				</ReactNativeModal>
+
+				{/* HealthKit Info Modal */}
+				<ReactNativeModal
+					isVisible={showHealthKitInfo}
+					onBackdropPress={() => setShowHealthKitInfo(false)}
+					onBackButtonPress={() => setShowHealthKitInfo(false)}
+					className="mt-32 mb-0 mx-0 "
+				>
+					<ScrollView className="bg-white rounded-3xl p-6 max-h-[100%] ">
+						<View className="flex-row justify-between items-center mb-6">
+							<Text className="text-xl font-JakartaBold">HealthKit Integration</Text>
+							<TouchableOpacity onPress={() => setShowHealthKitInfo(false)}>
+								<Ionicons name="close" size={24} color="#64748B" />
+							</TouchableOpacity>
+						</View>
+
+						<View className="mb-6">
+							<View className="flex-row items-center mb-3">
+								<Ionicons name="medical" size={20} color="#E3BBA1" />
+								<Text className="text-lg font-JakartaSemiBold ml-2">What is HealthKit?</Text>
+							</View>
+							<Text className="text-gray-700 leading-6">
+								HealthKit is Apple's secure framework for health and fitness data. Fortia uses
+								HealthKit to securely access your step count and activity data to provide
+								personalized fitness insights.
+							</Text>
+						</View>
+
+						<View className="mb-6">
+							<View className="flex-row items-center mb-3">
+								<Ionicons name="shield-checkmark" size={20} color="#E3BBA1" />
+								<Text className="text-lg font-JakartaSemiBold ml-2">Data Security</Text>
+							</View>
+							<Text className="text-gray-700 leading-6">
+								• Your health data is encrypted and stored securely on your device{'\n'}• We only
+								access step count and basic activity data{'\n'}• Data is never shared with third
+								parties without your consent{'\n'}• You can revoke access at any time in Settings
+							</Text>
+						</View>
+
+						<View className="mb-6">
+							<View className="flex-row items-center mb-3">
+								<Ionicons name="analytics" size={20} color="#E3BBA1" />
+								<Text className="text-lg font-JakartaSemiBold ml-2">How We Use Your Data</Text>
+							</View>
+							<Text className="text-gray-700 leading-6">
+								• Track your daily step count and activity levels{'\n'}• Calculate calories burned
+								from your activity{'\n'}• Provide personalized fitness recommendations{'\n'}• Sync
+								data across your devices securely
+							</Text>
+						</View>
+
+						<View className="mb-6">
+							<View className="flex-row items-center mb-3">
+								<Ionicons name="settings" size={20} color="#E3BBA1" />
+								<Text className="text-lg font-JakartaSemiBold ml-2">Managing Permissions</Text>
+							</View>
+							<Text className="text-gray-700 leading-6">
+								You can manage HealthKit permissions in your device Settings {'>'} Privacy &
+								Security {'>'} Health {'>'} Fortia.
+							</Text>
+						</View>
+
+						<TouchableOpacity
+							onPress={() => setShowHealthKitInfo(false)}
+							className="bg-[#E3BBA1] py-3 rounded-xl mt-4 mb-20"
+						>
+							<Text className="text-white text-center font-JakartaSemiBold">Got it</Text>
+						</TouchableOpacity>
+					</ScrollView>
 				</ReactNativeModal>
 			</View>
 		</View>

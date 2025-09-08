@@ -15,6 +15,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import Navbar from '@/components/Navbar';
 import WeightTracking from '@/components/WeightTracking';
 import WeeklyCalendar from '@/components/WeeklyCalendar';
+import MiniDashboardTracking from '@/components/MiniDashboardTracking';
 import ActivityTracking from '@/components/ActivityTracking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -128,9 +129,10 @@ export default function Page() {
 					<Navbar />
 					<View className="w-full pb-10">
 						<WeeklyCalendar />
+						{/* <MiniDashboardTracking /> */}
 
 						{/* Mindfulness Cards Section */}
-						<View className="flex flex-row justify-between px-4 mt-4 mb-6">
+						<View className="flex flex-row justify-between px-4 mt-2 mb-6">
 							{/* Card 1: Awakened Manifesting */}
 							<TouchableOpacity
 								className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"

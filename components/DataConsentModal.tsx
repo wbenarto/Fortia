@@ -49,8 +49,9 @@ const DataConsentModal: React.FC<DataConsentModalProps> = ({
 			description: 'Weight measurements over time for progress tracking',
 		},
 		{
-			title: 'Step & Activity Data',
-			description: 'Daily step count and physical activity from HealthKit',
+			title: 'Step & Activity Data (HealthKit)',
+			description:
+				'Daily step count and physical activity data from Apple HealthKit for fitness tracking and calorie calculations',
 		},
 		{
 			title: 'Workout Activities',
