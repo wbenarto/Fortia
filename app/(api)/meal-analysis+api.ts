@@ -44,8 +44,6 @@ export async function POST(request: Request) {
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
-			console.log(`=== MEAL ANALYSIS API CALLED (Attempt ${attempt}/${maxRetries}) ===`);
-
 			if (!foodDescription) {
 				return Response.json({ error: 'Food description is required' }, { status: 400 });
 			}
@@ -271,7 +269,6 @@ Be accurate and realistic with the values. Do not include any text before or aft
 					lastError.message.includes('rate limit'))
 			) {
 				const waitTime = attempt * 1000; // 1s, 2s, 3s
-				console.log(`Retrying in ${waitTime}ms...`);
 				await new Promise(resolve => setTimeout(resolve, waitTime));
 				continue;
 			}

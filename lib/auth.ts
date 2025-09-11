@@ -34,15 +34,11 @@ const createTokenCache = (): TokenCache => {
  */
 const handleClerkOAuth = async (startOAuthFlow: any) => {
 	try {
-		console.log('Starting Clerk OAuth flow...');
-		console.log('startOAuthFlow function:', typeof startOAuthFlow);
-
 		let oauthResult;
 		try {
 			oauthResult = await startOAuthFlow({
 				redirectUrl: Linking.createURL('/(root)/(tabs)/home', { scheme: 'Fortia' }),
 			});
-			console.log('OAuth flow completed successfully');
 		} catch (oauthFlowError) {
 			console.error('OAuth flow failed:', oauthFlowError);
 			console.error('OAuth flow error type:', typeof oauthFlowError);
@@ -52,38 +48,23 @@ const handleClerkOAuth = async (startOAuthFlow: any) => {
 
 		const { createdSessionId, signIn, signUp, setActive } = oauthResult;
 
-		console.log('Clerk OAuth Response - Session ID:', !!createdSessionId);
-
-		// Debug the raw objects
-		console.log('Raw signIn object exists:', !!signIn);
-		console.log('Raw signUp object exists:', !!signUp);
-		console.log('Raw createdSessionId exists:', !!createdSessionId);
-		console.log('Raw setActive function exists:', !!setActive);
-
 		if (!createdSessionId || !setActive) {
-			console.log('OAuth flow completed but no session created - likely user cancellation');
-			console.log('createdSessionId exists:', !!createdSessionId);
-			console.log('setActive exists:', !!setActive);
 			// Don't throw error for cancellation, let the calling function handle it
 			return null;
 		}
 
-		console.log('Session created, setting active session...');
 		try {
 			await setActive({ session: createdSessionId });
-			console.log('Active session set successfully');
 		} catch (setActiveError) {
 			console.error('Failed to set active session:', setActiveError);
 			console.error('setActiveError type:', typeof setActiveError);
 			console.error('setActiveError:', setActiveError);
 
 			// If setActive fails, we might still have user data, so continue
-			console.log('Continuing without setting active session...');
 		}
 
 		// Since Clerk doesn't provide user data in the OAuth response,
 		// we need to get it from the active session
-		console.log('Getting user data from active session...');
 
 		// Import the useUser hook to get current user data
 		// Note: This approach requires the component to be wrapped in ClerkProvider
@@ -91,7 +72,6 @@ const handleClerkOAuth = async (startOAuthFlow: any) => {
 
 		// For now, let's try to extract user data from the session ID
 		// We'll need to make an API call to get user data using the session
-		console.log('Session ID for user lookup exists:', !!createdSessionId);
 
 		// Since we can't use useUser here (it's a hook), we'll need to get user data
 		// from the backend using the session, or handle this in the component

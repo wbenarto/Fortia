@@ -14,49 +14,42 @@ export async function DELETE(request: Request) {
 		// Start with tables that reference other tables, then move to main tables
 
 		// 1. Delete API logs
-		console.log('Deleting API logs...');
 		await sql`
 			DELETE FROM api_logs 
 			WHERE clerk_id = ${clerkId}
 		`;
 
 		// 2. Delete deep focus sessions
-		console.log('Deleting deep focus sessions...');
 		await sql`
 			DELETE FROM deep_focus_sessions 
 			WHERE clerk_id = ${clerkId}
 		`;
 
 		// 3. Delete activities
-		console.log('Deleting activities...');
 		await sql`
 			DELETE FROM activities 
 			WHERE clerk_id = ${clerkId}
 		`;
 
 		// 4. Delete steps
-		console.log('Deleting steps...');
 		await sql`
 			DELETE FROM steps 
 			WHERE clerk_id = ${clerkId}
 		`;
 
 		// 5. Delete weights
-		console.log('Deleting weights...');
 		await sql`
 			DELETE FROM weights 
 			WHERE clerk_id = ${clerkId}
 		`;
 
 		// 6. Delete meals
-		console.log('Deleting meals...');
 		await sql`
 			DELETE FROM meals 
 			WHERE clerk_id = ${clerkId}
 		`;
 
 		// 7. Delete consent data
-		console.log('Deleting consent data...');
 		await sql`
 			DELETE FROM data_consent 
 			WHERE clerk_id = ${clerkId}

@@ -71,7 +71,6 @@ const SwipeableExerciseCard: React.FC<SwipeableExerciseCardProps> = ({
 
 	const handleDelete = () => {
 		const exerciseType = exercise.workout_type === 'barbell' ? 'workout session' : 'exercise';
-		console.log('Delete button pressed for exercise:', exercise);
 		Alert.alert('Delete Exercise', `Are you sure you want to delete this ${exerciseType}?`, [
 			{
 				text: 'Cancel',
@@ -81,7 +80,6 @@ const SwipeableExerciseCard: React.FC<SwipeableExerciseCardProps> = ({
 				text: 'Delete',
 				style: 'destructive',
 				onPress: () => {
-					console.log('Delete confirmed, calling onDelete');
 					onDelete(exercise.id);
 					// Animate back to original position
 					Animated.spring(translateX, {

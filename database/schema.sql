@@ -171,6 +171,20 @@ CREATE INDEX IF NOT EXISTS idx_steps_clerk_id ON steps(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_steps_date ON steps(date);
 CREATE INDEX IF NOT EXISTS idx_activities_clerk_id ON activities(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_activities_date ON activities(date);
+
+-- Unique constraints to prevent duplicate BMR and Steps entries
+-- These ensure only one BMR and one Steps entry per user per day
+CREATE UNIQUE INDEX IF NOT EXISTS idx_activities_bmr_unique 
+ON activities (clerk_id, date) 
+WHERE activity_description LIKE '%Basal Metabolic Rate%';
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_activities_steps_unique 
+ON activities (clerk_id, date) 
+WHERE activity_description LIKE '%Daily Steps%';
+
+-- Additional index for better performance on daily activity queries
+CREATE INDEX IF NOT EXISTS idx_activities_clerk_date_type 
+ON activities (clerk_id, date, activity_description);
 CREATE INDEX IF NOT EXISTS idx_api_logs_clerk_id ON api_logs(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_privacy_consent_clerk_id ON privacy_consent(clerk_id);

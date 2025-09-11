@@ -74,8 +74,9 @@ const SignUp = () => {
 			// and redirect the user
 			if (signUpAttempt.status === 'complete') {
 				try {
-					// Create database user
-					const userResponse = await fetchAPI('/api/user', {
+					// Create basic database user (same as OAuth flow)
+					// This creates a minimal user record, onboarding will be completed later
+					const userResponse = await fetchAPI('/api/user/basic', {
 						method: 'POST',
 						body: JSON.stringify({
 							firstName: form.firstName,
@@ -94,7 +95,7 @@ const SignUp = () => {
 					} else {
 						// Handle specific error cases
 						if (userResponse.error && userResponse.error.includes('already exists')) {
-							// User already exists, try to sign them in instead
+							// User already exists, proceed with sign in
 							await setActive({ session: signUpAttempt.createdSessionId });
 							setVerification({
 								...verification,

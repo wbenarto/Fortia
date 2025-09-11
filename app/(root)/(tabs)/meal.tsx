@@ -83,7 +83,6 @@ const Meal = () => {
 
 	// Transform database meals to Food component format
 	const transformMealsToFoodItems = (meals: Meal[]): FoodItem[] => {
-		console.log(meals, 'meals here');
 		const mealTypeOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
 		const foodList = meals.map(meal => {
 			return {

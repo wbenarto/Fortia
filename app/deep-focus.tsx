@@ -187,7 +187,6 @@ const DeepFocus = () => {
 			});
 
 			if (response.success) {
-				console.log('Focus session saved successfully:', response.data);
 				// Refresh chart data after saving
 				fetchWeeklyFocusData();
 				fetchStatsData();
@@ -213,9 +212,6 @@ const DeepFocus = () => {
 			});
 
 			if (response.success && response.data) {
-				console.log('Weekly focus data:', response.data);
-				console.log('Current date:', new Date().toISOString());
-
 				// Create a map of day labels to hours
 				const dayMap: { [key: string]: number } = {};
 				response.data.forEach((item: any) => {

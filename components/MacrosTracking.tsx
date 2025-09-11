@@ -344,8 +344,6 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					confidence: Math.min(1, Math.max(0, Number(nutritionData.confidence) || 0.5)),
 				};
 
-				console.log('Validated nutrition data:', validatedNutritionData);
-
 				// Validate required fields
 				if (!foodName.trim()) {
 					setError('Food name is required');
@@ -360,8 +358,6 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				// Validate meal type
 				const validMealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
 				const validatedMealType = validMealTypes.includes(mealType) ? mealType : 'snack';
-
-				console.log('Meal type validation:', { original: mealType, validated: validatedMealType });
 
 				const mealData = {
 					clerkId: user.id,
@@ -379,18 +375,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					date: getTodayDate(), // Add user's local date for proper timezone handling
 				};
 
-				console.log('Saving meal with data (clerkId hidden)');
-
-				console.log('Nutrition data validation:', {
-					calories: typeof nutritionData.calories,
-					protein: typeof nutritionData.protein,
-					carbs: typeof nutritionData.carbs,
-					fats: typeof nutritionData.fats,
-					fiber: typeof nutritionData.fiber,
-					sugar: typeof nutritionData.sugar,
-					sodium: typeof nutritionData.sodium,
-					confidence: typeof nutritionData.confidence,
-				});
+				// Validate nutrition data before saving
 
 				// Use fetchAPI utility to get the correct base URL
 				const data = await fetchAPI('/api/meals', {

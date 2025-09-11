@@ -20,9 +20,20 @@ export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
 		const response = await fetch(url, options);
 
 		if (!response.ok) {
-			console.error(`HTTP error! status: ${response.status}`);
 			const errorText = await response.text();
 
+			// For 400/404 errors, return the error response instead of throwing
+			// This allows calling code to handle these cases gracefully
+			if (response.status === 400 || response.status === 404) {
+				try {
+					const errorData = JSON.parse(errorText);
+					return { success: false, error: errorData.error || errorText };
+				} catch {
+					return { success: false, error: errorText };
+				}
+			}
+
+			// For other errors, still throw
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 
@@ -30,17 +41,6 @@ export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
 
 		return data;
 	} catch (error) {
-		console.error('Fetch error:', error);
-		console.error('Error type:', typeof error);
-		console.error('Error constructor:', error?.constructor?.name);
-
-		// TestFlight debugging - log more details
-		if (error instanceof TypeError && error.message.includes('Network request failed')) {
-			console.error('Network request failed - possible connectivity issue');
-			console.error('Base URL:', baseURL);
-			console.error('Full URL:', url);
-		}
-
 		throw error;
 	}
 };

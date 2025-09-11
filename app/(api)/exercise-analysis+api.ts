@@ -14,7 +14,6 @@ export async function POST(request: Request) {
 	let requestBody;
 	try {
 		requestBody = await request.json();
-		console.log('Exercise analysis request received');
 	} catch (parseError) {
 		console.error('Failed to parse request body:', parseError);
 		return Response.json({ error: 'Invalid request body' }, { status: 400 });
@@ -45,8 +44,6 @@ export async function POST(request: Request) {
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
-			console.log(`=== EXERCISE ANALYSIS API CALLED (Attempt ${attempt}/${maxRetries}) ===`);
-
 			if (!exerciseDescription) {
 				return Response.json({ error: 'Exercise description is required' }, { status: 400 });
 			}
@@ -97,8 +94,6 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 				}
 			);
 
-			console.log('Gemini API response status:', response.status);
-
 			if (!response.ok) {
 				const errorText = await response.text();
 				console.error('Gemini API error response:', errorText);
@@ -118,10 +113,7 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 			}
 
 			const data = await response.json();
-			console.log('Gemini API response received');
-
 			const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-			console.log('Extracted content from Gemini');
 
 			if (!content) {
 				throw new Error('No response from Gemini');
@@ -203,7 +195,6 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 			}
 
 			// Validate the exercise data structure
-			console.log('Parsed exercise data:', exerciseData);
 
 			// Ensure all required fields exist with fallbacks
 			const validatedData = {
@@ -211,8 +202,6 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 				confidence: exerciseData.confidence || 0.5,
 				notes: exerciseData.notes || '',
 			};
-
-			console.log('Validated exercise data:', validatedData);
 
 			// Record successful request for rate limiting
 			// exerciseAnalysisRateLimiter.recordRequest(userId);
@@ -238,7 +227,6 @@ Be realistic with the calorie estimates. Consider the exercise type, intensity, 
 					lastError.message.includes('rate limit'))
 			) {
 				const waitTime = attempt * 1000; // 1s, 2s, 3s
-				console.log(`Retrying in ${waitTime}ms...`);
 				await new Promise(resolve => setTimeout(resolve, waitTime));
 				continue;
 			}

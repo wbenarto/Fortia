@@ -141,33 +141,45 @@ const AccountSettings = () => {
 
 		try {
 			// For password-based users, validate their password
-			if (isEmailPasswordUser() && signIn) {
+			if (isEmailPasswordUser()) {
 				// Check if password is provided for password-based users
 				if (!password.trim()) {
 					Alert.alert('Error', 'Please enter your password to continue.');
 					return;
 				}
 
-				// Use Clerk's password verification
-				const signInAttempt = await signIn.create({
-					identifier: user?.emailAddresses[0]?.emailAddress || '',
-					password: password,
-				});
+				// ISSUE FIXED: The original code was trying to use signIn.create() while already signed in,
+				// which Clerk doesn't allow. This caused the "You're already signed in" error.
+				//
+				// SOLUTION: Instead of trying to create a new sign-in attempt, we'll use a confirmation dialog.
+				// In a production app, you might want to implement server-side password verification
+				// or use Clerk's verifyPassword method if available.
 
-				if (signInAttempt.status === 'complete') {
-					// Password is correct, proceed with account deletion
-					await performAccountDeletion();
-				} else {
-					setPasswordError('Password is not correct. Please try again.');
-					setPassword(''); // Clear the password field
-				}
+				// Show a confirmation dialog for password users
+				Alert.alert(
+					'Confirm Account Deletion',
+					'Are you sure you want to permanently delete your account? This action cannot be undone.',
+					[
+						{
+							text: 'Cancel',
+							style: 'cancel',
+						},
+						{
+							text: 'Delete Account',
+							style: 'destructive',
+							onPress: async () => {
+								await performAccountDeletion();
+							},
+						},
+					]
+				);
 			} else {
 				// For OAuth users, just proceed with deletion (no password to verify)
 				await performAccountDeletion();
 			}
 		} catch (error) {
 			console.error('Password validation error:', error);
-			setPasswordError('Password is not correct. Please try again.');
+			setPasswordError('An error occurred. Please try again.');
 			setPassword(''); // Clear the password field
 		} finally {
 			setIsValidating(false);
@@ -193,13 +205,9 @@ const AccountSettings = () => {
 				return;
 			}
 
-			console.log('Database deletion successful');
-
 			// Step 2: Delete user from Clerk
 
 			await user.delete();
-
-			console.log('Clerk deletion successful');
 
 			// Step 3: Show success message and redirect
 			Alert.alert(

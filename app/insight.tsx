@@ -100,7 +100,7 @@ const Insight = () => {
 				);
 				soundRef.current = sound;
 			} catch (error) {
-				console.log('Error loading sound:', error);
+				console.error('Error loading sound:', error);
 			}
 		};
 		loadSound();
@@ -125,7 +125,7 @@ const Insight = () => {
 						// Play gong sound
 						if (soundRef.current) {
 							soundRef.current.replayAsync().catch(error => {
-								console.log('Error playing sound:', error);
+								console.error('Error playing sound:', error);
 							});
 						}
 

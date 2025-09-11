@@ -203,8 +203,6 @@ export async function POST(request: Request) {
 			);
 		}
 
-		console.log('Validated data:', validatedData);
-
 		// Check if user exists in database before creating meal
 		const userCheck = await sql`
 			SELECT id, first_name, last_name FROM users WHERE clerk_id = ${validatedData.clerkId}
@@ -238,21 +236,7 @@ export async function POST(request: Request) {
 			meal_type: validatedData.mealType,
 		};
 
-		console.log('Inserting meal data (clerk_id hidden)');
-		console.log('Data types:', {
-			clerk_id: typeof validatedData.clerkId,
-			food_name: typeof validatedData.foodName,
-			portion_size: typeof validatedData.portionSize,
-			calories: typeof validatedData.calories,
-			protein: typeof validatedData.protein,
-			carbs: typeof validatedData.carbs,
-			fats: typeof validatedData.fats,
-			fiber: typeof validatedData.fiber,
-			sugar: typeof validatedData.sugar,
-			sodium: typeof validatedData.sodium,
-			confidence_score: typeof validatedData.confidenceScore,
-			meal_type: typeof validatedData.mealType,
-		});
+		// Insert meal data
 
 		const newMeal = await sql`
       INSERT INTO meals (
@@ -263,8 +247,6 @@ export async function POST(request: Request) {
         ${validatedData.fiber}, ${validatedData.sugar}, ${validatedData.sodium}, ${validatedData.confidenceScore}, ${validatedData.mealType}
       ) RETURNING *
     `;
-
-		console.log('Meal created successfully');
 
 		return Response.json({ success: true, data: newMeal[0] });
 	} catch (error) {

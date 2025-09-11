@@ -1,12 +1,14 @@
 import { useUser } from '@clerk/clerk-expo';
 import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import ReactNativeModal from 'react-native-modal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
+import { getUnifiedBMR } from '@/lib/unifiedBMRCalculator';
+import { logDailySteps } from '@/lib/stepsLogging';
 import { fetchDataConsent, hasDataCollectionConsent } from '@/lib/consentUtils';
 import { fetchAPI } from '@/lib/fetch';
 import { getTodayDate } from '@/lib/dateUtils';
@@ -19,9 +21,10 @@ import SwipeableExerciseCard from './SwipeableExerciseCard';
 
 interface ActivityTrackingProps {
 	refreshTrigger?: number;
+	onActivityLogged?: () => void;
 }
 
-const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
+const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrackingProps) => {
 	const [nutritionGoals, setNutritionGoals] = useState<any>(null);
 	const [stepData, setStepData] = useState<any>(null);
 	const [healthKitStatus, setHealthKitStatus] = useState<any>(null);
@@ -139,6 +142,30 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 							date: today,
 						}),
 					});
+
+					// Log steps to activities table (once per day)
+					if (todayStepData.steps > 0) {
+						try {
+							const success = await logDailySteps({
+								clerkId: user.id,
+								steps: todayStepData.steps,
+								caloriesBurned: todayStepData.caloriesBurned,
+								onSuccess: () => {
+									// Refresh charts when steps are logged
+									onActivityLogged?.();
+								},
+								onError: error => {
+									console.error('Steps logging failed:', error);
+								},
+							});
+
+							if (success) {
+								// Steps logged successfully
+							}
+						} catch (error) {
+							console.error('Error in steps logging:', error);
+						}
+					}
 				}
 			}
 		} catch (error) {
@@ -295,43 +322,26 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	// Refresh scheduled exercises when refreshTrigger changes
 	useEffect(() => {
 		if (user?.id && refreshTrigger > 0) {
-			console.log('Refreshing scheduled exercises due to refreshTrigger:', refreshTrigger);
 			fetchScheduledExercises();
 		}
 	}, [refreshTrigger, user?.id]);
 
-	// Get BMR from stored nutrition goals with fallback calculation
-	const getStoredBMR = () => {
-		if (!nutritionGoals) return 0;
+	// Get BMR using unified calculator with user's current data (memoized for performance)
+	const [storedBMR, setStoredBMR] = useState(0);
 
-		// Try to get BMR from database first
-		const storedBMR = nutritionGoals.bmr;
-		if (storedBMR && Number(storedBMR) > 0) {
-			return Number(storedBMR);
-		}
+	useEffect(() => {
+		const fetchBMR = async () => {
+			if (user?.id) {
+				const bmr = await getUnifiedBMR(user.id);
+				setStoredBMR(bmr);
+			}
+		};
 
-		// Fallback: calculate BMR if not stored
-		if (
-			nutritionGoals.weight &&
-			nutritionGoals.height &&
-			nutritionGoals.age &&
-			nutritionGoals.gender
-		) {
-			return Math.round(
-				calculateBMR(
-					Number(nutritionGoals.weight),
-					Number(nutritionGoals.height),
-					Number(nutritionGoals.age),
-					nutritionGoals.gender
-				)
-			);
-		}
+		fetchBMR();
+	}, [user?.id, refreshTrigger]); // Refresh when user changes or refreshTrigger updates
 
-		return 0;
-	};
-
-	// Get TDEE from stored nutrition goals with fallback calculation
-	const getStoredTDEE = () => {
+	// Get TDEE from stored nutrition goals with fallback calculation (memoized for performance)
+	const storedTDEE = useMemo(() => {
 		if (!nutritionGoals) return 0;
 
 		// Try to get TDEE from database first
@@ -358,13 +368,17 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 		}
 
 		return 0;
-	};
+	}, [
+		nutritionGoals?.tdee,
+		nutritionGoals?.weight,
+		nutritionGoals?.height,
+		nutritionGoals?.age,
+		nutritionGoals?.gender,
+		nutritionGoals?.activity_level,
+	]);
 
-	const storedBMR = getStoredBMR();
-	const storedTDEE = getStoredTDEE();
-
-	// Calculate step calories with fallback
-	const getStepCalories = () => {
+	// Calculate step calories with fallback (memoized for performance)
+	const stepCalories = useMemo(() => {
 		// First try to use stored calories from backend
 		if (stepData?.calories_burned && stepData.calories_burned > 0) {
 			return stepData.calories_burned;
@@ -393,34 +407,47 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 		}
 
 		return 0;
-	};
+	}, [
+		stepData?.calories_burned,
+		stepData?.steps,
+		nutritionGoals?.weight,
+		nutritionGoals?.height,
+		nutritionGoals?.gender,
+	]);
 
-	const stepCalories = getStepCalories();
-
-	// Calculate total calories from activities
-	const getActivitiesCalories = () => {
+	// Calculate total calories from activities (memoized for performance)
+	// Exclude BMR and Steps activities since they are already included separately
+	const activitiesCalories = useMemo(() => {
 		return activities.reduce((total, activity) => {
+			// Skip BMR activities to avoid double counting
+			if (
+				activity.activity_description &&
+				activity.activity_description.toLowerCase().includes('basal metabolic rate')
+			) {
+				return total;
+			}
+			// Skip Steps activities to avoid double counting
+			if (
+				activity.activity_description &&
+				activity.activity_description.toLowerCase().includes('daily steps')
+			) {
+				return total;
+			}
 			return total + (activity.estimated_calories || 0);
 		}, 0);
-	};
+	}, [activities]);
 
-	const activitiesCalories = getActivitiesCalories();
-
-	// Calculate total calories from scheduled exercises
-	const getExercisesCalories = () => {
+	// Calculate total calories from scheduled exercises (memoized for performance)
+	const exercisesCalories = useMemo(() => {
 		return scheduledExercises.reduce((total, exercise) => {
 			return total + (exercise.calories_burned || 0);
 		}, 0);
-	};
+	}, [scheduledExercises]);
 
-	const exercisesCalories = getExercisesCalories();
-
-	// Get count of completed exercises
-	const getCompletedExercisesCount = () => {
+	// Get count of completed exercises (memoized for performance)
+	const completedExercisesCount = useMemo(() => {
 		return completedExercises.size;
-	};
-
-	const completedExercisesCount = getCompletedExercisesCount();
+	}, [completedExercises]);
 	const totalCaloriesBurned = storedBMR + stepCalories + activitiesCalories + exercisesCalories;
 
 	const handleWorkoutModal = () => {
@@ -498,6 +525,8 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 				setWorkoutModal(false);
 				// Refresh activities list
 				await fetchActivities();
+				// Notify parent component to refresh dashboard counts
+				onActivityLogged?.();
 			} else {
 				console.error('Failed to save activity:', response.error);
 			}
@@ -529,8 +558,6 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 	};
 
 	const toggleExerciseCompletion = async (exerciseId: string, isCompleted: boolean) => {
-		console.log('Toggling exercise completion for:', exerciseId, 'to:', isCompleted);
-
 		// Update local state immediately for responsive UI
 		setCompletedExercises(prev => {
 			const newSet = new Set(prev);
@@ -601,8 +628,6 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 				return;
 			}
 
-			console.log('Deleting exercise');
-
 			// Build the API URL with appropriate parameters
 			let apiUrl = `/(api)/workouts?clerkId=${user.id}&sessionId=${sessionId}`;
 			if (individualExerciseId) {
@@ -614,7 +639,6 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 			});
 
 			if (response.success) {
-				console.log('Exercise deleted successfully, refreshing data...');
 				// Refresh the data instead of just removing from local state
 				await fetchScheduledExercises();
 			} else {
@@ -800,14 +824,26 @@ const ActivityTracking = ({ refreshTrigger = 0 }: ActivityTrackingProps) => {
 					)}
 
 					{/* Activities Cards */}
-					{activities.length > 0 ? (
-						activities.map((activity, index) => (
-							<SwipeableActivityCard
-								key={activity.id}
-								activity={activity}
-								onDelete={deleteActivity}
-							/>
-						))
+					{activities.filter(
+						activity =>
+							!activity.activity_description ||
+							(!activity.activity_description.toLowerCase().includes('basal metabolic rate') &&
+								!activity.activity_description.toLowerCase().includes('daily steps'))
+					).length > 0 ? (
+						activities
+							.filter(
+								activity =>
+									!activity.activity_description ||
+									(!activity.activity_description.toLowerCase().includes('basal metabolic rate') &&
+										!activity.activity_description.toLowerCase().includes('daily steps'))
+							)
+							.map((activity, index) => (
+								<SwipeableActivityCard
+									key={activity.id}
+									activity={activity}
+									onDelete={deleteActivity}
+								/>
+							))
 					) : scheduledExercises.length === 0 ? (
 						<View className="h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9]">
 							<View className="flex flex-row gap-2 mb-2 items-center">

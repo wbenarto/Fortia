@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking } from 'react-native';
+import {
+	View,
+	Text,
+	ScrollView,
+	TouchableOpacity,
+	Alert,
+	TextInput,
+	Linking,
+	KeyboardAvoidingView,
+	Platform,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import InputField from './InputField';
 import CustomButton from './CustomButton';
@@ -434,196 +444,213 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 	};
 
 	return (
-		<ScrollView className="flex-1 bg-[#262135] px-5">
-			<View className="py-6">
-				<Text className="text-white text-2xl font-JakartaSemiBold mb-2">Complete Your Profile</Text>
-				<Text className="text-gray-400 text-base mb-6">
-					Help us create your personalized fitness plan
-				</Text>
+		<KeyboardAvoidingView
+			className="flex-1 bg-[#262135]"
+			behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+			keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+		>
+			<ScrollView
+				className="flex-1 px-5"
+				contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}
+				keyboardShouldPersistTaps="handled"
+				showsVerticalScrollIndicator={false}
+			>
+				<View className="py-6">
+					<Text className="text-white text-2xl font-JakartaSemiBold mb-2">
+						Complete Your Profile
+					</Text>
+					<Text className="text-gray-400 text-base mb-6">
+						Help us create your personalized fitness plan
+					</Text>
 
-				{/* Date of Birth */}
-				<View className="mb-6">
-					<Text className="text-white text-lg font-JakartaSemiBold mb-3">Date of Birth</Text>
-					<View className="flex-row space-x-3">
-						<View className="flex-1">
-							<Text className="text-gray-400 text-sm mb-2">Month</Text>
-							<TextInput
-								className="bg-white rounded-lg p-4 border border-gray-200 text-gray-700"
-								placeholder="MM"
-								placeholderTextColor="#9CA3AF"
-								value={formData.dobMonth}
-								onChangeText={(value: string) => updateFormData('dobMonth', value)}
-								keyboardType="numeric"
-								maxLength={2}
-							/>
-						</View>
-						<View className="flex-1">
-							<Text className="text-gray-400 text-sm mb-2">Day</Text>
-							<TextInput
-								className="bg-white rounded-lg p-4 border border-gray-200 text-gray-700"
-								placeholder="DD"
-								placeholderTextColor="#9CA3AF"
-								value={formData.dobDay}
-								onChangeText={(value: string) => updateFormData('dobDay', value)}
-								keyboardType="numeric"
-								maxLength={2}
-							/>
-						</View>
-						<View className="flex-1">
-							<Text className="text-gray-400 text-sm mb-2">Year</Text>
-							<TextInput
-								className="bg-white rounded-lg p-4 border border-gray-200 text-gray-700"
-								placeholder="YYYY"
-								placeholderTextColor="#9CA3AF"
-								value={formData.dobYear}
-								onChangeText={(value: string) => updateFormData('dobYear', value)}
-								keyboardType="numeric"
-								maxLength={4}
-							/>
+					{/* Date of Birth */}
+					<View className="mb-6">
+						<Text className="text-white text-lg font-JakartaSemiBold mb-3">Date of Birth</Text>
+						<View className="flex-row space-x-3">
+							<View className="flex-1">
+								<Text className="text-gray-400 text-sm mb-2">Month</Text>
+								<TextInput
+									className="bg-white rounded-lg p-4 border border-gray-200 text-gray-700"
+									placeholder="MM"
+									placeholderTextColor="#9CA3AF"
+									value={formData.dobMonth}
+									onChangeText={(value: string) => updateFormData('dobMonth', value)}
+									keyboardType="numeric"
+									maxLength={2}
+								/>
+							</View>
+							<View className="flex-1">
+								<Text className="text-gray-400 text-sm mb-2">Day</Text>
+								<TextInput
+									className="bg-white rounded-lg p-4 border border-gray-200 text-gray-700"
+									placeholder="DD"
+									placeholderTextColor="#9CA3AF"
+									value={formData.dobDay}
+									onChangeText={(value: string) => updateFormData('dobDay', value)}
+									keyboardType="numeric"
+									maxLength={2}
+								/>
+							</View>
+							<View className="flex-1">
+								<Text className="text-gray-400 text-sm mb-2">Year</Text>
+								<TextInput
+									className="bg-white rounded-lg p-4 border border-gray-200 text-gray-700"
+									placeholder="YYYY"
+									placeholderTextColor="#9CA3AF"
+									value={formData.dobYear}
+									onChangeText={(value: string) => updateFormData('dobYear', value)}
+									keyboardType="numeric"
+									maxLength={4}
+								/>
+							</View>
 						</View>
 					</View>
-				</View>
 
-				{/* Current Weight */}
-				<View className="mb-6">
-					<Text className="text-white text-lg font-JakartaSemiBold mb-3">Current Weight (lbs)</Text>
-					<InputField
-						placeholder="Enter your current weight"
-						keyboardType="numeric"
-						value={formData.weight}
-						onChangeText={value => updateFormData('weight', value)}
-						className="bg-white"
-					/>
-				</View>
+					{/* Current Weight */}
+					<View className="mb-6">
+						<Text className="text-white text-lg font-JakartaSemiBold mb-3">
+							Current Weight (lbs)
+						</Text>
+						<InputField
+							placeholder="Enter your current weight"
+							keyboardType="numeric"
+							value={formData.weight}
+							onChangeText={value => updateFormData('weight', value)}
+							className="bg-white rounded-lg"
+						/>
+					</View>
 
-				{/* Height */}
-				<View className="mb-6">
-					<Text className="text-white text-lg font-JakartaSemiBold mb-3">Height</Text>
-					<View className="flex-row" style={{ gap: 12 }}>
-						<View style={{ flex: 1 }}>
-							<InputField
-								placeholder="Feet"
-								keyboardType="numeric"
-								value={formData.heightFeet}
-								onChangeText={value => updateFormData('heightFeet', value)}
-								className="bg-white"
-							/>
-						</View>
-						<View style={{ flex: 1 }}>
-							<InputField
-								placeholder="Inches"
-								keyboardType="numeric"
-								value={formData.heightInches}
-								onChangeText={value => updateFormData('heightInches', value)}
-								className="bg-white"
-							/>
+					{/* Height */}
+					<View className="mb-6">
+						<Text className="text-white text-lg font-JakartaSemiBold mb-3">Height</Text>
+						<View className="flex-row" style={{ gap: 12 }}>
+							<View style={{ flex: 1 }}>
+								<InputField
+									placeholder="Feet"
+									keyboardType="numeric"
+									value={formData.heightFeet}
+									onChangeText={value => updateFormData('heightFeet', value)}
+									className="bg-white rounded-lg"
+								/>
+							</View>
+							<View style={{ flex: 1 }}>
+								<InputField
+									placeholder="Inches"
+									keyboardType="numeric"
+									value={formData.heightInches}
+									onChangeText={value => updateFormData('heightInches', value)}
+									className="bg-white rounded-lg"
+								/>
+							</View>
 						</View>
 					</View>
-				</View>
 
-				{/* Gender */}
-				<View className="mb-6">
-					<Text className="text-white text-lg font-JakartaSemiBold mb-3">Gender</Text>
-					<View style={{ gap: 8 }}>
-						{genders.map(gender => (
-							<TouchableOpacity
-								key={gender.key}
-								onPress={() => updateFormData('gender', gender.key)}
-								className={`p-4 rounded-lg border ${
-									formData.gender === gender.key
-										? 'bg-[#E3BBA1] border-[#E3BBA1]'
-										: 'bg-white border-gray-200'
-								}`}
-							>
-								<Text
-									className={`font-JakartaSemiBold ${
-										formData.gender === gender.key ? 'text-white' : 'text-gray-700'
+					{/* Gender */}
+					<View className="mb-6">
+						<Text className="text-white text-lg font-JakartaSemiBold mb-3">Gender</Text>
+						<View style={{ gap: 8 }}>
+							{genders.map(gender => (
+								<TouchableOpacity
+									key={gender.key}
+									onPress={() => updateFormData('gender', gender.key)}
+									className={`p-4 rounded-lg border ${
+										formData.gender === gender.key
+											? 'bg-[#E3BBA1] border-[#E3BBA1]'
+											: 'bg-white border-gray-200'
 									}`}
 								>
-									{gender.label}
-								</Text>
-							</TouchableOpacity>
-						))}
+									<Text
+										className={`font-JakartaSemiBold ${
+											formData.gender === gender.key ? 'text-white' : 'text-gray-700'
+										}`}
+									>
+										{gender.label}
+									</Text>
+								</TouchableOpacity>
+							))}
+						</View>
 					</View>
-				</View>
 
-				{/* Fitness Goal */}
-				<View className="mb-6">
-					<Text className="text-white text-lg font-JakartaSemiBold mb-3">Fitness Goal</Text>
-					<View style={{ gap: 8 }}>
-						{fitnessGoals.map(goal => (
-							<TouchableOpacity
-								key={goal.key}
-								onPress={() => updateFormData('fitnessGoal', goal.key)}
-								className={`p-4 rounded-lg border ${
-									formData.fitnessGoal === goal.key
-										? 'bg-[#E3BBA1] border-[#E3BBA1]'
-										: 'bg-white border-gray-200'
-								}`}
-							>
-								<View className="flex-row items-center">
-									<Text className="text-2xl mr-3">{goal.icon}</Text>
-									<View className="flex-1">
-										<Text
-											className={`font-JakartaSemiBold ${
-												formData.fitnessGoal === goal.key ? 'text-white' : 'text-gray-700'
-											}`}
-										>
-											{goal.title}
-										</Text>
-										<Text
-											className={`text-sm ${
-												formData.fitnessGoal === goal.key ? 'text-white' : 'text-gray-500'
-											}`}
-										>
-											{goal.description}
-										</Text>
+					{/* Fitness Goal */}
+					<View className="mb-6">
+						<Text className="text-white text-lg font-JakartaSemiBold mb-3">Fitness Goal</Text>
+						<View style={{ gap: 8 }}>
+							{fitnessGoals.map(goal => (
+								<TouchableOpacity
+									key={goal.key}
+									onPress={() => updateFormData('fitnessGoal', goal.key)}
+									className={`p-4 rounded-lg border ${
+										formData.fitnessGoal === goal.key
+											? 'bg-[#E3BBA1] border-[#E3BBA1]'
+											: 'bg-white border-gray-200'
+									}`}
+								>
+									<View className="flex-row items-center">
+										<Text className="text-2xl mr-3">{goal.icon}</Text>
+										<View className="flex-1">
+											<Text
+												className={`font-JakartaSemiBold ${
+													formData.fitnessGoal === goal.key ? 'text-white' : 'text-gray-700'
+												}`}
+											>
+												{goal.title}
+											</Text>
+											<Text
+												className={`text-sm ${
+													formData.fitnessGoal === goal.key ? 'text-white' : 'text-gray-500'
+												}`}
+											>
+												{goal.description}
+											</Text>
+										</View>
 									</View>
-								</View>
-							</TouchableOpacity>
-						))}
+								</TouchableOpacity>
+							))}
+						</View>
 					</View>
-				</View>
 
-				{/* Target Weight */}
-				<View className="mb-6">
-					<Text className="text-white text-lg font-JakartaSemiBold mb-3">Target Weight (lbs)</Text>
-					<InputField
-						placeholder="Enter your target weight"
-						keyboardType="numeric"
-						value={formData.targetWeight}
-						onChangeText={value => updateFormData('targetWeight', value)}
-						className="bg-white"
+					{/* Target Weight */}
+					<View className="mb-6">
+						<Text className="text-white text-lg font-JakartaSemiBold mb-3">
+							Target Weight (lbs)
+						</Text>
+						<InputField
+							placeholder="Enter your target weight"
+							keyboardType="numeric"
+							value={formData.targetWeight}
+							onChangeText={value => updateFormData('targetWeight', value)}
+							className="bg-white rounded-lg"
+						/>
+					</View>
+
+					{/* Submit Button */}
+					<CustomButton
+						title={isSubmitting ? 'Setting up your plan...' : 'Complete Setup'}
+						onPress={() => {
+							if (!isSubmitting) {
+								handleSubmit();
+							}
+						}}
+						className="mb-6"
 					/>
 				</View>
 
-				{/* Submit Button */}
-				<CustomButton
-					title={isSubmitting ? 'Setting up your plan...' : 'Complete Setup'}
-					onPress={() => {
-						if (!isSubmitting) {
-							handleSubmit();
+				{/* Data Consent Modal */}
+				<DataConsentModal
+					isVisible={dataConsentModal}
+					onClose={() => setDataConsentModal(false)}
+					onConsent={async () => {
+						if (user?.id) {
+							// Refresh consent data
+							const updatedConsent = await fetchDataConsent(user.id);
+							setUserConsentData(updatedConsent);
+							setDataConsentModal(false);
 						}
 					}}
-					className="mb-6"
+					clerkId={user?.id || ''}
 				/>
-			</View>
-
-			{/* Data Consent Modal */}
-			<DataConsentModal
-				isVisible={dataConsentModal}
-				onClose={() => setDataConsentModal(false)}
-				onConsent={async () => {
-					if (user?.id) {
-						// Refresh consent data
-						const updatedConsent = await fetchDataConsent(user.id);
-						setUserConsentData(updatedConsent);
-						setDataConsentModal(false);
-					}
-				}}
-				clerkId={user?.id || ''}
-			/>
-		</ScrollView>
+			</ScrollView>
+		</KeyboardAvoidingView>
 	);
 };
 

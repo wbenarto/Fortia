@@ -11,12 +11,11 @@ import {
 	Platform,
 	ActivityIndicator,
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
 import Navbar from '@/components/Navbar';
 import WeightTracking from '@/components/WeightTracking';
 import WeeklyCalendar from '@/components/WeeklyCalendar';
-import MiniDashboardTracking from '@/components/MiniDashboardTracking';
 import ActivityTracking from '@/components/ActivityTracking';
+import HomeSliderComponent from '@/components/HomeSliderComponent';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { images } from '@/constants/index';
@@ -25,18 +24,86 @@ import { fetchAPI, useFetch } from '@/lib/fetch';
 import { Weights } from '@/types/type';
 import WeeklyTracking from '@/components/WeeklyTracking';
 import MacrosTracking from '@/components/MacrosTracking';
-import { Ionicons } from '@expo/vector-icons';
-import { PRIMARY } from '@/constants/colors';
 import RecipeBreakdownModal from '@/components/RecipeBreakdownModal';
+import { logDailyBMR } from '@/lib/bmrLogging';
+import { useUserProfile } from '@/lib/userUtils';
+import { getUnifiedBMR } from '@/lib/unifiedBMRCalculator';
 // import { DATA } from '@/lib/data'
 
 export default function Page() {
 	const insets = useSafeAreaInsets();
 	const { user } = useUser();
 	const router = useRouter();
+	const userProfile = useUserProfile();
 	const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
 	const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 	const [showRecipeModal, setShowRecipeModal] = useState(false);
+	const [chartRefreshTrigger, setChartRefreshTrigger] = useState(0);
+	const [dashboardRefreshTrigger, setDashboardRefreshTrigger] = useState(0);
+
+	// Function to refresh the calorie chart
+	const refreshCalorieChart = useCallback(() => {
+		setChartRefreshTrigger(prev => prev + 1);
+	}, []);
+
+	// Function to refresh dashboard counts (meals, weights, exercises)
+	const refreshDashboardCounts = useCallback(() => {
+		setDashboardRefreshTrigger(prev => prev + 1);
+	}, []);
+
+	// Combined refresh function for when meals are logged
+	const onMealLogged = useCallback(() => {
+		refreshCalorieChart();
+		refreshDashboardCounts();
+	}, [refreshCalorieChart, refreshDashboardCounts]);
+
+	// Combined refresh function for when activities are logged
+	const onActivityLogged = useCallback(() => {
+		refreshCalorieChart();
+		refreshDashboardCounts();
+	}, [refreshCalorieChart, refreshDashboardCounts]);
+
+	// Function to log daily BMR
+	const logDailyBMRIfNeeded = useCallback(async () => {
+		if (!user?.id) return;
+
+		// Use unified BMR calculation with user's current data
+		const bmr = await getUnifiedBMR(user.id);
+
+		// Validate BMR value before logging
+		if (!bmr || bmr <= 0) {
+			console.warn('Invalid BMR value, skipping logging:', bmr);
+			return;
+		}
+
+		try {
+			const success = await logDailyBMR({
+				clerkId: user.id,
+				bmr: bmr,
+				onSuccess: () => {
+					// Refresh charts when BMR is logged
+					refreshCalorieChart();
+					refreshDashboardCounts();
+				},
+				onError: error => {
+					console.error('BMR logging failed:', error);
+				},
+			});
+
+			if (success) {
+				// BMR logged successfully
+			}
+		} catch (error) {
+			console.error('Error in BMR logging:', error);
+		}
+	}, [
+		user?.id,
+		userProfile?.weight,
+		userProfile?.height,
+		userProfile?.fitnessGoal,
+		refreshCalorieChart,
+		refreshDashboardCounts,
+	]);
 
 	// Check if user has completed onboarding
 	useFocusEffect(
@@ -54,6 +121,7 @@ export default function Page() {
 						const userData = response.data;
 						if (userData.weight && userData.height && userData.fitness_goal) {
 							setHasCompletedOnboarding(true);
+							// BMR logging will be handled by the consolidated useEffect below
 						} else {
 							// User hasn't completed onboarding, redirect to onboarding setup
 							router.replace('/(auth)/onboarding-setup');
@@ -106,6 +174,25 @@ export default function Page() {
 		}, [user?.id])
 	);
 
+	// Log BMR when userProfile is loaded and user has completed onboarding
+	// This is the ONLY place where BMR logging should be triggered
+	useEffect(() => {
+		if (hasCompletedOnboarding && userProfile?.weight && userProfile?.height && user?.id) {
+			// Add a small delay to ensure all data is properly loaded
+			const timeoutId = setTimeout(() => {
+				logDailyBMRIfNeeded();
+			}, 500);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [
+		hasCompletedOnboarding,
+		userProfile?.weight,
+		userProfile?.height,
+		user?.id,
+		logDailyBMRIfNeeded,
+	]);
+
 	// Show loading while checking onboarding status
 	if (isCheckingOnboarding) {
 		return (
@@ -129,51 +216,22 @@ export default function Page() {
 					<Navbar />
 					<View className="w-full pb-10">
 						<WeeklyCalendar />
-						{/* <MiniDashboardTracking /> */}
 
-						{/* Mindfulness Cards Section */}
-						<View className="flex flex-row justify-between px-4 mt-2 mb-6">
-							{/* Card 1: Awakened Manifesting */}
-							<TouchableOpacity
-								className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
-								onPress={() => router.push('/awakened-manifesting')}
-							>
-								<View className="w-12 h-12 rounded-full bg-[#F8F1ED] flex items-center justify-center mb-2">
-									<Ionicons name="sparkles-outline" size={24} color={PRIMARY} />
-								</View>
-								<Text className="text-center text-secondary-800 font-JakartaSemiBold text-xs leading-tight">
-									Awakened{'\n'}Manifesting
-								</Text>
-							</TouchableOpacity>
-							{/* Card 2: Recipe Breakdown */}
-							{/* <TouchableOpacity
-								className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
-								onPress={() => setShowRecipeModal(true)}
-							>
-								<View className="w-12 h-12 rounded-full bg-[#F8F1ED] flex items-center justify-center mb-2">
-									<Ionicons name="restaurant-outline" size={24} color={PRIMARY} />
-								</View>
-								<Text className="text-center text-secondary-800 font-JakartaSemiBold text-xs leading-tight">
-									Recipe{'\n'}Breakdown
-								</Text>
-							</TouchableOpacity> */}
-							{/* Card 3: Deep Thinking */}
-							<TouchableOpacity
-								className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
-								onPress={() => router.push('/deep-focus')}
-							>
-								<View className="w-12 h-12 rounded-full bg-[#F8F1ED] flex items-center justify-center mb-2">
-									<Ionicons name="bulb-outline" size={24} color={PRIMARY} />
-								</View>
-								<Text className="text-center text-secondary-800 font-JakartaSemiBold text-xs leading-tight">
-									Deep{'\n'}Focus
-								</Text>
-							</TouchableOpacity>
-						</View>
+						{/* Slider Component */}
+						<HomeSliderComponent
+							totalMealsLog={0}
+							totalWeightsLog={0}
+							totalExercisesLog={0}
+							refreshTrigger={chartRefreshTrigger}
+							dashboardRefreshTrigger={dashboardRefreshTrigger}
+						/>
 
 						<WeightTracking />
-						<MacrosTracking />
-						<ActivityTracking />
+						<MacrosTracking onMealLogged={onMealLogged} />
+						<ActivityTracking
+							refreshTrigger={dashboardRefreshTrigger}
+							onActivityLogged={onActivityLogged}
+						/>
 					</View>
 					{/* <View className="w-full  px-8 ">
 						<Text className="text-white text-3xl font-JakartaSemiBold mt-8">Macros</Text>

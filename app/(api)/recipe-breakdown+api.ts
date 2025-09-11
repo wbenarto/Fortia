@@ -56,8 +56,6 @@ async function retryWithBackoff<T>(
 
 export async function POST(request: Request) {
 	try {
-		console.log('Recipe breakdown API called');
-
 		if (!GEMINI_API_KEY) {
 			console.error('GEMINI_API_KEY not configured');
 			return Response.json({ error: 'Gemini API key not configured' }, { status: 500 });
@@ -100,7 +98,6 @@ export async function POST(request: Request) {
 }`;
 
 		const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-		console.log('Calling Gemini API...');
 
 		// Use retry logic for the Gemini API call
 		const response = await retryWithBackoff(async () => {
@@ -127,8 +124,6 @@ export async function POST(request: Request) {
 			return res;
 		});
 
-		console.log('Gemini API response status:', response.status);
-
 		const data = await response.json();
 		const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
@@ -144,7 +139,6 @@ export async function POST(request: Request) {
 			result = { error: 'Failed to parse response', raw: text };
 		}
 
-		console.log('Final result:', result);
 		return Response.json({ success: true, data: result });
 	} catch (error) {
 		console.error('Recipe breakdown error:', error);

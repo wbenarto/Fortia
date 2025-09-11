@@ -163,7 +163,6 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 
 					if (analysisResponse.success) {
 						calories_burned = analysisResponse.data.calories_burned;
-						console.log('Exercise analysis successful');
 					} else {
 						console.error('Exercise analysis failed:', analysisResponse.error);
 						// Continue without calories if analysis fails
@@ -208,7 +207,6 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 								...exercise,
 								calories_burned: analysisResponse.data.calories_burned,
 							});
-							console.log(`Exercise ${i + 1} analysis successful`);
 						} else {
 							console.error(`Exercise ${i + 1} analysis failed:`, analysisResponse.error);
 							// Continue without calories if analysis fails
