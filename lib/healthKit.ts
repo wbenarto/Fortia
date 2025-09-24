@@ -24,7 +24,21 @@ export interface HealthKitStatus {
 }
 
 /**
- * Check if step counting is available on the device
+ * Check if HealthKit is available on the device (iOS only)
+ */
+export async function isHealthKitAvailable(): Promise<boolean> {
+	try {
+		// In Expo managed workflow, we use Pedometer which provides HealthKit-like functionality
+		// on iOS devices. This automatically prompts for motion & fitness permissions.
+		return Platform.OS === 'ios' && (await Pedometer.isAvailableAsync());
+	} catch (error) {
+		console.error('Error checking HealthKit availability:', error);
+		return false;
+	}
+}
+
+/**
+ * Check if step counting is available on the device (fallback)
  */
 export async function isStepCountingAvailable(): Promise<boolean> {
 	try {
@@ -36,7 +50,58 @@ export async function isStepCountingAvailable(): Promise<boolean> {
 }
 
 /**
- * Request step counting permissions
+ * Request HealthKit permissions with explicit user prompt
+ * In Expo managed workflow, this uses Pedometer which automatically prompts for motion & fitness permissions
+ */
+export async function requestHealthKitPermissions(): Promise<HealthKitStatus> {
+	try {
+		const isAvailable = await isHealthKitAvailable();
+
+		if (!isAvailable) {
+			return {
+				isAvailable: false,
+				isAuthorized: false,
+				permissions: [],
+			};
+		}
+
+		// In Expo managed workflow, we use Pedometer which automatically prompts for motion & fitness permissions
+		// when we try to access step data. The iOS system will show the permission dialog.
+		// We'll test access by trying to get step count for today
+		try {
+			const today = new Date();
+			const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+			const endOfDay = new Date(startOfDay);
+			endOfDay.setDate(endOfDay.getDate() + 1);
+
+			// This will trigger the iOS permission prompt if not already granted
+			const stepData = await Pedometer.getStepCountAsync(startOfDay, endOfDay);
+
+			return {
+				isAvailable: true,
+				isAuthorized: true,
+				permissions: ['motion', 'fitness', 'steps'],
+			};
+		} catch (permissionError) {
+			// Permission was denied or error occurred
+			return {
+				isAvailable: true,
+				isAuthorized: false,
+				permissions: [],
+			};
+		}
+	} catch (error) {
+		console.error('Error requesting HealthKit permissions:', error);
+		return {
+			isAvailable: false,
+			isAuthorized: false,
+			permissions: [],
+		};
+	}
+}
+
+/**
+ * Request step counting permissions (fallback)
  */
 export async function requestStepPermissions(): Promise<HealthKitStatus> {
 	try {
@@ -69,7 +134,25 @@ export async function requestStepPermissions(): Promise<HealthKitStatus> {
 }
 
 /**
- * Get step count for today using pedometer
+ * Get step count for today using HealthKit (via Pedometer in Expo)
+ */
+export async function getTodayStepCountFromHealthKit(): Promise<number> {
+	try {
+		const now = new Date();
+		const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+		const endOfDay = new Date(startOfDay);
+		endOfDay.setDate(endOfDay.getDate() + 1);
+
+		const stepData = await Pedometer.getStepCountAsync(startOfDay, endOfDay);
+		return stepData?.steps || 0;
+	} catch (error) {
+		console.error('Error getting step count from HealthKit:', error);
+		return 0;
+	}
+}
+
+/**
+ * Get step count for today using pedometer (fallback)
  */
 export async function getTodayStepCount(): Promise<number> {
 	try {
@@ -189,29 +272,77 @@ export async function getStepData(
 }
 
 /**
- * Get step data for today
+ * Get step data for today with HealthKit fallback to Pedometer
  */
 export async function getTodayStepData(
 	goal: number = 10000,
-	calorieParams?: CalorieCalculationParams
+	calorieParams?: CalorieCalculationParams,
+	date: Date = new Date()
 ): Promise<StepData> {
-	return getStepData(new Date(), goal, calorieParams);
+	try {
+		// First try HealthKit
+		const healthKitAvailable = await isHealthKitAvailable();
+		let steps = 0;
+
+		if (healthKitAvailable) {
+			steps = await getTodayStepCountFromHealthKit();
+		} else {
+			// Fallback to Pedometer
+			steps = await getTodayStepCount();
+		}
+
+		const percentage = goal > 0 ? Math.round((steps / goal) * 100) : 0;
+
+		let caloriesBurned = 0;
+		if (calorieParams && steps > 0) {
+			caloriesBurned = calculateCaloriesFromSteps(steps, calorieParams);
+		}
+
+		return {
+			steps,
+			date: date.toISOString().split('T')[0],
+			goal,
+			percentage: Math.min(percentage, 100),
+			caloriesBurned,
+		};
+	} catch (error) {
+		console.error('Error getting step data:', error);
+		return {
+			steps: 0,
+			date: date.toISOString().split('T')[0],
+			goal,
+			percentage: 0,
+			caloriesBurned: 0,
+		};
+	}
 }
 
 /**
- * Check current step counting authorization status
+ * Check current HealthKit authorization status
+ * In Expo managed workflow, we check if Pedometer is available without accessing data
  */
 export async function getHealthKitStatus(): Promise<HealthKitStatus> {
 	try {
-		const isAvailable = await Pedometer.isAvailableAsync();
+		const isAvailable = await isHealthKitAvailable();
 
+		if (!isAvailable) {
+			return {
+				isAvailable: false,
+				isAuthorized: false,
+				permissions: [],
+			};
+		}
+
+		// In Expo managed workflow with Pedometer, we can't check permissions without accessing data
+		// So we return a conservative status that requires explicit permission request
+		// The actual permission check will happen when user explicitly requests access
 		return {
-			isAvailable,
-			isAuthorized: isAvailable, // If available, assume authorized
-			permissions: isAvailable ? ['motion', 'fitness'] : [],
+			isAvailable: true,
+			isAuthorized: false, // Conservative approach - assume not authorized until explicitly granted
+			permissions: [],
 		};
 	} catch (error) {
-		console.error('Error getting step counting status:', error);
+		console.error('Error getting HealthKit status:', error);
 		return {
 			isAvailable: false,
 			isAuthorized: false,
@@ -221,8 +352,50 @@ export async function getHealthKitStatus(): Promise<HealthKitStatus> {
 }
 
 /**
- * Request HealthKit permissions (alias for step permissions)
+ * Verify HealthKit permissions by testing actual data access
+ * This should only be called after user has explicitly granted permissions
  */
-export async function requestHealthKitPermissions(): Promise<HealthKitStatus> {
-	return requestStepPermissions();
+export async function verifyHealthKitPermissions(): Promise<HealthKitStatus> {
+	try {
+		const isAvailable = await isHealthKitAvailable();
+
+		if (!isAvailable) {
+			return {
+				isAvailable: false,
+				isAuthorized: false,
+				permissions: [],
+			};
+		}
+
+		// Test if we can actually get step data (this indicates permissions are granted)
+		try {
+			const today = new Date();
+			const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+			const endOfDay = new Date(startOfDay);
+			endOfDay.setDate(endOfDay.getDate() + 1);
+
+			// Try to get step count - if this works, permissions are granted
+			await Pedometer.getStepCountAsync(startOfDay, endOfDay);
+
+			return {
+				isAvailable: true,
+				isAuthorized: true,
+				permissions: ['motion', 'fitness', 'steps'],
+			};
+		} catch (permissionError) {
+			// Permission not granted or error occurred
+			return {
+				isAvailable: true,
+				isAuthorized: false,
+				permissions: [],
+			};
+		}
+	} catch (error) {
+		console.error('Error verifying HealthKit permissions:', error);
+		return {
+			isAvailable: false,
+			isAuthorized: false,
+			permissions: [],
+		};
+	}
 }

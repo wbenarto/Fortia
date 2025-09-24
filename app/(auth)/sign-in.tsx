@@ -13,11 +13,24 @@ const SignIn = () => {
 		email: '',
 		password: '',
 	});
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
 	const { signIn, setActive, isLoaded } = useSignIn();
 
 	const onSignInPress = useCallback(async () => {
 		if (!isLoaded) return;
+
+		// Clear any previous errors
+		setError(null);
+		setIsLoading(true);
+
+		// Basic validation
+		if (!form.email.trim() || !form.password.trim()) {
+			setError('Please enter both email and password');
+			setIsLoading(false);
+			return;
+		}
 
 		// Start the sign-in process using the email and password provided
 		try {
@@ -36,15 +49,56 @@ const SignIn = () => {
 			} else {
 				// If the status isn't complete, check why. User might need to
 				// complete further steps.
-				console.error(JSON.stringify(signInAttempt, null, 2));
+				console.error('Sign in incomplete, status:', signInAttempt.status);
+				setError('Sign in process incomplete. Please try again.');
 			}
 		} catch (err: any) {
-			// See https://clerk.com/docs/custom-flows/error-handling
-			// for more info on error handling
-			console.error(JSON.stringify(err, null, 2));
-			Alert.alert('Error', err.errors?.[0]?.longMessage || 'Sign in failed');
+			// Handle specific Clerk errors with user-friendly messages
+			let errorMessage = 'Sign in failed. Please try again.';
+
+			if (err.errors && err.errors.length > 0) {
+				const error = err.errors[0];
+
+				// Handle specific error codes
+				switch (error.code) {
+					case 'form_identifier_not_found':
+						errorMessage = 'No account found with this email address.';
+						break;
+					case 'form_password_incorrect':
+						errorMessage = 'Incorrect password. Please try again.';
+						break;
+					case 'form_identifier_exists':
+						errorMessage = 'An account with this email already exists.';
+						break;
+					case 'form_password_pwned':
+						errorMessage =
+							'This password has been compromised. Please choose a different password.';
+						break;
+					case 'form_password_too_short':
+						errorMessage = 'Password is too short.';
+						break;
+					case 'form_password_too_weak':
+						errorMessage = 'Password is too weak. Please choose a stronger password.';
+						break;
+					default:
+						errorMessage = error.longMessage || error.message || errorMessage;
+				}
+			}
+
+			// Only log non-user errors (like network issues) to console
+			// Don't log expected authentication errors
+			if (
+				err.errors?.[0]?.code !== 'form_password_incorrect' &&
+				err.errors?.[0]?.code !== 'form_identifier_not_found'
+			) {
+				console.error('Sign in error:', err.errors?.[0]?.code || 'Unknown error');
+			}
+
+			setError(errorMessage);
+		} finally {
+			setIsLoading(false);
 		}
-	}, [isLoaded, form.email, form.password]);
+	}, [isLoaded, form.email, form.password, signIn, setActive, router]);
 
 	return (
 		<ScrollView className="flex-1 ">
@@ -62,7 +116,11 @@ const SignIn = () => {
 						placeholder="Enter your Email"
 						icon={icons.Email}
 						value={form.email}
-						onChangeText={value => setForm({ ...form, email: value })}
+						onChangeText={value => {
+							setForm({ ...form, email: value });
+							// Clear error when user starts typing
+							if (error) setError(null);
+						}}
 						labelStyle="text-black"
 					/>
 					<InputField
@@ -71,11 +129,28 @@ const SignIn = () => {
 						icon={icons.Lock}
 						secureTextEntry={true}
 						value={form.password}
-						onChangeText={value => setForm({ ...form, password: value })}
+						onChangeText={value => {
+							setForm({ ...form, password: value });
+							// Clear error when user starts typing
+							if (error) setError(null);
+						}}
 						labelStyle="text-black"
 					/>
 
-					<CustomButton title="Sign In" onPress={onSignInPress} className="mt-6" width="100%" />
+					{/* Error Message */}
+					{error && (
+						<View className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+							<Text className="text-red-600 text-sm text-center">{error}</Text>
+						</View>
+					)}
+
+					<CustomButton
+						title={isLoading ? 'Signing In...' : 'Sign In'}
+						onPress={onSignInPress}
+						className="mt-6"
+						width="100%"
+						disabled={isLoading}
+					/>
 
 					<OAuth />
 

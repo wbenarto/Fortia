@@ -1,5 +1,13 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {
+	View,
+	Text,
+	TouchableOpacity,
+	ScrollView,
+	ActivityIndicator,
+	KeyboardAvoidingView,
+	Platform,
+} from 'react-native';
 import CustomButton from './CustomButton';
 import ReactNativeModal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
@@ -89,12 +97,19 @@ interface MacrosTrackingProps {
 	onMealLogged?: () => void;
 }
 
+type MealTabType = 'food' | 'recipe';
+
 const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 	({ onMealLogged }, ref) => {
 		const [addMealModal, setAddMealModal] = useState(false);
+		const [activeMealTab, setActiveMealTab] = useState<MealTabType>('food');
 		const [goalSetupModal, setGoalSetupModal] = useState(false);
 		const [foodName, setFoodName] = useState('');
 		const [portionSize, setPortionSize] = useState('');
+		// Recipe tab state
+		const [recipeIngredients, setRecipeIngredients] = useState<
+			Array<{ ingredient: string; amount: string }>
+		>([{ ingredient: '', amount: '' }]);
 		const [nutritionData, setNutritionData] = useState<NutritionData | null>(null);
 		const [isAnalyzing, setIsAnalyzing] = useState(false);
 		const [isSaving, setIsSaving] = useState(false);
@@ -237,12 +252,86 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				// Reset state when opening modal
 				setFoodName('');
 				setPortionSize('');
+				setRecipeIngredients([{ ingredient: '', amount: '' }]);
 				setNutritionData(null);
 				setError('');
 				setMealType('snack');
+				setActiveMealTab('food');
 			} else {
 				// Refresh daily summary when closing modal
 				fetchDailySummary();
+			}
+		};
+
+		// Handle tab switching and clear forms
+		const handleMealTabSwitch = (newTab: MealTabType) => {
+			if (newTab !== activeMealTab) {
+				// Clear forms when switching tabs
+				setFoodName('');
+				setPortionSize('');
+				setRecipeIngredients([{ ingredient: '', amount: '' }]);
+				setNutritionData(null);
+				setIsAnalyzing(false);
+				setError('');
+				setActiveMealTab(newTab);
+			}
+		};
+
+		// Add new ingredient row
+		const addIngredient = () => {
+			setRecipeIngredients([...recipeIngredients, { ingredient: '', amount: '' }]);
+		};
+
+		// Remove ingredient row
+		const removeIngredient = (index: number) => {
+			if (recipeIngredients.length > 1) {
+				setRecipeIngredients(recipeIngredients.filter((_, i) => i !== index));
+			}
+		};
+
+		// Update ingredient
+		const updateIngredient = (index: number, field: 'ingredient' | 'amount', value: string) => {
+			const updated = [...recipeIngredients];
+			updated[index][field] = value;
+			setRecipeIngredients(updated);
+		};
+
+		// Analyze recipe ingredients
+		const analyzeRecipe = async () => {
+			// Filter out empty ingredients
+			const validIngredients = recipeIngredients.filter(
+				ing => ing.ingredient.trim() && ing.amount.trim()
+			);
+
+			if (validIngredients.length === 0) {
+				setError('Please enter at least one ingredient with amount');
+				return;
+			}
+
+			setIsAnalyzing(true);
+			setError('');
+
+			try {
+				const response = await fetchAPI('/api/recipe-analysis', {
+					method: 'POST',
+					body: JSON.stringify({
+						ingredients: validIngredients,
+						userId: user?.id,
+					}),
+				});
+
+				console.log('Recipe analysis response:', response);
+
+				if (response.success && response.data) {
+					setNutritionData(response.data);
+				} else {
+					setError(response.error || 'Failed to analyze recipe');
+				}
+			} catch (error) {
+				console.error('Recipe analysis error:', error);
+				setError('Failed to analyze recipe. Please try again.');
+			} finally {
+				setIsAnalyzing(false);
 			}
 		};
 
@@ -344,25 +433,40 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					confidence: Math.min(1, Math.max(0, Number(nutritionData.confidence) || 0.5)),
 				};
 
-				// Validate required fields
-				if (!foodName.trim()) {
-					setError('Food name is required');
-					return;
-				}
-
-				if (!portionSize.trim()) {
-					setError('Portion size is required');
-					return;
+				// Validate required fields based on active tab
+				if (activeMealTab === 'food') {
+					if (!foodName.trim()) {
+						setError('Food name is required');
+						return;
+					}
+					if (!portionSize.trim()) {
+						setError('Portion size is required');
+						return;
+					}
+				} else {
+					// Recipe tab validation
+					if (!foodName.trim()) {
+						setError('Recipe name is required');
+						return;
+					}
+					const validIngredients = recipeIngredients.filter(
+						ing => ing.ingredient.trim() && ing.amount.trim()
+					);
+					if (validIngredients.length === 0) {
+						setError('At least one ingredient is required');
+						return;
+					}
 				}
 
 				// Validate meal type
 				const validMealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
 				const validatedMealType = validMealTypes.includes(mealType) ? mealType : 'snack';
 
+				// Prepare meal data based on active tab
 				const mealData = {
 					clerkId: user.id,
 					foodName: foodName.trim(),
-					portionSize: portionSize.trim(),
+					portionSize: activeMealTab === 'food' ? portionSize.trim() : '1 portion',
 					calories: validatedNutritionData.calories,
 					protein: validatedNutritionData.protein,
 					carbs: validatedNutritionData.carbs,
@@ -603,191 +707,323 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						isVisible={addMealModal}
 						onBackdropPress={() => setAddMealModal(false)}
 					>
-						<ScrollView className="bg-white px-4 rounded-md py-6">
-							<View className="flex flex-row justify-between items-center mb-6">
-								<Text className="text-xl font-JakartaSemiBold">Log Your Meal</Text>
-								<TouchableOpacity onPress={() => setAddMealModal(false)}>
-									<Ionicons name="close" size={24} color="black" />
-								</TouchableOpacity>
-							</View>
-
-							<View className="flex mx-auto w-full justify-center mb-4">
-								<InputField
-									label="Food Name"
-									labelClassName="text-xs text-black font-JakartaSemiBold"
-									placeholder="e.g. Chicken Breast or In-N-Out Double Double"
-									value={foodName}
-									onChangeText={setFoodName}
-								/>
-							</View>
-
-							<View className="flex mx-auto w-full justify-center mb-4">
-								<InputField
-									label="Amount"
-									labelClassName="text-xs text-black font-JakartaSemiBold"
-									placeholder="e.g. 100g or 1 cup or 1 serving"
-									value={portionSize}
-									onChangeText={setPortionSize}
-								/>
-							</View>
-
-							{/* Re-analyze Button - moved here */}
-							{nutritionData && (
-								<View className="mb-6">
-									<TouchableOpacity
-										onPress={analyzeFood}
-										disabled={isAnalyzing}
-										className={`py-3 px-4 rounded-lg border-2 ${
-											isAnalyzing ? 'bg-gray-200 border-gray-300' : 'bg-white border-[#E3BBA1]'
-										}`}
-									>
-										<View className="flex flex-row items-center justify-center">
-											{isAnalyzing ? (
-												<ActivityIndicator size="small" color="#E3BBA1" />
-											) : (
-												<Ionicons name="refresh" size={16} color="#E3BBA1" />
-											)}
-											<Text
-												className={`ml-2 font-JakartaSemiBold ${
-													isAnalyzing ? 'text-gray-500' : 'text-[#E3BBA1]'
-												}`}
-											>
-												{isAnalyzing ? 'Re-analyzing...' : 'Re-analyze meal'}
-											</Text>
-										</View>
+						<KeyboardAvoidingView
+							behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+							className="flex-1"
+						>
+							<ScrollView
+								className="bg-white px-4 rounded-md py-6"
+								keyboardShouldPersistTaps="handled"
+								showsVerticalScrollIndicator={false}
+							>
+								<View className="flex flex-row justify-between items-center mb-6">
+									<Text className="text-xl font-JakartaSemiBold">Log Your Meal</Text>
+									<TouchableOpacity onPress={() => setAddMealModal(false)}>
+										<Ionicons name="close" size={24} color="black" />
 									</TouchableOpacity>
-									<Text className="text-xs text-gray-500 text-center mt-1">
-										Adjust food name or portion size above, then tap to re-analyze
-									</Text>
 								</View>
-							)}
-							{/* Rate Limit Display */}
-							{rateLimitInfo && (
-								<View className="px-4 mb-4 ">
-									<View className="bg-blue-50 border border-blue-200 rounded-lg p-2">
-										<Text className="text-xs text-blue-700 text-center">
-											Meal analysis: {rateLimitInfo.used}/20 used today ({rateLimitInfo.remaining}{' '}
-											remaining)
-										</Text>
-									</View>
-								</View>
-							)}
-							{/* Meal Type Selection */}
-							<View className="mb-6">
-								<Text className="text-xs text-black font-JakartaSemiBold mb-2">Meal Type</Text>
-								<View className="flex flex-row gap-2">
-									{['breakfast', 'lunch', 'dinner', 'snack'].map(type => (
+
+								{/* Tabs */}
+								<View className="flex flex-row justify-between items-center my-4 px-20">
+									<View className="items-center">
 										<TouchableOpacity
-											key={type}
-											onPress={() => setMealType(type)}
-											className={`px-3 py-2 rounded-full border ${
-												mealType === type
-													? 'bg-[#E3BBA1] border-[#E3BBA1]'
-													: 'bg-white border-gray-300'
+											onPress={() => handleMealTabSwitch('food')}
+											className={`flex justify-center items-center rounded-full p-6 border-[1px] ${
+												activeMealTab === 'food' ? 'bg-green-200 border-gray-400' : 'bg-white'
 											}`}
 										>
-											<Text
-												className={`text-xs capitalize ${
-													mealType === type ? 'text-white' : 'text-gray-600'
-												}`}
-											>
-												{type}
-											</Text>
+											<Ionicons
+												name="fast-food-outline"
+												size={30}
+												color={activeMealTab === 'food' ? 'black' : 'black'}
+											/>
 										</TouchableOpacity>
-									))}
+										<Text className="text-xs font-JakartaSemiBold mt-2 text-black">Food</Text>
+									</View>
+									<View className="items-center">
+										<TouchableOpacity
+											onPress={() => handleMealTabSwitch('recipe')}
+											className={`flex justify-center items-center rounded-full p-6 border-[1px] ${
+												activeMealTab === 'recipe' ? 'bg-blue-200 border-gray-400' : 'bg-white'
+											}`}
+										>
+											<Ionicons
+												name="restaurant-outline"
+												size={30}
+												color={activeMealTab === 'recipe' ? 'black' : 'black'}
+											/>
+										</TouchableOpacity>
+										<Text className="text-xs font-JakartaSemiBold mt-2 text-black">Recipe</Text>
+									</View>
 								</View>
-							</View>
 
-							{error ? <Text className="text-red-500 text-center mb-4">{error}</Text> : null}
+								{/* Tab Content */}
+								{activeMealTab === 'food' && (
+									<View>
+										<View className="flex mx-auto w-full justify-center mb-4">
+											<InputField
+												label="Food Name"
+												labelClassName="text-xs text-black font-JakartaSemiBold"
+												placeholder="e.g. Chicken Breast or In-N-Out Double Double"
+												value={foodName}
+												onChangeText={setFoodName}
+											/>
+										</View>
 
-							{!nutritionData && !isAnalyzing && (
-								<View className="flex justify-center items-center mb-6">
-									<TouchableOpacity
-										className="rounded-full bg-[#E3BBA1] w-20 h-20 p-4 flex justify-center items-center"
-										onPress={analyzeFood}
-										disabled={isAnalyzing}
-									>
-										<Ionicons name="aperture-sharp" size={36} color="white" />
-									</TouchableOpacity>
-									<Text className="text-center mt-2 text-sm text-gray-600">
-										Tap to analyze meal
-									</Text>
-								</View>
-							)}
-
-							{isAnalyzing && (
-								<View className="flex justify-center items-center mb-6">
-									<ActivityIndicator size="large" color="#E3BBA1" />
-									<Text className="text-center mt-2 text-sm text-gray-600">
-										Analyzing nutrition data...
-									</Text>
-								</View>
-							)}
-
-							{nutritionData && (
-								<View className="mb-6">
-									<Text className="text-2xl  text-center font-JakartaSemiBold ">{foodName}</Text>
-									<Text className="text-base text-gray-600 font-JakartaSemiBold mb-4 text-center">
-										Nutrition Analysis
-									</Text>
-
-									<View className="bg-gray-50 p-4 rounded-lg mb-4">
-										<View className="flex flex-row justify-between mb-2">
-											<Text className="font-JakartaSemiBold">Calories:</Text>
-											<Text>{nutritionData.calories} kcal</Text>
-										</View>
-										<View className="flex flex-row justify-between mb-2">
-											<Text className="font-JakartaSemiBold">Protein:</Text>
-											<Text>{nutritionData.protein}g</Text>
-										</View>
-										<View className="flex flex-row justify-between mb-2">
-											<Text className="font-JakartaSemiBold">Carbs:</Text>
-											<Text>{nutritionData.carbs}g</Text>
-										</View>
-										<View className="flex flex-row justify-between mb-2">
-											<Text className="font-JakartaSemiBold">Fat:</Text>
-											<Text>{nutritionData.fats}g</Text>
-										</View>
-										<View className="flex flex-row justify-between mb-2">
-											<Text className="font-JakartaSemiBold">Fiber:</Text>
-											<Text>{nutritionData.fiber}g</Text>
-										</View>
-										<View className="flex flex-row justify-between mb-2">
-											<Text className="font-JakartaSemiBold">Sugar:</Text>
-											<Text>{nutritionData.sugar}g</Text>
-										</View>
-										<View className="flex flex-row justify-between mb-2">
-											<Text className="font-JakartaSemiBold">Sodium:</Text>
-											<Text>{nutritionData.sodium}mg</Text>
-										</View>
-										<View className="flex flex-row justify-between mb-2">
-											<Text className="font-JakartaSemiBold">Confidence:</Text>
-											<Text>{(nutritionData.confidence * 100).toFixed(0)}%</Text>
+										<View className="flex mx-auto w-full justify-center mb-4">
+											<InputField
+												label="Amount"
+												labelClassName="text-xs text-black font-JakartaSemiBold"
+												placeholder="e.g. 100g or 1 cup or 1 serving"
+												value={portionSize}
+												onChangeText={setPortionSize}
+											/>
 										</View>
 									</View>
+								)}
 
-									{nutritionData.notes && (
-										<View className="mb-4">
-											<Text className="text-sm text-gray-600">{nutritionData.notes}</Text>
+								{activeMealTab === 'recipe' && (
+									<View>
+										<View className="flex mx-auto w-full justify-center mb-4 ">
+											<InputField
+												label="Food Name"
+												className="placeholder:text-[12x]"
+												labelClassName=" text-black font-JakartaSemiBold"
+												placeholder="e.g. Chicken Breast or In-N-Out Double Double"
+												value={foodName}
+												onChangeText={setFoodName}
+											/>
 										</View>
-									)}
 
-									{nutritionData.suggestions.length > 0 && (
-										<View className="mb-4">
-											<Text className="font-JakartaSemiBold mb-2">Similar foods:</Text>
-											<Text className="text-sm text-gray-600">
-												{nutritionData.suggestions.join(', ')}
+										{/* Ingredients Header */}
+										<View className="flex flex-row w-full bg-blue-100 py-2 items-center space-between mb-2">
+											<Text className="text-black font-JakartaSemiBold w-[60%] text-center">
+												Ingredient
+											</Text>
+											<Text className="text-black font-JakartaSemiBold w-1/3 text-center">
+												Amount
+											</Text>
+											<Text className="text-black font-JakartaSemiBold w-[10%] text-center"></Text>
+										</View>
+
+										{/* Dynamic Ingredient Rows */}
+										{recipeIngredients.map((item, index) => (
+											<View
+												key={index}
+												className="flex flex-row w-full items-center space-between mb-2"
+											>
+												<View className="flex w-[60%] justify-center">
+													<InputField
+														className="placeholder:text-[10px] h-12  mr-2 justify-center"
+														style={{ textAlignVertical: 'center' }}
+														placeholder="e.g. Chicken Breast, Rice, Tuna"
+														value={item.ingredient}
+														onChangeText={value => updateIngredient(index, 'ingredient', value)}
+													/>
+												</View>
+
+												<View className="flex w-1/3 justify-center">
+													<InputField
+														className="placeholder:text-[10px]  h-12"
+														placeholder="e.g. 10g, 1 cup, 1tbsp"
+														value={item.amount}
+														onChangeText={value => updateIngredient(index, 'amount', value)}
+													/>
+												</View>
+
+												<View className="flex w-[10%] justify-center">
+													{recipeIngredients.length > 1 && (
+														<TouchableOpacity
+															onPress={() => removeIngredient(index)}
+															className="bg-red-500 rounded-full w-4 h-4 flex items-center justify-center"
+														>
+															<Ionicons name="close" size={10} color="white" />
+														</TouchableOpacity>
+													)}
+												</View>
+											</View>
+										))}
+
+										{/* Add Ingredient Button */}
+										<TouchableOpacity
+											onPress={addIngredient}
+											className="bg-gray-500 rounded-lg py-2 px-4 flex flex-row items-center justify-center mb-4"
+										>
+											<Ionicons name="add" size={20} color="white" />
+											<Text className="text-white font-JakartaSemiBold ml-2">Add Ingredient</Text>
+										</TouchableOpacity>
+									</View>
+								)}
+
+								{/* Re-analyze Button */}
+								{nutritionData && (
+									<View className="mb-6">
+										<TouchableOpacity
+											onPress={activeMealTab === 'food' ? analyzeFood : analyzeRecipe}
+											disabled={isAnalyzing}
+											className={`py-3 px-4 rounded-lg border-2 ${
+												isAnalyzing ? 'bg-gray-200 border-gray-300' : 'bg-white border-[#E3BBA1]'
+											}`}
+										>
+											<View className="flex flex-row items-center justify-center">
+												{isAnalyzing ? (
+													<ActivityIndicator size="small" color="#E3BBA1" />
+												) : (
+													<Ionicons name="refresh" size={16} color="#E3BBA1" />
+												)}
+												<Text
+													className={`ml-2 font-JakartaSemiBold ${
+														isAnalyzing ? 'text-gray-500' : 'text-[#E3BBA1]'
+													}`}
+												>
+													{isAnalyzing
+														? 'Re-analyzing...'
+														: `Re-analyze ${activeMealTab === 'food' ? 'meal' : 'recipe'}`}
+												</Text>
+											</View>
+										</TouchableOpacity>
+										<Text className="text-xs text-gray-500 text-center mt-1">
+											{activeMealTab === 'food'
+												? 'Adjust food name or portion size above, then tap to re-analyze'
+												: 'Adjust ingredients above, then tap to re-analyze'}
+										</Text>
+									</View>
+								)}
+								{/* Rate Limit Display */}
+								{rateLimitInfo && (
+									<View className="px-4 mb-4 ">
+										<View className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+											<Text className="text-xs text-blue-700 text-center">
+												Meal analysis: {rateLimitInfo.used}/20 used today ({rateLimitInfo.remaining}{' '}
+												remaining)
 											</Text>
 										</View>
-									)}
-
-									<CustomButton
-										onPress={isSaving ? () => {} : handleSaveMeal}
-										title={isSaving ? 'Saving...' : 'Save Meal'}
-									/>
+									</View>
+								)}
+								{/* Meal Type Selection */}
+								<View className="mb-6">
+									<Text className="text-xs text-black font-JakartaSemiBold mb-2">Meal Type</Text>
+									<View className="flex flex-row gap-2">
+										{['breakfast', 'lunch', 'dinner', 'snack'].map(type => (
+											<TouchableOpacity
+												key={type}
+												onPress={() => setMealType(type)}
+												className={`px-3 py-2 rounded-full border ${
+													mealType === type
+														? 'bg-[#E3BBA1] border-[#E3BBA1]'
+														: 'bg-white border-gray-300'
+												}`}
+											>
+												<Text
+													className={`text-xs capitalize ${
+														mealType === type ? 'text-white' : 'text-gray-600'
+													}`}
+												>
+													{type}
+												</Text>
+											</TouchableOpacity>
+										))}
+									</View>
 								</View>
-							)}
-						</ScrollView>
+
+								{error ? <Text className="text-red-500 text-center mb-4">{error}</Text> : null}
+
+								{/* Analyze Button */}
+								{!nutritionData && !isAnalyzing && (
+									<View className="flex justify-center items-center mb-6">
+										<TouchableOpacity
+											className="rounded-full bg-[#E3BBA1] w-20 h-20 p-4 flex justify-center items-center"
+											onPress={activeMealTab === 'food' ? analyzeFood : analyzeRecipe}
+											disabled={isAnalyzing}
+										>
+											<Ionicons name="aperture-sharp" size={36} color="white" />
+										</TouchableOpacity>
+										<Text className="text-center mt-2 text-sm text-gray-600">
+											{activeMealTab === 'food' ? 'Tap to analyze meal' : 'Tap to analyze recipe'}
+										</Text>
+									</View>
+								)}
+
+								{/* Loading State */}
+								{isAnalyzing && (
+									<View className="flex justify-center items-center mb-6">
+										<ActivityIndicator size="large" color="#E3BBA1" />
+										<Text className="text-center mt-2 text-sm text-gray-600">
+											{activeMealTab === 'food'
+												? 'Analyzing nutrition data...'
+												: 'Analyzing recipe ingredients...'}
+										</Text>
+									</View>
+								)}
+
+								{/* Nutrition Data */}
+								{nutritionData && (
+									<View className="mb-6">
+										<Text className="text-2xl text-center font-JakartaSemiBold">
+											{activeMealTab === 'food' ? foodName : 'Recipe Analysis'}
+										</Text>
+										<Text className="text-base text-gray-600 font-JakartaSemiBold mb-4 text-center">
+											{activeMealTab === 'food' ? 'Nutrition Analysis' : 'Total Recipe Nutrition'}
+										</Text>
+
+										<View className="bg-gray-50 p-4 rounded-lg mb-4">
+											<View className="flex flex-row justify-between mb-2">
+												<Text className="font-JakartaSemiBold">Calories:</Text>
+												<Text>{nutritionData.calories} kcal</Text>
+											</View>
+											<View className="flex flex-row justify-between mb-2">
+												<Text className="font-JakartaSemiBold">Protein:</Text>
+												<Text>{nutritionData.protein}g</Text>
+											</View>
+											<View className="flex flex-row justify-between mb-2">
+												<Text className="font-JakartaSemiBold">Carbs:</Text>
+												<Text>{nutritionData.carbs}g</Text>
+											</View>
+											<View className="flex flex-row justify-between mb-2">
+												<Text className="font-JakartaSemiBold">Fat:</Text>
+												<Text>{nutritionData.fats}g</Text>
+											</View>
+											<View className="flex flex-row justify-between mb-2">
+												<Text className="font-JakartaSemiBold">Fiber:</Text>
+												<Text>{nutritionData.fiber}g</Text>
+											</View>
+											<View className="flex flex-row justify-between mb-2">
+												<Text className="font-JakartaSemiBold">Sugar:</Text>
+												<Text>{nutritionData.sugar}g</Text>
+											</View>
+											<View className="flex flex-row justify-between mb-2">
+												<Text className="font-JakartaSemiBold">Sodium:</Text>
+												<Text>{nutritionData.sodium}mg</Text>
+											</View>
+											<View className="flex flex-row justify-between mb-2">
+												<Text className="font-JakartaSemiBold">Confidence:</Text>
+												<Text>{(nutritionData.confidence * 100).toFixed(0)}%</Text>
+											</View>
+										</View>
+
+										{nutritionData.notes && (
+											<View className="mb-4">
+												<Text className="text-sm text-gray-600">{nutritionData.notes}</Text>
+											</View>
+										)}
+
+										{nutritionData.suggestions && nutritionData.suggestions.length > 0 && (
+											<View className="mb-4">
+												<Text className="font-JakartaSemiBold mb-2">Similar foods:</Text>
+												<Text className="text-sm text-gray-600">
+													{nutritionData.suggestions.join(', ')}
+												</Text>
+											</View>
+										)}
+
+										<CustomButton
+											onPress={isSaving ? () => {} : handleSaveMeal}
+											title={isSaving ? 'Saving...' : 'Save Meal'}
+										/>
+									</View>
+								)}
+							</ScrollView>
+						</KeyboardAvoidingView>
 					</ReactNativeModal>
 				</View>
 			</View>

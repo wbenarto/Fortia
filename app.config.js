@@ -25,6 +25,10 @@ export default {
 			supportsTablet: true,
 			buildNumber: '1',
 			icon: './assets/icons/fortia-white-icon.png',
+			entitlements: {
+				'com.apple.developer.healthkit': true,
+				'com.apple.developer.healthkit.access': [],
+			},
 			infoPlist: {
 				ITSAppUsesNonExemptEncryption: false,
 				NSMotionUsageDescription:

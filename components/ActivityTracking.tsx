@@ -12,7 +12,12 @@ import { logDailySteps } from '@/lib/stepsLogging';
 import { fetchDataConsent, hasDataCollectionConsent } from '@/lib/consentUtils';
 import { fetchAPI } from '@/lib/fetch';
 import { getTodayDate } from '@/lib/dateUtils';
-import { getTodayStepData, requestHealthKitPermissions, getHealthKitStatus } from '@/lib/healthKit';
+import {
+	getTodayStepData,
+	requestHealthKitPermissions,
+	getHealthKitStatus,
+	verifyHealthKitPermissions,
+} from '@/lib/healthKit';
 
 import CustomButton from './CustomButton';
 import InputField from './InputField';
@@ -26,6 +31,7 @@ interface ActivityTrackingProps {
 
 const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrackingProps) => {
 	const [nutritionGoals, setNutritionGoals] = useState<any>(null);
+	const [lastStepsFetchTime, setLastStepsFetchTime] = useState<number>(0);
 	const [stepData, setStepData] = useState<any>(null);
 	const [healthKitStatus, setHealthKitStatus] = useState<any>(null);
 	const [activities, setActivities] = useState<any[]>([]);
@@ -33,6 +39,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 	const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
 	const [isLoading, setIsLoading] = useState(false);
 	const [showHealthKitInfo, setShowHealthKitInfo] = useState(false);
+	const [hasShownInitialPrompt, setHasShownInitialPrompt] = useState(false);
 
 	// Save completion status to AsyncStorage
 	const saveCompletionStatus = async (completedSet: Set<string>) => {
@@ -110,11 +117,16 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 	// On iPhone, fetch from device and upload to backend only if changed
 	const fetchAndUploadDeviceSteps = async () => {
 		if (!user?.id) return;
-		try {
-			const status = await getHealthKitStatus();
-			setHealthKitStatus(status);
 
-			if (status.isAvailable && status.isAuthorized) {
+		// Debounce: prevent multiple calls within 5 seconds
+		const now = Date.now();
+		if (now - lastStepsFetchTime < 5000) {
+			return;
+		}
+		setLastStepsFetchTime(now);
+		try {
+			// Only proceed if HealthKit is already authorized
+			if (healthKitStatus?.isAvailable && healthKitStatus?.isAuthorized) {
 				let calorieParams = undefined;
 				if (nutritionGoals) {
 					calorieParams = {
@@ -176,26 +188,49 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 	};
 
 	const requestHealthKitAccess = async () => {
-		if (!hasDataCollectionConsent(userConsentData)) {
-			Alert.alert(
-				'Consent Required',
-				'Please provide consent for data collection in your preferences.',
-				[{ text: 'OK' }]
-			);
-			return;
-		}
+		// Show detailed explanation before requesting permissions
+		Alert.alert(
+			'Motion & Fitness Access',
+			'Fortia would like to access your step count and activity data to provide personalized fitness insights and accurate calorie calculations. This data will be used solely for your fitness tracking within the app.',
+			[
+				{ text: 'Cancel', style: 'cancel' },
+				{
+					text: 'Allow Access',
+					onPress: async () => {
+						try {
+							const status = await requestHealthKitPermissions();
+							setHealthKitStatus(status);
 
-		try {
-			const status = await requestHealthKitPermissions();
-			setHealthKitStatus(status);
-			if (status.isAuthorized) {
-				// Refresh step data after authorization
-				await fetchAndUploadDeviceSteps();
-			}
-		} catch (error) {
-			console.error('HealthKit authorization error:', error);
-			Alert.alert('Error', 'Failed to enable HealthKit access');
-		}
+							if (status.isAuthorized) {
+								// Verify permissions were actually granted
+								const verifiedStatus = await verifyHealthKitPermissions();
+								setHealthKitStatus(verifiedStatus);
+
+								if (verifiedStatus.isAuthorized) {
+									// Refresh step data after authorization
+									await fetchAndUploadDeviceSteps();
+									// Also refresh the backend step data
+									await fetchStepDataFromBackend();
+								} else {
+									Alert.alert(
+										'Permission Denied',
+										'Motion & Fitness access is required for step tracking. You can enable it in Settings > Privacy & Security > Motion & Fitness > Fortia.'
+									);
+								}
+							} else {
+								Alert.alert(
+									'Permission Denied',
+									'Motion & Fitness access is required for step tracking. You can enable it in Settings > Privacy & Security > Motion & Fitness > Fortia.'
+								);
+							}
+						} catch (error) {
+							console.error('HealthKit authorization error:', error);
+							Alert.alert('Error', 'Failed to enable HealthKit access');
+						}
+					},
+				},
+			]
+		);
 	};
 
 	// Fetch activities from database
@@ -278,8 +313,63 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 			fetchScheduledExercises();
 			fetchUserConsent();
 			loadCompletionStatus();
+			// Check HealthKit status on mount (but don't request permissions)
+			checkHealthKitStatus();
 		}
 	}, [user?.id]);
+
+	// Check HealthKit status without requesting permissions
+	const checkHealthKitStatus = async () => {
+		try {
+			const status = await getHealthKitStatus();
+			setHealthKitStatus(status);
+		} catch (error) {
+			console.error('Error checking HealthKit status:', error);
+		}
+	};
+
+	// Show initial HealthKit permission prompt on app load
+	const showInitialHealthKitPrompt = async () => {
+		// Only show if we haven't shown it before and HealthKit is available but not authorized
+		if (!hasShownInitialPrompt && healthKitStatus?.isAvailable && !healthKitStatus?.isAuthorized) {
+			// Check if we've already asked this user before
+			if (!user?.id) return;
+
+			try {
+				const promptKey = `healthkit_prompt_shown_${user.id}`;
+				const hasBeenAsked = await AsyncStorage.getItem(promptKey);
+
+				if (!hasBeenAsked) {
+					setHasShownInitialPrompt(true);
+					// Mark that we've asked this user
+					await AsyncStorage.setItem(promptKey, 'true');
+
+					Alert.alert(
+						'Enable Step Tracking',
+						'Fortia can track your daily steps and activity to provide personalized fitness insights and accurate calorie calculations. This requires access to Motion & Fitness data. Would you like to enable step tracking now?',
+						[
+							{
+								text: 'Not Now',
+								style: 'cancel',
+								onPress: () => {
+									// User declined, they can enable later via the button
+								},
+							},
+							{
+								text: 'Enable',
+								onPress: async () => {
+									// User wants to enable, call the existing permission request function
+									await requestHealthKitAccess();
+								},
+							},
+						]
+					);
+				}
+			} catch (error) {
+				console.error('Error checking HealthKit prompt status:', error);
+			}
+		}
+	};
 
 	const fetchUserConsent = async () => {
 		if (!user?.id) return;
@@ -288,8 +378,8 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 			const consentData = await fetchDataConsent(user.id);
 			setUserConsentData(consentData);
 
-			// Only fetch step data if user has consented to data collection
-			if (hasDataCollectionConsent(consentData)) {
+			// Only fetch step data from backend if HealthKit is authorized
+			if (healthKitStatus?.isAuthorized) {
 				await fetchStepDataFromBackend();
 			}
 		} catch (error) {
@@ -297,12 +387,20 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 		}
 	};
 
-	// Refresh step data when nutrition goals change (for calorie calculation)
+	// Show initial HealthKit prompt when status is checked
 	useEffect(() => {
-		if (user?.id && nutritionGoals && hasDataCollectionConsent(userConsentData)) {
+		if (healthKitStatus !== null) {
+			showInitialHealthKitPrompt();
+		}
+	}, [healthKitStatus, hasShownInitialPrompt]);
+
+	// Refresh step data when nutrition goals change (for calorie calculation)
+	// Only auto-fetch if user has explicitly granted HealthKit permissions
+	useEffect(() => {
+		if (user?.id && nutritionGoals && healthKitStatus?.isAuthorized) {
 			fetchAndUploadDeviceSteps();
 		}
-	}, [user?.id, nutritionGoals, userConsentData]);
+	}, [user?.id, nutritionGoals, healthKitStatus?.isAuthorized]);
 
 	// Refresh data when screen comes into focus
 	useFocusEffect(
@@ -312,11 +410,13 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 				fetchActivities();
 				fetchScheduledExercises();
 				loadCompletionStatus(); // Reload completion status
-				if (hasDataCollectionConsent(userConsentData)) {
+				// Only fetch step data if HealthKit is authorized
+				if (healthKitStatus?.isAuthorized) {
 					fetchStepDataFromBackend();
+					fetchAndUploadDeviceSteps();
 				}
 			}
-		}, [user?.id, userConsentData])
+		}, [user?.id, healthKitStatus?.isAuthorized])
 	);
 
 	// Refresh scheduled exercises when refreshTrigger changes
@@ -379,6 +479,11 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 
 	// Calculate step calories with fallback (memoized for performance)
 	const stepCalories = useMemo(() => {
+		// Only calculate calories if HealthKit is authorized
+		if (!healthKitStatus?.isAuthorized) {
+			return 0;
+		}
+
 		// First try to use stored calories from backend
 		if (stepData?.calories_burned && stepData.calories_burned > 0) {
 			return stepData.calories_burned;
@@ -408,6 +513,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 
 		return 0;
 	}, [
+		healthKitStatus?.isAuthorized,
 		stepData?.calories_burned,
 		stepData?.steps,
 		nutritionGoals?.weight,
@@ -737,20 +843,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 								<Text className="text-xs text-[#E3BBA1] ml-1">HealthKit</Text>
 							</TouchableOpacity>
 
-							{!hasDataCollectionConsent(userConsentData) ? (
-								<TouchableOpacity
-									onPress={() =>
-										Alert.alert(
-											'Consent Required',
-											'Please provide consent for data collection in your preferences.',
-											[{ text: 'OK' }]
-										)
-									}
-									className="bg-red-500 px-2 py-1 rounded-lg"
-								>
-									<Text className="text-white text-xs">Consent Required</Text>
-								</TouchableOpacity>
-							) : !healthKitStatus?.isAuthorized && healthKitStatus?.isAvailable ? (
+							{!healthKitStatus?.isAuthorized && healthKitStatus?.isAvailable ? (
 								<TouchableOpacity
 									onPress={requestHealthKitAccess}
 									className="bg-[#E3BBA1] px-2 py-1 rounded-lg"
@@ -761,9 +854,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 						</View>
 						<View className="flex flex-row justify-between items-center">
 							<Text className="text-lg font-JakartaBold">
-								{!hasDataCollectionConsent(userConsentData) ? (
-									<Text className="text-xs text-[#64748B]">Consent required for step tracking</Text>
-								) : stepData ? (
+								{stepData && healthKitStatus?.isAuthorized ? (
 									<>
 										{stepData.steps.toLocaleString()}{' '}
 										<Text className="text-xs text-[#64748B]">
@@ -777,7 +868,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 							<View className="flex flex-row gap-2">
 								<SimpleLineIcons name="fire" size={14} colors="#5A556B" />
 								<Text className="text-[#64748B]">
-									{stepCalories > 0 ? `${stepCalories} cal` : '--'}
+									{stepCalories > 0 && healthKitStatus?.isAuthorized ? `${stepCalories} cal` : '--'}
 								</Text>
 							</View>
 						</View>
@@ -976,12 +1067,12 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 						<View className="mb-6">
 							<View className="flex-row items-center mb-3">
 								<Ionicons name="medical" size={20} color="#E3BBA1" />
-								<Text className="text-lg font-JakartaSemiBold ml-2">What is HealthKit?</Text>
+								<Text className="text-lg font-JakartaSemiBold ml-2">What is Motion & Fitness?</Text>
 							</View>
 							<Text className="text-gray-700 leading-6">
-								HealthKit is Apple's secure framework for health and fitness data. Fortia uses
-								HealthKit to securely access your step count and activity data to provide
-								personalized fitness insights.
+								Fortia uses Apple's Motion & Fitness framework to securely access your step count
+								and activity data to provide personalized fitness insights and accurate calorie
+								calculations.
 							</Text>
 						</View>
 
@@ -1015,8 +1106,8 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 								<Text className="text-lg font-JakartaSemiBold ml-2">Managing Permissions</Text>
 							</View>
 							<Text className="text-gray-700 leading-6">
-								You can manage HealthKit permissions in your device Settings {'>'} Privacy &
-								Security {'>'} Health {'>'} Fortia.
+								You can manage Motion & Fitness permissions in your device Settings {'>'} Privacy &
+								Security {'>'} Motion & Fitness {'>'} Fortia.
 							</Text>
 						</View>
 
