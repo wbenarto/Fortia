@@ -1,9 +1,20 @@
-import { ScrollView, View, Text, Image, TextInput, Button, Alert } from 'react-native';
+import {
+	ScrollView,
+	View,
+	Text,
+	Image,
+	TextInput,
+	Button,
+	Alert,
+	TouchableOpacity,
+} from 'react-native';
 import { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { useSignUp } from '@clerk/clerk-expo';
 import { images, icons } from '@/constants';
 import InputField from '@/components/InputField';
+import { LinearGradient } from 'expo-linear-gradient';
+
 import OAuth from '@/components/OAuth';
 import CustomButton from '@/components/CustomButton';
 import ReactNativeModal from 'react-native-modal';
@@ -139,108 +150,124 @@ const SignUp = () => {
 		}
 	};
 	return (
-		<ScrollView className="flex-1 ">
-			<View className="flex-1">
-				<View className="bg-white w-full h-[250px] overflow-hidden relative">
-					<Image source={images.SignUp} className="z-0 h-[250px] object-fill w-full " />
-
-					<Text className="absolute text-white text-2xl font-JakartaSemiBold bottom-5 left-5">
-						Create Your Account
-					</Text>
-				</View>
-				<View className="p-5">
-					<InputField
-						className=""
-						inputStyle="text-sm"
-						label="First Name"
-						placeholder="Enter your first name"
-						icon={icons.Person}
-						value={form.firstName}
-						onChangeText={value => setForm({ ...form, firstName: value })}
-						labelStyle="text-black"
-					/>
-					<InputField
-						label="Last Name"
-						placeholder="Enter your last name"
-						icon={icons.Person}
-						value={form.lastName}
-						onChangeText={value => setForm({ ...form, lastName: value })}
-						labelStyle="text-black"
-					/>
-					<InputField
-						label="Email"
-						placeholder="Enter your Email"
-						icon={icons.Email}
-						value={form.email}
-						onChangeText={value => setForm({ ...form, email: value })}
-						labelStyle="text-black"
-					/>
-					<InputField
-						label="Password"
-						placeholder="Enter your Password"
-						icon={icons.Lock}
-						secureTextEntry={true}
-						value={form.password}
-						onChangeText={value => setForm({ ...form, password: value })}
-						labelStyle="text-black"
-					/>
-
-					<CustomButton title="Sign Up" onPress={onSignUpPress} className="mt-6" width="100%" />
-
-					<OAuth />
-
-					<Link href="/sign-in" className="text-base text-center text-general-200 mt-10">
-						<Text>Already have an account? </Text>
-						<Text className="text-primary-500">Log In</Text>
-					</Link>
-				</View>
-
-				{/* Verification Modal */}
-				<ReactNativeModal
-					isVisible={verification.state === 'pending'}
-					onModalHide={() => {
-						if (verification.state === 'success') setShowSuccessModal(true);
-					}}
-				>
-					<View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
-						<Text className="text-2xl font-JakartaExtraBold mb-2">
-							We've sent a verification code to {form.email}
-						</Text>
+		<LinearGradient
+			colors={['#ffffff', '#f0dec9']}
+			start={{ x: 0, y: 0 }}
+			end={{ x: 1, y: 1 }}
+			className="flex-1"
+		>
+			<ScrollView className="flex-1 ">
+				<View className="flex-1 px-10 mt-24 min-h-screen">
+					<View className="w-full h-16 overflow-hidden ">
+						<Image source={icons.Logo} className="object-contain w-full h-full" />
+					</View>
+					<View className="px-5">
+						<View className="mx-auto my-4">
+							<Text className="text-3xl mb-2 text-center font-JakartaExtraBold">Welcome</Text>
+							<Text className="text-center text-gray-500 font-JakartaSemiBold">
+								Sign up to continue
+							</Text>
+						</View>
+						<View className="flex flex-row gap-2 mb-2 justify-between">
+							<TouchableOpacity className="w-[45%] rounded-xl h-12 bg-white flex justify-center items-center">
+								<Link href="/sign-in" className="text-black shadow-xl  font-JakartaSemiBold">
+									Login
+								</Link>
+							</TouchableOpacity>
+							<TouchableOpacity className="w-[45%] rounded-xl h-12 bg-[#E3BBA1] flex justify-center items-center">
+								<Link href="/sign-up" className="text-white  font-JakartaSemiBold">
+									Sign Up
+								</Link>
+							</TouchableOpacity>
+						</View>
 						<InputField
-							label="code"
+							className=""
+							inputStyle="text-sm"
+							label="First Name"
+							placeholder="Enter your first name"
+							icon={icons.Person}
+							value={form.firstName}
+							onChangeText={value => setForm({ ...form, firstName: value })}
+							labelStyle="text-black"
+						/>
+						<InputField
+							label="Last Name"
+							placeholder="Enter your last name"
+							icon={icons.Person}
+							value={form.lastName}
+							onChangeText={value => setForm({ ...form, lastName: value })}
+							labelStyle="text-black"
+						/>
+						<InputField
+							label="Email"
+							placeholder="Enter your Email"
+							icon={icons.Email}
+							value={form.email}
+							onChangeText={value => setForm({ ...form, email: value })}
+							labelStyle="text-black"
+						/>
+						<InputField
+							label="Password"
+							placeholder="Enter your Password"
 							icon={icons.Lock}
-							placeholder="12345"
-							value={verification.code}
-							keyboardType="numeric"
-							onChangeText={code => setVerification({ ...verification, code })}
+							secureTextEntry={true}
+							value={form.password}
+							onChangeText={value => setForm({ ...form, password: value })}
+							labelStyle="text-black"
 						/>
-						{verification.error && (
-							<Text className="text-red-500 text-sm mt-1">{verification.error}</Text>
-						)}
-						<CustomButton
-							title="Verify Email"
-							onPress={onVerifyPress}
-							className="mt-5 bg-success-500"
-						/>
-					</View>
-				</ReactNativeModal>
 
-				<ReactNativeModal isVisible={showSuccessModal}>
-					<View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
-						<Image source={images.Check} className="w-[110px] h-[110px] mx-auto my-5" />
-						<Text className="text-3xl font-JakartaBold text-center">Verified</Text>
-						<Text className="text-base text-gray-400 font-Jakarta text-center mt-2">
-							You have successfully verified your account.
-						</Text>
-						<CustomButton
-							title="Complete Setup"
-							onPress={() => router.replace('/(auth)/onboarding-setup')}
-							className="mt-5"
-						/>
+						<CustomButton title="Sign Up" onPress={onSignUpPress} className="mt-6" width="100%" />
+
+						<OAuth />
 					</View>
-				</ReactNativeModal>
-			</View>
-		</ScrollView>
+
+					{/* Verification Modal */}
+					<ReactNativeModal
+						isVisible={verification.state === 'pending'}
+						onModalHide={() => {
+							if (verification.state === 'success') setShowSuccessModal(true);
+						}}
+					>
+						<View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
+							<Text className="text-2xl font-JakartaExtraBold mb-2">
+								We've sent a verification code to {form.email}
+							</Text>
+							<InputField
+								label="code"
+								icon={icons.Lock}
+								placeholder="12345"
+								value={verification.code}
+								keyboardType="numeric"
+								onChangeText={code => setVerification({ ...verification, code })}
+							/>
+							{verification.error && (
+								<Text className="text-red-500 text-sm mt-1">{verification.error}</Text>
+							)}
+							<CustomButton
+								title="Verify Email"
+								onPress={onVerifyPress}
+								className="mt-5 bg-success-500"
+							/>
+						</View>
+					</ReactNativeModal>
+
+					<ReactNativeModal isVisible={showSuccessModal}>
+						<View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
+							<Image source={images.Check} className="w-[110px] h-[110px] mx-auto my-5" />
+							<Text className="text-3xl font-JakartaBold text-center">Verified</Text>
+							<Text className="text-base text-gray-400 font-Jakarta text-center mt-2">
+								You have successfully verified your account.
+							</Text>
+							<CustomButton
+								title="Complete Setup"
+								onPress={() => router.replace('/(auth)/onboarding-setup')}
+								className="mt-5"
+							/>
+						</View>
+					</ReactNativeModal>
+				</View>
+			</ScrollView>
+		</LinearGradient>
 	);
 };
 

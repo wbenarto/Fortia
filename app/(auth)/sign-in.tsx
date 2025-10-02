@@ -1,7 +1,8 @@
-import { ScrollView, View, Text, Image, Alert } from 'react-native';
+import { ScrollView, View, Text, Image, Alert, TouchableOpacity } from 'react-native';
 import { useSignIn } from '@clerk/clerk-expo';
 import { useState, useCallback } from 'react';
 import { Link, useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { images, icons } from '@/constants';
 import InputField from '@/components/InputField';
 import OAuth from '@/components/OAuth';
@@ -80,8 +81,12 @@ const SignIn = () => {
 					case 'form_password_too_weak':
 						errorMessage = 'Password is too weak. Please choose a stronger password.';
 						break;
+					case 'strategy_for_user_invalid':
+						errorMessage = 'Invalid sign-in method. Please try again.';
+						break;
 					default:
-						errorMessage = error.longMessage || error.message || errorMessage;
+						// Don't show technical error messages to users
+						errorMessage = 'Sign in failed. Please check your credentials and try again.';
 				}
 			}
 
@@ -89,7 +94,8 @@ const SignIn = () => {
 			// Don't log expected authentication errors
 			if (
 				err.errors?.[0]?.code !== 'form_password_incorrect' &&
-				err.errors?.[0]?.code !== 'form_identifier_not_found'
+				err.errors?.[0]?.code !== 'form_identifier_not_found' &&
+				err.errors?.[0]?.code !== 'strategy_for_user_invalid'
 			) {
 				console.error('Sign in error:', err.errors?.[0]?.code || 'Unknown error');
 			}
@@ -101,66 +107,82 @@ const SignIn = () => {
 	}, [isLoaded, form.email, form.password, signIn, setActive, router]);
 
 	return (
-		<ScrollView className="flex-1 ">
-			<View className="flex-1">
-				<View className="bg-white w-full h-[250px] overflow-hidden relative">
-					<Image source={images.SignUp} className="z-0 h-[250px] object-fill w-full " />
-
-					<Text className="absolute text-white text-2xl font-JakartaSemiBold bottom-5 left-5">
-						Log In
-					</Text>
-				</View>
-				<View className="p-5">
-					<InputField
-						label="Email"
-						placeholder="Enter your Email"
-						icon={icons.Email}
-						value={form.email}
-						onChangeText={value => {
-							setForm({ ...form, email: value });
-							// Clear error when user starts typing
-							if (error) setError(null);
-						}}
-						labelStyle="text-black"
-					/>
-					<InputField
-						label="Password"
-						placeholder="Enter your Password"
-						icon={icons.Lock}
-						secureTextEntry={true}
-						value={form.password}
-						onChangeText={value => {
-							setForm({ ...form, password: value });
-							// Clear error when user starts typing
-							if (error) setError(null);
-						}}
-						labelStyle="text-black"
-					/>
-
-					{/* Error Message */}
-					{error && (
-						<View className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-							<Text className="text-red-600 text-sm text-center">{error}</Text>
+		<LinearGradient
+			colors={['#ffffff', '#f0dec9']}
+			start={{ x: 0, y: 0 }}
+			end={{ x: 1, y: 1 }}
+			className="flex-1"
+		>
+			<ScrollView className="flex-1">
+				<View className="flex-1 justify-center px-10 min-h-screen">
+					<View className="w-full h-16 overflow-hidden ">
+						<Image source={icons.Logo} className="object-contain w-full h-full" />
+					</View>
+					<View className="px-5">
+						<View className="mx-auto my-4">
+							<Text className="text-3xl mb-2 text-center font-JakartaExtraBold">Welcome</Text>
+							<Text className="text-center text-gray-500 font-JakartaSemiBold">
+								Sign in to continue
+							</Text>
 						</View>
-					)}
+						<View className="flex flex-row gap-2 mb-2 justify-between">
+							<TouchableOpacity className="w-[45%] rounded-xl h-12 bg-[#E3BBA1] flex justify-center items-center">
+								<Link href="/sign-in" className="text-white shadow-xl  font-JakartaSemiBold">
+									Login
+								</Link>
+							</TouchableOpacity>
+							<TouchableOpacity className="w-[45%] rounded-xl h-12 bg-white flex justify-center items-center">
+								<Link href="/sign-up" className="text-black  font-JakartaSemiBold">
+									Sign Up
+								</Link>
+							</TouchableOpacity>
+						</View>
+						<InputField
+							label="Email"
+							placeholder="Enter your Email"
+							icon={icons.Email}
+							value={form.email}
+							onChangeText={value => {
+								setForm({ ...form, email: value });
+								// Clear error when user starts typing
+								if (error) setError(null);
+							}}
+							labelStyle="text-black"
+						/>
+						<InputField
+							label="Password"
+							placeholder="Enter your Password"
+							icon={icons.Lock}
+							secureTextEntry={true}
+							value={form.password}
+							onChangeText={value => {
+								setForm({ ...form, password: value });
+								// Clear error when user starts typing
+								if (error) setError(null);
+							}}
+							labelStyle="text-black"
+						/>
 
-					<CustomButton
-						title={isLoading ? 'Signing In...' : 'Sign In'}
-						onPress={onSignInPress}
-						className="mt-6"
-						width="100%"
-						disabled={isLoading}
-					/>
+						{/* Error Message */}
+						{error && (
+							<View className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+								<Text className="text-red-600 text-sm text-center">{error}</Text>
+							</View>
+						)}
 
-					<OAuth />
+						<CustomButton
+							title={isLoading ? 'Signing In...' : 'Login'}
+							onPress={onSignInPress}
+							className="mt-6"
+							width="100%"
+							disabled={isLoading}
+						/>
 
-					<Link href="/sign-up" className="text-base text-center text-general-200 mt-10">
-						<Text>Don't have an account? </Text>
-						<Text className="text-primary-500">Sign Up</Text>
-					</Link>
+						<OAuth />
+					</View>
 				</View>
-			</View>
-		</ScrollView>
+			</ScrollView>
+		</LinearGradient>
 	);
 };
 

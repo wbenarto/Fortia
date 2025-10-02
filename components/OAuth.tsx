@@ -252,13 +252,13 @@ export default function OAuth() {
 		<View>
 			<View className="flex flex-row justify-center items-center mt-4 gap-x-3">
 				<View className="flex-1 h-[1px] bg-general-100"></View>
-				<Text className="text-lg text-black">Or</Text>
+				<Text className="text-sm text-black">or continue with</Text>
 				<View className="flex-1 h-[1px] bg-general-100"></View>
 			</View>
 
 			<CustomButton
-				title={isLoading ? 'Signing In...' : 'Log In with Google'}
-				className="mt-5 w-full shadow-none"
+				title={isLoading ? 'Signing In...' : 'Google'}
+				className="mt-5 w-full shadow-none bg-white rounded-2xl"
 				IconLeft={() => (
 					<Image source={icons.Google} resizeMode="contain" className="w-5 h-5 mx-2" />
 				)}
@@ -271,8 +271,8 @@ export default function OAuth() {
 
 			{Platform.OS === 'ios' && (
 				<CustomButton
-					title={isLoading ? 'Signing In...' : 'Sign in with Apple'}
-					className="mt-3 w-full shadow-none "
+					title={isLoading ? 'Signing In...' : 'Apple'}
+					className="mt-3 w-full shadow-none bg-white rounded-2xl"
 					IconLeft={() => <AntDesign name="apple1" size={24} color="black" />}
 					bgVariant="outline"
 					onPress={handleAppleSignIn}

@@ -14,7 +14,20 @@ const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-LogBox.ignoreLogs(['Clerk:', '[clerk/telemetry]']);
+
+// Suppress error logs and overlays
+LogBox.ignoreLogs([
+	'Clerk:',
+	'[clerk/telemetry]',
+	'strategy_for_user_invalid',
+	'Error: strategy_for_user_invalid',
+	'Warning: strategy_for_user_invalid',
+]);
+
+// Disable error overlay in development
+if (__DEV__) {
+	LogBox.ignoreAllLogs(true);
+}
 
 export default function RootLayout() {
 	const [loaded] = useFonts({
@@ -45,7 +58,16 @@ export default function RootLayout() {
 
 	return (
 		<GestureHandlerRootView style={{ flex: 1 }}>
-			<ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey} telemetry={false}>
+			<ClerkProvider
+				tokenCache={tokenCache}
+				publishableKey={publishableKey}
+				telemetry={false}
+				appearance={{
+					variables: {
+						colorPrimary: '#E3BBA1',
+					},
+				}}
+			>
 				<ClerkLoaded>
 					<Stack>
 						<Stack.Screen name="index" options={{ headerShown: false }} />

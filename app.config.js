@@ -76,5 +76,9 @@ export default {
 		experiments: {
 			typedRoutes: true,
 		},
+		// Disable error overlay in development
+		developer: {
+			tool: 'expo-cli',
+		},
 	},
 };
