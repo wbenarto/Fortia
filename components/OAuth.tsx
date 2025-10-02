@@ -52,6 +52,21 @@ export default function OAuth() {
 
 		setIsLoading(true);
 		try {
+			// Check if user is already signed in before starting OAuth
+			if (user) {
+				// User is already signed in, check their status instead of starting new OAuth
+				const userStatus = await checkUserStatus(user.id);
+
+				if (userStatus.success) {
+					if (userStatus.needsOnboarding) {
+						router.push('/(auth)/onboarding-setup');
+					} else {
+						router.push('/(root)/(tabs)/home');
+					}
+					return;
+				}
+			}
+
 			// Step 1: Complete OAuth flow
 			const oauthResult = await googleOAuth(startGoogleOAuthFlow);
 
@@ -142,8 +157,30 @@ export default function OAuth() {
 			console.error('Error type:', typeof err);
 			console.error('Error message:', err instanceof Error ? err.message : 'Unknown error');
 
-			// TestFlight debugging - show detailed error
+			// Handle "already signed in" error specifically
 			const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+			if (
+				errorMessage.includes('already signed in') ||
+				errorMessage.includes("You're already signed in")
+			) {
+				// User is already signed in, redirect them appropriately
+				if (user) {
+					const userStatus = await checkUserStatus(user.id);
+					if (userStatus.success) {
+						if (userStatus.needsOnboarding) {
+							router.push('/(auth)/onboarding-setup');
+						} else {
+							router.push('/(root)/(tabs)/home');
+						}
+						return;
+					}
+				}
+				// Fallback: redirect to home
+				router.push('/(root)/(tabs)/home');
+				return;
+			}
+
+			// TestFlight debugging - show detailed error for other cases
 			Alert.alert(
 				'TestFlight Debug - OAuth Error',
 				`Error: ${errorMessage}\n\nType: ${typeof err}\n\nPlease report this error.`
@@ -158,6 +195,21 @@ export default function OAuth() {
 
 		setIsLoading(true);
 		try {
+			// Check if user is already signed in before starting OAuth
+			if (user) {
+				// User is already signed in, check their status instead of starting new OAuth
+				const userStatus = await checkUserStatus(user.id);
+
+				if (userStatus.success) {
+					if (userStatus.needsOnboarding) {
+						router.push('/(auth)/onboarding-setup');
+					} else {
+						router.push('/(root)/(tabs)/home');
+					}
+					return;
+				}
+			}
+
 			const result = await appleOAuth(startAppleOAuthFlow);
 
 			if (result.success) {

@@ -9,8 +9,8 @@ export default {
 		},
 		platforms: ['ios', 'web'],
 		entryPoint: 'app/index.tsx',
-		version: '1.0.0',
-		buildNumber: '1',
+		version: '1.0.1',
+		buildNumber: '60',
 		orientation: 'portrait',
 		icon: './assets/icons/fortia-white-icon.png',
 		scheme: 'Fortia',
@@ -23,7 +23,7 @@ export default {
 		newArchEnabled: true,
 		ios: {
 			supportsTablet: true,
-			buildNumber: '1',
+			buildNumber: '60',
 			icon: './assets/icons/fortia-white-icon.png',
 			entitlements: {
 				'com.apple.developer.healthkit': true,
