@@ -21,6 +21,7 @@ export interface UserProfile {
 	dailyProtein?: number;
 	dailyCarbs?: number;
 	dailyFats?: number;
+	username: string;
 }
 
 // Global refresh trigger
@@ -101,6 +102,7 @@ export const useUserProfile = (): UserProfile & { refresh: () => void } => {
 		imageUrl: user?.imageUrl,
 		isLoaded: isLoaded && isDbLoaded,
 		isSignedIn: isSignedIn || false,
+		username: dbUserData?.username,
 		// Database-specific fields
 		weight: dbUserData?.weight,
 		height: dbUserData?.height,
@@ -125,7 +127,7 @@ export const useUserProfile = (): UserProfile & { refresh: () => void } => {
 export const getUserDisplayName = (userProfile: UserProfile): string => {
 	if (!userProfile.isLoaded) return 'Loading...';
 	if (!userProfile.isSignedIn) return 'Guest';
-	if (userProfile.firstName) return userProfile.firstName;
+	if (userProfile.username) return userProfile.username;
 	if (userProfile.fullName) return userProfile.fullName;
 	return 'User';
 };
@@ -136,19 +138,11 @@ export const getUserDisplayName = (userProfile: UserProfile): string => {
 export const getUserInitials = (userProfile: UserProfile): string => {
 	if (!userProfile.isLoaded) return '...';
 	if (!userProfile.isSignedIn) return 'G';
-	if (userProfile.firstName && userProfile.lastName) {
-		return `${userProfile.firstName[0]}${userProfile.lastName[0]}`.toUpperCase();
+
+	if (userProfile.username) {
+		return userProfile.username[0].toUpperCase();
 	}
-	if (userProfile.firstName) {
-		return userProfile.firstName[0].toUpperCase();
-	}
-	if (userProfile.fullName) {
-		const names = userProfile.fullName.split(' ');
-		if (names.length >= 2) {
-			return `${names[0][0]}${names[1][0]}`.toUpperCase();
-		}
-		return names[0][0].toUpperCase();
-	}
+
 	return 'U';
 };
 

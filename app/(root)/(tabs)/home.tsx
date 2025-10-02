@@ -10,6 +10,7 @@ import {
 	Button,
 	Platform,
 	ActivityIndicator,
+	Alert,
 } from 'react-native';
 import Navbar from '@/components/Navbar';
 import WeightTracking from '@/components/WeightTracking';
@@ -25,6 +26,7 @@ import { Weights } from '@/types/type';
 import WeeklyTracking from '@/components/WeeklyTracking';
 import MacrosTracking from '@/components/MacrosTracking';
 import RecipeBreakdownModal from '@/components/RecipeBreakdownModal';
+import UsernameCollectionModal from '@/components/UsernameCollectionModal';
 import { logDailyBMR } from '@/lib/bmrLogging';
 import { useUserProfile } from '@/lib/userUtils';
 import { getUnifiedBMR } from '@/lib/unifiedBMRCalculator';
@@ -38,6 +40,8 @@ export default function Page() {
 	const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
 	const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 	const [showRecipeModal, setShowRecipeModal] = useState(false);
+	const [showUsernameModal, setShowUsernameModal] = useState(false);
+	const [userNeedsUsername, setUserNeedsUsername] = useState(false);
 	const [chartRefreshTrigger, setChartRefreshTrigger] = useState(0);
 	const [dashboardRefreshTrigger, setDashboardRefreshTrigger] = useState(0);
 
@@ -120,6 +124,15 @@ export default function Page() {
 						// Check if user has completed onboarding by looking for required fields
 						const userData = response.data;
 						if (userData.weight && userData.height && userData.fitness_goal) {
+							// Check if user needs a username - MANDATORY
+							if (!userData.username) {
+								setUserNeedsUsername(true);
+								setShowUsernameModal(true);
+								// Don't set hasCompletedOnboarding to true until username is set
+								return;
+							}
+
+							// Only set completed onboarding if user has username
 							setHasCompletedOnboarding(true);
 							// BMR logging will be handled by the consolidated useEffect below
 						} else {
@@ -204,36 +217,35 @@ export default function Page() {
 		);
 	}
 
-	// Don't render the main content if onboarding is not completed
-	if (!hasCompletedOnboarding) {
-		return null;
-	}
+	// Note: We removed the early return to allow modals to render even when onboarding is not completed
 
 	return (
 		<View className="flex-1 bg-[#ffffff]" style={{ paddingTop: insets.top }}>
 			<SignedIn>
-				<ScrollView stickyHeaderIndices={[0]} className="w-full h-full ">
-					<Navbar />
-					<View className="w-full pb-10">
-						<WeeklyCalendar />
+				{/* Show main content only if onboarding is completed */}
+				{hasCompletedOnboarding && (
+					<ScrollView stickyHeaderIndices={[0]} className="w-full h-full ">
+						<Navbar />
+						<View className="w-full pb-10">
+							<WeeklyCalendar />
 
-						{/* Slider Component */}
-						<HomeSliderComponent
-							totalMealsLog={0}
-							totalWeightsLog={0}
-							totalExercisesLog={0}
-							refreshTrigger={chartRefreshTrigger}
-							dashboardRefreshTrigger={dashboardRefreshTrigger}
-						/>
+							{/* Slider Component */}
+							<HomeSliderComponent
+								totalMealsLog={0}
+								totalWeightsLog={0}
+								totalExercisesLog={0}
+								refreshTrigger={chartRefreshTrigger}
+								dashboardRefreshTrigger={dashboardRefreshTrigger}
+							/>
 
-						<WeightTracking />
-						<MacrosTracking onMealLogged={onMealLogged} />
-						<ActivityTracking
-							refreshTrigger={dashboardRefreshTrigger}
-							onActivityLogged={onActivityLogged}
-						/>
-					</View>
-					{/* <View className="w-full  px-8 ">
+							<WeightTracking />
+							<MacrosTracking onMealLogged={onMealLogged} />
+							<ActivityTracking
+								refreshTrigger={dashboardRefreshTrigger}
+								onActivityLogged={onActivityLogged}
+							/>
+						</View>
+						{/* <View className="w-full  px-8 ">
 						<Text className="text-white text-3xl font-JakartaSemiBold mt-8">Macros</Text>
 						<View className="w-full h-40 rounded-md flex items-center flex-row justify-between">
 							<View className="w-[30%] py-8 bg-blue-100 rounded-full">
@@ -250,7 +262,7 @@ export default function Page() {
 							</View>
 						</View>
 					</View> */}
-					{/* <View className="w-full  px-8 pb-40">
+						{/* <View className="w-full  px-8 pb-40">
 						<Text className="text-white text-3xl font-JakartaSemiBold mt-8">
 							Your {'\n'}
 							Schedule
@@ -308,8 +320,37 @@ export default function Page() {
 							</View>
 						</View>
 					</View> */}
-				</ScrollView>
+					</ScrollView>
+				)}
+
+				{/* Show loading screen if user needs username */}
+				{userNeedsUsername && !hasCompletedOnboarding && (
+					<View className="flex-1 bg-[#E3BBA1] justify-center items-center">
+						<ActivityIndicator size="large" color="black" />
+						<Image
+							source={require('@/assets/images/logo-main-fortia.svg')}
+							className="w-full h-10"
+						/>
+						<Text className="text-black mt-4 text-lg">Setting up your username...</Text>
+					</View>
+				)}
+
 				<RecipeBreakdownModal visible={showRecipeModal} onClose={() => setShowRecipeModal(false)} />
+				<UsernameCollectionModal
+					isVisible={showUsernameModal}
+					onClose={() => {
+						// Don't allow closing - username is mandatory
+						Alert.alert('Username Required', 'You must set a username to continue using Fortia.', [
+							{ text: 'OK' },
+						]);
+					}}
+					onSuccess={() => {
+						setUserNeedsUsername(false);
+						setShowUsernameModal(false);
+						setHasCompletedOnboarding(true); // Now allow access to home screen
+					}}
+					clerkId={user?.id || ''}
+				/>
 			</SignedIn>
 			<SignedOut>
 				<Link href="/(auth)/sign-in">
