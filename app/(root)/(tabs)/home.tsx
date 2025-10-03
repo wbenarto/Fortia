@@ -44,6 +44,7 @@ export default function Page() {
 	const [userNeedsUsername, setUserNeedsUsername] = useState(false);
 	const [chartRefreshTrigger, setChartRefreshTrigger] = useState(0);
 	const [dashboardRefreshTrigger, setDashboardRefreshTrigger] = useState(0);
+	const [questRefreshTrigger, setQuestRefreshTrigger] = useState(0);
 
 	// Function to refresh the calorie chart
 	const refreshCalorieChart = useCallback(() => {
@@ -55,17 +56,31 @@ export default function Page() {
 		setDashboardRefreshTrigger(prev => prev + 1);
 	}, []);
 
+	// Function to refresh quest status
+	const refreshQuests = useCallback(() => {
+		setQuestRefreshTrigger(prev => prev + 1);
+	}, []);
+
 	// Combined refresh function for when meals are logged
 	const onMealLogged = useCallback(() => {
 		refreshCalorieChart();
 		refreshDashboardCounts();
-	}, [refreshCalorieChart, refreshDashboardCounts]);
+		refreshQuests();
+	}, [refreshCalorieChart, refreshDashboardCounts, refreshQuests]);
 
 	// Combined refresh function for when activities are logged
 	const onActivityLogged = useCallback(() => {
 		refreshCalorieChart();
 		refreshDashboardCounts();
-	}, [refreshCalorieChart, refreshDashboardCounts]);
+		refreshQuests();
+	}, [refreshCalorieChart, refreshDashboardCounts, refreshQuests]);
+
+	// Combined refresh function for when weight is logged
+	const onWeightLogged = useCallback(() => {
+		refreshCalorieChart();
+		refreshDashboardCounts();
+		refreshQuests();
+	}, [refreshCalorieChart, refreshDashboardCounts, refreshQuests]);
 
 	// Function to log daily BMR
 	const logDailyBMRIfNeeded = useCallback(async () => {
@@ -236,9 +251,10 @@ export default function Page() {
 								totalExercisesLog={0}
 								refreshTrigger={chartRefreshTrigger}
 								dashboardRefreshTrigger={dashboardRefreshTrigger}
+								questRefreshTrigger={questRefreshTrigger}
 							/>
 
-							<WeightTracking />
+							<WeightTracking onWeightLogged={onWeightLogged} />
 							<MacrosTracking onMealLogged={onMealLogged} />
 							<ActivityTracking
 								refreshTrigger={dashboardRefreshTrigger}

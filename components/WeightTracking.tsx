@@ -24,7 +24,11 @@ interface ChartDataPoint {
 	dataPointText: string;
 }
 
-const WeightTracking = () => {
+interface WeightTrackingProps {
+	onWeightLogged?: () => void;
+}
+
+const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 	const [userWeights, setUserWeights] = useState<ChartDataPoint[]>([]);
 	const [addWeightModal, setAddWeightModal] = useState(false);
 	const [weightForm, setWeightForm] = useState({
@@ -223,6 +227,9 @@ const WeightTracking = () => {
 				weight: '',
 				date: new Date(), // This is just for the form state, actual date uses getTodayDate()
 			});
+
+			// Trigger quest refresh callback
+			onWeightLogged?.();
 		} catch (error) {
 			console.error('Weight logging error:', error);
 		}

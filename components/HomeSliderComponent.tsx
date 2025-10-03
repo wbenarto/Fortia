@@ -6,6 +6,7 @@ import { PRIMARY } from '@/constants/colors';
 import MiniDashboardTracking from './MiniDashboardTracking';
 import CalorieChart from './CalorieChart';
 import CaloriesBurnedChart from './CaloriesBurnedChart';
+import { useDailyQuests } from '@/lib/useDailyQuests';
 
 interface HomeSliderComponentProps {
 	totalMealsLog?: number;
@@ -13,6 +14,7 @@ interface HomeSliderComponentProps {
 	totalExercisesLog?: number;
 	refreshTrigger?: number;
 	dashboardRefreshTrigger?: number;
+	questRefreshTrigger?: number;
 }
 
 export default function HomeSliderComponent({
@@ -21,10 +23,12 @@ export default function HomeSliderComponent({
 	totalExercisesLog = 0,
 	refreshTrigger = 0,
 	dashboardRefreshTrigger = 0,
+	questRefreshTrigger = 0,
 }: HomeSliderComponentProps) {
 	const router = useRouter();
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const screenWidth = Dimensions.get('window').width;
+	const { questStatus, streakDay, isLoading: questLoading } = useDailyQuests(questRefreshTrigger);
 
 	return (
 		<View className="w-full h-64">
@@ -46,10 +50,61 @@ export default function HomeSliderComponent({
 						totalExercisesLog={totalExercisesLog}
 						refreshTrigger={dashboardRefreshTrigger}
 					/>
+					<View className="flex-1  flex justify-center mt-2 ">
+						<View className="flex-1  border-[1px] border-gray-200 p-2 px-4 rounded-xl">
+							<View className="flex flex-row justify-between">
+								{questStatus.allCompleted && (
+									<View className="flex flex-row items-center">
+										<Text className="text-lg font-JakartaSemiBold mr-2">Daily Quests</Text>
+										<View className="flex flex-row border-[1px] border-green-600 px-2 py-1 items-center rounded-full">
+											<Ionicons name="sparkles-outline" color={'green'} />
+											<Text className="text-green-600 ml-1">Completed! </Text>
+										</View>
+									</View>
+								)}
+
+								<View className="flex flex-row items-center gap-1">
+									<Ionicons name="flash-outline" />
+									<Text>Day {streakDay}</Text>
+								</View>
+							</View>
+							<View className="flex flex-row flex-1 items-center m-auto ">
+								<View className=" py-1 px-4 items-center">
+									<Ionicons
+										name={questStatus.weight ? 'speedometer-outline' : 'ellipse-outline'}
+										color={questStatus.weight ? 'green' : 'gray'}
+										size={32}
+										className="w-4 "
+									/>
+									<Text className="mt-2 ">Log Weight</Text>
+								</View>
+								<Text>---</Text>
+								<View className=" py-1 px-4 items-center">
+									<Ionicons
+										name={questStatus.meal ? 'restaurant-outline' : 'ellipse-outline'}
+										size={32}
+										color={questStatus.meal ? 'green' : 'gray'}
+										className="w-4"
+									/>
+									<Text className="mt-2 ">Log Meals</Text>
+								</View>
+								<Text>---</Text>
+								<View className=" py-1 px-4 items-center">
+									<Ionicons
+										name={questStatus.exercise ? 'barbell-outline' : 'ellipse-outline'}
+										size={32}
+										color={questStatus.exercise ? 'green' : 'gray'}
+										className="w-4"
+									/>
+									<Text className="mt-2 ">Log Exercises</Text>
+								</View>
+							</View>
+						</View>
+					</View>
 
 					{/* Mindfulness Cards Section */}
-					<View className="flex flex-row justify-between px-0 mt-2 mb-6">
-						{/* Card 1: Awakened Manifesting */}
+					{/* <View className="flex flex-row justify-between px-0 mt-2 mb-6">
+						Card 1: Awakened Manifesting
 						<TouchableOpacity
 							className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
 							onPress={() => router.push('/awakened-manifesting')}
@@ -61,8 +116,8 @@ export default function HomeSliderComponent({
 								Awakened{'\n'}Manifesting
 							</Text>
 						</TouchableOpacity>
-						{/* Card 2: Recipe Breakdown */}
-						{/* <TouchableOpacity
+						Card 2: Recipe Breakdown
+						<TouchableOpacity
 			className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
 			onPress={() => setShowRecipeModal(true)}
 		>
@@ -72,8 +127,8 @@ export default function HomeSliderComponent({
 			<Text className="text-center text-secondary-800 font-JakartaSemiBold text-xs leading-tight">
 				Recipe{'\n'}Breakdown
 			</Text>
-		</TouchableOpacity> */}
-						{/* Card 3: Deep Thinking */}
+		</TouchableOpacity>
+						Card 3: Deep Thinking
 						<TouchableOpacity
 							className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
 							onPress={() => router.push('/deep-focus')}
@@ -85,7 +140,7 @@ export default function HomeSliderComponent({
 								Deep{'\n'}Focus
 							</Text>
 						</TouchableOpacity>
-					</View>
+					</View> */}
 				</View>
 
 				{/* Slide 2: Calorie Chart */}

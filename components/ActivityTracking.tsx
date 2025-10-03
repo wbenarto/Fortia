@@ -620,6 +620,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 					clerkId: user.id,
 					activityDescription: `${exerciseName.trim()} for ${exerciseDuration.trim()}`,
 					estimatedCalories: estimatedCalories,
+					date: getTodayDate(), // Add user's local date for proper timezone handling
 				}),
 			});
 
