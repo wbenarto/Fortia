@@ -53,15 +53,15 @@ export default function HomeSliderComponent({
 					<View className="flex-1  flex justify-center mt-2 ">
 						<View className="flex-1  border-[1px] border-gray-200 p-2 px-4 rounded-xl">
 							<View className="flex flex-row justify-between">
-								{questStatus.allCompleted && (
-									<View className="flex flex-row items-center">
-										<Text className="text-lg font-JakartaSemiBold mr-2">Daily Quests</Text>
-										<View className="flex flex-row border-[1px] border-green-600 px-2 py-1 items-center rounded-full">
+								<View className="flex flex-row items-center">
+									<Text className="text-lg font-JakartaSemiBold mr-2">Daily Quests</Text>
+									{questStatus.allCompleted && (
+										<View className="flex flex-row border-[1px] border-green-600 px-2 py-1 items-center rounded-lg">
 											<Ionicons name="sparkles-outline" color={'green'} />
 											<Text className="text-green-600 ml-1">Completed! </Text>
 										</View>
-									</View>
-								)}
+									)}
+								</View>
 
 								<View className="flex flex-row items-center gap-1">
 									<Ionicons name="flash-outline" />

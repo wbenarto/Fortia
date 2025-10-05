@@ -10,6 +10,11 @@ We successfully submitted Fortia (version 1.0.0, build 4) to the Apple App Store
 
 ### ✅ Apple Developer Account
 
+### Development build
+
+- eas build --platform ios --profile development
+- npx expo start --dev-client
+
 ### ✅ Environment Variables (EAS Secrets)
 
 All sensitive environment variables are securely stored using EAS Secrets:

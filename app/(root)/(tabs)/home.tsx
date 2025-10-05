@@ -17,6 +17,7 @@ import WeightTracking from '@/components/WeightTracking';
 import WeeklyCalendar from '@/components/WeeklyCalendar';
 import ActivityTracking from '@/components/ActivityTracking';
 import HomeSliderComponent from '@/components/HomeSliderComponent';
+import FortiaPT from '@/components/FortiaPT';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { images } from '@/constants/index';
@@ -41,6 +42,7 @@ export default function Page() {
 	const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 	const [showRecipeModal, setShowRecipeModal] = useState(false);
 	const [showUsernameModal, setShowUsernameModal] = useState(false);
+	const [showFortia, setShowFortia] = useState(false);
 	const [userNeedsUsername, setUserNeedsUsername] = useState(false);
 	const [chartRefreshTrigger, setChartRefreshTrigger] = useState(0);
 	const [dashboardRefreshTrigger, setDashboardRefreshTrigger] = useState(0);
@@ -232,6 +234,10 @@ export default function Page() {
 		);
 	}
 
+	const handleClose = () => {
+		setShowFortia(false);
+	};
+
 	// Note: We removed the early return to allow modals to render even when onboarding is not completed
 
 	return (
@@ -253,7 +259,11 @@ export default function Page() {
 								dashboardRefreshTrigger={dashboardRefreshTrigger}
 								questRefreshTrigger={questRefreshTrigger}
 							/>
+							<TouchableOpacity onPress={() => setShowFortia(!showFortia)}>
+								<Text>show fortia</Text>
+							</TouchableOpacity>
 
+							{showFortia && <FortiaPT onClose={handleClose} isVisible={showFortia} />}
 							<WeightTracking onWeightLogged={onWeightLogged} />
 							<MacrosTracking onMealLogged={onMealLogged} />
 							<ActivityTracking

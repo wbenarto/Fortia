@@ -781,9 +781,9 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 						<View className="flex flex-row items-center gap-2 mb-2">
 							<Text className=" text-[#64748B]">Calories Burned</Text>
 							{totalCaloriesBurned >= storedTDEE && storedTDEE > 0 ? (
-								<View className="flex flex-row items-center  rounded-lg px-2 border-[1px] border-[#9ED5A0] py-1">
-									<Ionicons name="sparkles-outline" size={14} color="#9ED5A0" />
-									<Text className="text-xs font-JakartaSemiBold ml-1 text-[#9ED5A0]">
+								<View className="flex flex-row items-center  rounded-lg px-2 border-[1px] border-green-600 py-1">
+									<Ionicons name="sparkles-outline" size={14} color="green" />
+									<Text className="text-xs font-JakartaSemiBold ml-1 text-green-600">
 										Goal reached!
 									</Text>
 								</View>
