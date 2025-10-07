@@ -82,7 +82,7 @@ export default function HomeSliderComponent({
 									<Ionicons
 										name={questStatus.weight ? 'speedometer-outline' : 'ellipse-outline'}
 										color={questStatus.weight ? 'green' : 'gray'}
-										size={32}
+										size={24}
 										className="w-4 "
 									/>
 									<Text className="mt-2 ">Log Weight</Text>
@@ -91,7 +91,7 @@ export default function HomeSliderComponent({
 								<View className=" py-1 px-4 items-center">
 									<Ionicons
 										name={questStatus.meal ? 'restaurant-outline' : 'ellipse-outline'}
-										size={32}
+										size={24}
 										color={questStatus.meal ? 'green' : 'gray'}
 										className="w-4"
 									/>
@@ -101,11 +101,11 @@ export default function HomeSliderComponent({
 								<View className=" py-1 px-4 items-center">
 									<Ionicons
 										name={questStatus.exercise ? 'barbell-outline' : 'ellipse-outline'}
-										size={32}
+										size={24}
 										color={questStatus.exercise ? 'green' : 'gray'}
 										className="w-4"
 									/>
-									<Text className="mt-2 ">Log Exercises</Text>
+									<Text className="mt-2 text-xs ">Log Exercises</Text>
 								</View>
 							</View>
 						</View>

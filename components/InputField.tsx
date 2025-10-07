@@ -1,13 +1,4 @@
-import {
-	KeyboardAvoidingView,
-	TouchableWithoutFeedback,
-	View,
-	Text,
-	Image,
-	TextInput,
-	Platform,
-	Keyboard,
-} from 'react-native';
+import { TouchableWithoutFeedback, View, Text, Image, TextInput, Keyboard } from 'react-native';
 
 interface InputFieldProps {
 	label?: string;
@@ -35,30 +26,28 @@ const InputField = ({
 	testID,
 	...props
 }: InputFieldProps) => (
-	<KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-		<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-			<View className="my-2 w-full">
-				{label && (
-					<Text className={`text-sm font-JakartaSemiBold mb-2 text-black ${labelStyle}`}>
-						{label}
-					</Text>
-				)}
-				<View
-					className={`flex flex-row justify-start items-center relative rounded-md
-                    focus:border-primary-500 ${containerStyle}
-                `}
-				>
-					{icon && <Image source={icon} className={`w-6 h-6 ml-4 ${iconStyle}`} />}
-					<TextInput
-						className={`px-2 py-2 font-JakartaSemiBold border-b-[1px] border-gray-400 text-sm flex-1 ${inputStyle} text-left`}
-						secureTextEntry={secureTextEntry}
-						testID={testID}
-						{...props}
-					/>
-				</View>
+	<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+		<View className="my-2 w-full">
+			{label && (
+				<Text className={`text-sm font-JakartaSemiBold mb-2 text-black ${labelStyle}`}>
+					{label}
+				</Text>
+			)}
+			<View
+				className={`flex flex-row justify-start items-center relative rounded-md
+                focus:border-primary-500 ${containerStyle}
+            `}
+			>
+				{icon && <Image source={icon} className={`w-6 h-6 ml-4 ${iconStyle}`} />}
+				<TextInput
+					className={`px-2 py-2 font-JakartaSemiBold border-b-[1px] border-gray-400 text-sm flex-1 ${inputStyle} text-left`}
+					secureTextEntry={secureTextEntry}
+					testID={testID}
+					{...props}
+				/>
 			</View>
-		</TouchableWithoutFeedback>
-	</KeyboardAvoidingView>
+		</View>
+	</TouchableWithoutFeedback>
 );
 
 export default InputField;

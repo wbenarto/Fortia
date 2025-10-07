@@ -24,6 +24,7 @@ interface Meal {
 	sodium: number;
 	confidence_score: number;
 	meal_type: string;
+	ingredients: string[][];
 	created_at: string;
 	updated_at: string;
 }
@@ -36,6 +37,7 @@ interface FoodItem {
 	carbs: number;
 	fats: number;
 	mealType: string;
+	ingredients: string[][];
 }
 
 const Meal = () => {
@@ -93,6 +95,7 @@ const Meal = () => {
 				carbs: meal.carbs,
 				fats: meal.fats,
 				mealType: meal.meal_type,
+				ingredients: meal.ingredients || [],
 			};
 		});
 

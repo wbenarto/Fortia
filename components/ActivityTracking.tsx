@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import ReactNativeModal from 'react-native-modal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import NewWorkoutModal from '@/components/NewWorkoutModal';
 import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
 import { getUnifiedBMR } from '@/lib/unifiedBMRCalculator';
 import { logDailySteps } from '@/lib/stepsLogging';
@@ -185,6 +185,35 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 		}
 		// Always fetch from backend after potential upload
 		await fetchStepDataFromBackend();
+	};
+
+	const handleSaveWorkout = async (workoutData: any) => {
+		try {
+			if (!user?.id) {
+				console.error('No user ID available');
+				return;
+			}
+
+			const response = await fetchAPI('/api/workouts', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					...workoutData,
+					clerkId: user.id,
+				}),
+			});
+
+			if (response.success) {
+				console.log('Workout saved successfully:', response);
+				// Trigger refresh of ActivityTracking component
+			} else {
+				console.error('Failed to save workout:', response.error);
+			}
+		} catch (error) {
+			console.error('Error saving workout:', error);
+		}
 	};
 
 	const requestHealthKitAccess = async () => {
@@ -956,7 +985,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 				</View>
 
 				{/* Workout Modal */}
-				<ReactNativeModal
+				{/* <ReactNativeModal
 					className=" w-full h-full bg-red-100 p-0 m-0 mt-20 rounded-lg"
 					isVisible={workoutModal}
 					onBackdropPress={() => setWorkoutModal(false)}
@@ -999,8 +1028,6 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 								</Text>
 							</View>
 						)}
-
-						{/* Re-analyze Button - appears after initial estimation */}
 
 						<View className="mb-6">
 							<TouchableOpacity
@@ -1048,7 +1075,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 							</TouchableOpacity>
 						)}
 					</View>
-				</ReactNativeModal>
+				</ReactNativeModal> */}
 
 				{/* HealthKit Info Modal */}
 				<ReactNativeModal
@@ -1120,6 +1147,14 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 						</TouchableOpacity>
 					</ScrollView>
 				</ReactNativeModal>
+
+				{/* New Workout Modal */}
+				<NewWorkoutModal
+					isVisible={workoutModal}
+					onClose={() => setWorkoutModal(false)}
+					onSave={handleSaveWorkout}
+					userId={user?.id}
+				/>
 			</View>
 		</View>
 	);

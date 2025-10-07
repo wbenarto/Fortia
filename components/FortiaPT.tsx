@@ -96,7 +96,7 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 			<ScrollView className="bg-white w-full h-full pt-10 px-6 rounded-xl">
 				{/* Header */}
 				<View className="mb-6">
-					<Text className="font-JakartaSemiBold text-3xl text-[#E3BBA1] mb-2">
+					<Text className="font-JakartaSemiBold text-3xl text-[#E3BBA1] mb-2 pb-2 border-b-[3px] border-[#E3BBA1]">
 						Your Personal Trainer
 					</Text>
 					<Text className="text-gray-600 text-lg">
@@ -106,9 +106,10 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 				</View>
 
 				{/* Current Status */}
-				<View className=" p-2 rounded-xl mb-6">
+				<View className=" p-2 rounded-xl mb-2">
 					<Text className="font-JakartaSemiBold text-xl mb-3 text-gray-800">
-						📊 Your Current Status
+						<Ionicons name="podium-outline" size={24} color={'green'} />
+						{'  '} Your Current Status
 					</Text>
 					<View className="space-y-2">
 						<Text className="text-gray-700">
@@ -132,59 +133,66 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 					</View>
 				</View>
 
+				<View className="flex flex-row px-4 py-4 mb-2 justify-center items-center">
+					<Ionicons name="sparkles-outline" size={20} color="green" />
+					<Text className="text-green-900 text-center px-2 text-lg rounded-lg leading-6">
+						{getCalorieStrategyMessage(userProfile.fitnessGoal || '')}
+					</Text>
+					<Ionicons name="sparkles-outline" size={20} color="green" />
+				</View>
+
 				{/* Daily Macro Targets */}
 				{nutritionGoals && (
-					<View className="p-2 rounded-xl mb-6">
-						<Text className="font-JakartaSemiBold text-xl mb-3 text-blue-800">
-							🥗 Today's Macro Targets
+					<View className="p-4 bg-orange-100 rounded-xl mb-6">
+						<Text className="font-JakartaSemiBold text-center text-xl mb-3 text-black">
+							Today's Macro Targets
 						</Text>
-						<View className="space-y-2">
-							<Text className="text-blue-500">
-								<Text className="font-JakartaSemiBold">Daily Calories:</Text>{' '}
-								{nutritionGoals.daily_calories || '--'} cal
-							</Text>
-							<Text className="text-blue-500">
-								<Text className="font-JakartaSemiBold">Protein:</Text>{' '}
-								{Math.round(nutritionGoals.daily_protein || 0)}g
-							</Text>
-							<Text className="text-blue-500">
-								<Text className="font-JakartaSemiBold">Carbs:</Text>{' '}
-								{Math.round(nutritionGoals.daily_carbs || 0)}g
-							</Text>
-							<Text className="text-blue-500">
-								<Text className="font-JakartaSemiBold">Fats:</Text>{' '}
-								{Math.round(nutritionGoals.daily_fats || 0)}g
-							</Text>
+						<View className="flex flex-row space-x-4 justify-between items-end">
+							<View className="justify-center items-center">
+								<Text className="text-2xl font-JakartaSemiBold">
+									{' '}
+									{nutritionGoals.daily_calories || '--'}{' '}
+								</Text>
+								<Text className="font-JakartaLight">Daily Calories</Text>{' '}
+							</View>
+							<View className="items-center">
+								<Text className="font-JakartaSemiBold text-lg">
+									{Math.round(nutritionGoals.daily_protein || 0)}
+								</Text>
+								<Text className="font-JakartaLight">Protein</Text>{' '}
+							</View>
+							<View className="items-center">
+								<Text className="font-JakartaSemiBold text-lg">
+									{Math.round(nutritionGoals.daily_carbs || 0)}
+								</Text>
+								<Text className="font-JakartaLight">Carbs</Text>{' '}
+							</View>
+							<View className="items-center">
+								<Text className="font-JakartaSemiBold text-lg">
+									{Math.round(nutritionGoals.daily_fats || 0)}
+								</Text>
+								<Text className="font-JakartaLight">Fats</Text>
+							</View>
 						</View>
 					</View>
 				)}
 
-				{/* Calorie Strategy */}
-				<View className="bg-white p-2 rounded-xl mb-6">
-					<Text className="font-JakartaSemiBold text-xl mb-3 text-green-800">
-						⚡ Your Calorie Strategy
-					</Text>
-					<Text className="text-green-700 leading-6">
-						{getCalorieStrategyMessage(userProfile.fitnessGoal || '')}
-					</Text>
-				</View>
-
 				{/* Daily Quest Reminder */}
 				<View className="bg-white p-2 rounded-xl mb-6">
-					<Text className="font-JakartaSemiBold text-xl mb-3 text-orange-800">
-						🎯 Daily Quest Reminder
+					<Text className="font-JakartaSemiBold text-xl mb-3 text-green-800">
+						<Ionicons name="color-filter-outline" size={20} /> {'  '} Daily Quest Reminder
 					</Text>
-					<Text className="text-orange-700 leading-6 mb-3">
+					<Text className="text-black leading-6 mb-3">
 						Consistency is key! Make sure to log your daily quests:
 					</Text>
 					<View className="space-y-2">
-						<Text className="text-orange-700">
+						<Text className="text-green-700">
 							• <Text className="font-JakartaSemiBold">Weight:</Text> Track your progress
 						</Text>
-						<Text className="text-orange-700">
+						<Text className="text-green-700">
 							• <Text className="font-JakartaSemiBold">Meals:</Text> Log your nutrition
 						</Text>
-						<Text className="text-orange-700">
+						<Text className="text-green-700">
 							• <Text className="font-JakartaSemiBold">Exercise:</Text> Record your activities
 						</Text>
 					</View>
@@ -192,7 +200,9 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 
 				{/* Motivational Message */}
 				<View className="bg-white p-2 rounded-xl mb-6">
-					<Text className="font-JakartaSemiBold text-xl mb-3 text-black">💪 Keep Going!</Text>
+					<Text className="font-JakartaSemiBold text-xl mb-3 text-black">
+						<Ionicons name="trophy-outline" size={20} /> {'  '} Keep Going!
+					</Text>
 					<Text className="text-black leading-6">
 						Every day you log your quests is a step closer to your goals. You've got this,{' '}
 						{userProfile.username || 'champion'}!

@@ -11,6 +11,7 @@ interface FoodItem {
 	carbs: number;
 	fats: number;
 	mealType: string;
+	ingredients: string[][];
 }
 
 interface SwipeableFoodCardProps {
@@ -107,6 +108,15 @@ const SwipeableFoodCard: React.FC<SwipeableFoodCardProps> = ({ food, mealId, onD
 							</Text>
 						</View>
 					</View>
+					{food.ingredients && (
+						<View className="px-2 mb-2">
+							{food.ingredients.map((e, i) => (
+								<Text className=" text-xs">
+									{e[0]} - {e[1]}
+								</Text>
+							))}
+						</View>
+					)}
 					<View className="flex flex-row justify-between items-center">
 						<Text className="text-[12px] text-[#64748B]">{food.calories} cal</Text>
 						<Text className="text-[12px] text-[#64748B]">{Math.round(food.protein)}g protein</Text>

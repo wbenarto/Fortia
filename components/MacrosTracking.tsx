@@ -478,9 +478,13 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					confidenceScore: validatedNutritionData.confidence,
 					mealType: validatedMealType,
 					date: getTodayDate(), // Add user's local date for proper timezone handling
+					ingredients:
+						activeMealTab === 'recipe'
+							? recipeIngredients
+									.filter(item => item.ingredient.trim() !== '' && item.amount.trim() !== '')
+									.map(item => [item.ingredient.trim(), item.amount.trim()])
+							: [], // Empty array for food tab
 				};
-
-				// Validate nutrition data before saving
 
 				// Use fetchAPI utility to get the correct base URL
 				const data = await fetchAPI('/api/meals', {
