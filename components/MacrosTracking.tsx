@@ -165,6 +165,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 		useImperativeHandle(ref, () => ({
 			refresh: () => {
 				fetchDailySummary();
+				fetchNutritionGoals();
 			},
 		}));
 
@@ -537,6 +538,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 				// Use the stored daily_calories which should already be calculated based on fitness goal
 				// But also provide a fallback calculation in case the stored value needs updating
 				let calorieTarget = nutritionGoals.daily_calories;
+				console.log('nutrition goals', nutritionGoals);
 
 				// If we have TDEE and fitness goal, we can double-check the calculation
 				if (nutritionGoals.tdee && nutritionGoals.fitnessGoal) {

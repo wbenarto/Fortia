@@ -21,7 +21,7 @@ import FortiaPT from '@/components/FortiaPT';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { images } from '@/constants/index';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchAPI, useFetch } from '@/lib/fetch';
 import { Weights } from '@/types/type';
 import WeeklyTracking from '@/components/WeeklyTracking';
@@ -47,6 +47,9 @@ export default function Page() {
 	const [chartRefreshTrigger, setChartRefreshTrigger] = useState(0);
 	const [dashboardRefreshTrigger, setDashboardRefreshTrigger] = useState(0);
 	const [questRefreshTrigger, setQuestRefreshTrigger] = useState(0);
+
+	// Ref for MacrosTracking component
+	const macrosTrackingRef = useRef<{ refresh: () => void }>(null);
 
 	// Function to refresh the calorie chart
 	const refreshCalorieChart = useCallback(() => {
@@ -82,6 +85,8 @@ export default function Page() {
 		refreshCalorieChart();
 		refreshDashboardCounts();
 		refreshQuests();
+		// Refresh MacrosTracking to update macro targets based on new BMR/TDEE
+		macrosTrackingRef.current?.refresh();
 	}, [refreshCalorieChart, refreshDashboardCounts, refreshQuests]);
 
 	// Function to log daily BMR
@@ -258,14 +263,14 @@ export default function Page() {
 								refreshTrigger={chartRefreshTrigger}
 								dashboardRefreshTrigger={dashboardRefreshTrigger}
 								questRefreshTrigger={questRefreshTrigger}
+								onClose={() => setShowFortia(!showFortia)}
 							/>
-							<TouchableOpacity onPress={() => setShowFortia(!showFortia)}>
-								<Text>show fortia</Text>
-							</TouchableOpacity>
 
-							{showFortia && <FortiaPT onClose={handleClose} isVisible={showFortia} />}
+							{showFortia && (
+								<FortiaPT onClose={() => setShowFortia(!showFortia)} isVisible={showFortia} />
+							)}
 							<WeightTracking onWeightLogged={onWeightLogged} />
-							<MacrosTracking onMealLogged={onMealLogged} />
+							<MacrosTracking ref={macrosTrackingRef} onMealLogged={onMealLogged} />
 							<ActivityTracking
 								refreshTrigger={dashboardRefreshTrigger}
 								onActivityLogged={onActivityLogged}

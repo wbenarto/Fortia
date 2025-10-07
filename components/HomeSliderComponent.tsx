@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-nati
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PRIMARY } from '@/constants/colors';
+import { LinearGradient } from 'expo-linear-gradient';
 import MiniDashboardTracking from './MiniDashboardTracking';
 import CalorieChart from './CalorieChart';
 import CaloriesBurnedChart from './CaloriesBurnedChart';
@@ -15,6 +16,7 @@ interface HomeSliderComponentProps {
 	refreshTrigger?: number;
 	dashboardRefreshTrigger?: number;
 	questRefreshTrigger?: number;
+	onClose: () => void;
 }
 
 export default function HomeSliderComponent({
@@ -24,6 +26,7 @@ export default function HomeSliderComponent({
 	refreshTrigger = 0,
 	dashboardRefreshTrigger = 0,
 	questRefreshTrigger = 0,
+	onClose,
 }: HomeSliderComponentProps) {
 	const router = useRouter();
 	const [currentSlide, setCurrentSlide] = useState(0);
@@ -54,7 +57,13 @@ export default function HomeSliderComponent({
 						<View className="flex-1  border-[1px] border-gray-200 p-2 px-4 rounded-xl">
 							<View className="flex flex-row justify-between">
 								<View className="flex flex-row items-center">
-									<Text className="text-lg font-JakartaSemiBold mr-2">Daily Quests</Text>
+									<TouchableOpacity
+										onPress={onClose}
+										className="py-2 px-4 border-[1px] border-gray-200 bg-[#E3BBA1] rounded-xl"
+									>
+										<Text className="text-white font-JakartaSemiBold mr-2">Daily Quests</Text>
+									</TouchableOpacity>
+
 									{questStatus.allCompleted && (
 										<View className="flex flex-row border-[1px] border-green-600 px-2 py-1 items-center rounded-lg">
 											<Ionicons name="sparkles-outline" color={'green'} />

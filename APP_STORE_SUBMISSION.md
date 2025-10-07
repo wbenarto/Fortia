@@ -12,8 +12,16 @@ We successfully submitted Fortia (version 1.0.0, build 4) to the Apple App Store
 
 ### Development build
 
+```bash
 - eas build --platform ios --profile development
 - npx expo start --dev-client
+```
+
+## OTA Updates
+
+```bash
+- eas update --branch production --platform ios  --message "daily personal trainer FortiaAI modal"
+```
 
 ### ✅ Environment Variables (EAS Secrets)
 

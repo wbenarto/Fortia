@@ -15,6 +15,8 @@ export function calculateBMR(weight: number, height: number, age: number, gender
 	// Convert weight from pounds to kilograms (1 lb = 0.453592 kg)
 	const weightInKg = weight * 0.453592;
 
+	// convert height from ft to centimeters
+	console.log('calculating BMR ', weight, height, age, gender);
 	if (gender === 'male') {
 		return 10 * weightInKg + 6.25 * height - 5 * age + 5;
 	} else {

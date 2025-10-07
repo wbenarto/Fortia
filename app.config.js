@@ -13,7 +13,7 @@ export default {
 		buildNumber: '60',
 		orientation: 'portrait',
 		icon: './assets/icons/fortia-white-icon.png',
-		scheme: 'Fortia',
+		scheme: ['fortia'],
 		userInterfaceStyle: 'automatic',
 		splash: {
 			image: './assets/images/logo-main-fortia-1.png',
@@ -21,6 +21,11 @@ export default {
 			backgroundColor: '#E3BBA1',
 		},
 		newArchEnabled: true,
+		// Expo Updates configuration for OTA updates
+		updates: {
+			url: 'https://u.expo.dev/061a67d8-c8d4-4d24-b007-4c4b50e330ee',
+		},
+		runtimeVersion: '1.0.1',
 		ios: {
 			supportsTablet: true,
 			buildNumber: '60',
@@ -72,6 +77,8 @@ export default {
 					microphonePermission: false,
 				},
 			],
+			// Add expo-updates plugin for OTA updates
+			'expo-updates',
 		],
 		experiments: {
 			typedRoutes: true,
