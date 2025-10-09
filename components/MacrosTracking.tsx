@@ -607,12 +607,12 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			<View className="w-full">
 				<View className="flex flex-row justify-between items-center px-4">
 					<Text className="font-JakartaSemiBold text-lg">Today's Nutrition</Text>
-					<View className="flex flex-row w-24  items-center ">
+					<View className="flex flex-row w-28  items-center ">
 						<TouchableOpacity
 							onPress={handleAddMealModal}
-							className="bg-[#E3BBA1] w-full px-3 py-1 rounded-full"
+							className="bg-[#E3BBA1] w-full py-2 rounded-full"
 						>
-							<Text className="text-white text-center text-xs font-JakartaSemiBold">Log Meal</Text>
+							<Text className="text-white text-center text-xs font-JakartaBold">Log Meal</Text>
 						</TouchableOpacity>
 					</View>
 				</View>
@@ -701,17 +701,11 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						</View>
 					)}
 
-					{/* Goal Setup Modal */}
-					<GoalSetupModal
-						isVisible={goalSetupModal}
-						onClose={() => setGoalSetupModal(false)}
-						onGoalsSet={handleGoalsSet}
-					/>
-
 					<ReactNativeModal
 						className=" w-full p-0 m-0 mt-20 rounded-lg"
 						isVisible={addMealModal}
 						onBackdropPress={() => setAddMealModal(false)}
+						avoidKeyboard={true}
 					>
 						<KeyboardAvoidingView
 							behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -730,17 +724,17 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 								</View>
 
 								{/* Tabs */}
-								<View className="flex flex-row justify-between items-center my-4 px-20">
+								<View className="flex flex-row justify-between items-center my-2 px-24">
 									<View className="items-center">
 										<TouchableOpacity
 											onPress={() => handleMealTabSwitch('food')}
-											className={`flex justify-center items-center rounded-full p-6 border-[1px] ${
+											className={`flex justify-center items-center rounded-full p-4 border-[1px] ${
 												activeMealTab === 'food' ? 'bg-green-200 border-gray-400' : 'bg-white'
 											}`}
 										>
 											<Ionicons
 												name="fast-food-outline"
-												size={30}
+												size={24}
 												color={activeMealTab === 'food' ? 'black' : 'black'}
 											/>
 										</TouchableOpacity>
@@ -749,13 +743,13 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 									<View className="items-center">
 										<TouchableOpacity
 											onPress={() => handleMealTabSwitch('recipe')}
-											className={`flex justify-center items-center rounded-full p-6 border-[1px] ${
+											className={`flex justify-center items-center rounded-full p-4 border-[1px] ${
 												activeMealTab === 'recipe' ? 'bg-blue-200 border-gray-400' : 'bg-white'
 											}`}
 										>
 											<Ionicons
 												name="restaurant-outline"
-												size={30}
+												size={24}
 												color={activeMealTab === 'recipe' ? 'black' : 'black'}
 											/>
 										</TouchableOpacity>
@@ -853,10 +847,12 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 										{/* Add Ingredient Button */}
 										<TouchableOpacity
 											onPress={addIngredient}
-											className="bg-gray-500 rounded-lg py-2 px-4 flex flex-row items-center justify-center mb-4"
+											className="bg-gray-500 rounded-lg w-1/3 mx-auto py-2 px-4 flex flex-row items-center justify-center mb-4"
 										>
-											<Ionicons name="add" size={20} color="white" />
-											<Text className="text-white font-JakartaSemiBold ml-2">Add Ingredient</Text>
+											<Ionicons name="add" size={16} color="white" />
+											<Text className="text-white text-center text-xs font-JakartaSemiBold ml-2">
+												Add Ingredient
+											</Text>
 										</TouchableOpacity>
 									</View>
 								)}

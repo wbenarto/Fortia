@@ -205,8 +205,8 @@ const Workout = () => {
 					<Navbar />
 					<View className="w-full pb-20">
 						<WeeklyCalendar />
-						<View className="flex flex-row justify-center items-center my-4 px-2">
-							<View className="flex flex-row justify-between items-center">
+						<View className="flex flex-row justify-center items-center  px-2">
+							{/* <View className="flex flex-row justify-between items-center">
 								<CustomButton
 									title="Schedule a Workout"
 									textVariant="primary"
@@ -214,7 +214,7 @@ const Workout = () => {
 									IconLeft={() => <Ionicons name="add" size={20} color="#E3BBA1" />}
 									onPress={handleWorkoutModal}
 								/>
-							</View>
+							</View> */}
 							{/* <View className="flex flex-row justify-between items-center">
 								<CustomButton
 									title="AI Assistant"

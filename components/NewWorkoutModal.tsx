@@ -294,7 +294,7 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 
 	return (
 		<ReactNativeModal
-			className="w-full h-full px-2 m-0 mt-14 "
+			className="w-full h-full m-0 mt-14 "
 			isVisible={isVisible}
 			onBackdropPress={resetForm}
 			avoidKeyboard={true}

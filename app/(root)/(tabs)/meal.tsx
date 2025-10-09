@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { useState, useEffect, useRef } from 'react';
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo';
 import ReactNativeModal from 'react-native-modal';
+import WeeklyCalendar from '@/components/WeeklyCalendar';
 import Navbar from '@/components/Navbar';
 import MacrosTracking from '@/components/MacrosTracking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -155,7 +156,8 @@ const Meal = () => {
 			<SignedIn>
 				<ScrollView stickyHeaderIndices={[0]} className="w-full h-full">
 					<Navbar />
-					<View className="w-full pb-20 mt-4">
+					<View className="w-full pb-20">
+						<WeeklyCalendar />
 						<MacrosTracking onMealLogged={handleMealLogged} ref={macrosRefreshRef} />
 						<View className="w-full ">
 							<View className="flex flex-row justify-between items-center px-4">

@@ -796,11 +796,9 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 				<View className="flex flex-row  w-28 items-center ">
 					<TouchableOpacity
 						onPress={handleWorkoutModal}
-						className="bg-[#E3BBA1] w-full px-3 py-1 rounded-full"
+						className="bg-[#E3BBA1] w-full px-3 py-2 rounded-full"
 					>
-						<Text className="text-white text-center text-xs font-JakartaSemiBold">
-							Log Exercise
-						</Text>
+						<Text className="text-white text-center text-xs font-JakartaBold">Log Exercise</Text>
 					</TouchableOpacity>
 				</View>
 			</View>
@@ -983,99 +981,6 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 						</View>
 					) : null}
 				</View>
-
-				{/* Workout Modal */}
-				{/* <ReactNativeModal
-					className=" w-full h-full bg-red-100 p-0 m-0 mt-20 rounded-lg"
-					isVisible={workoutModal}
-					onBackdropPress={() => setWorkoutModal(false)}
-				>
-					<View className="bg-white w-full h-full p-6 rounded-md">
-						<View className="pb-4 flex flex-row justify-between items-center">
-							<Text className="text-xl text-center font-JakartaSemiBold">Log your activity</Text>
-							<TouchableOpacity onPress={() => setWorkoutModal(false)}>
-								<Ionicons name="close" size={24} color="black" />
-							</TouchableOpacity>
-						</View>
-
-						<View className="mb-4 bg-white rounded-xl">
-							<InputField
-								label="Exercise Name"
-								labelStyle="text-sm"
-								placeholder="e.g. Morning Bike Ride, Light Run, Swimming, etc..."
-								value={exerciseName}
-								onChangeText={setExerciseName}
-								className="text-left text-sm placeholder:text-xs border-none"
-							/>
-						</View>
-
-						<View className="mb-4 bg-white rounded-xl">
-							<InputField
-								label="Exercise Duration"
-								labelStyle="text-sm"
-								placeholder="e.g. 30 minutes or 2 miles..."
-								value={exerciseDuration}
-								onChangeText={setExerciseDuration}
-								className="text-left text-sm placeholder:text-xs border-none"
-							/>
-						</View>
-
-						{isCalculating && (
-							<View className="flex justify-center items-center mb-6">
-								<ActivityIndicator size="large" color="#E3BBA1" />
-								<Text className="text-center mt-2 text-sm text-gray-600">
-									Estimating calories burned...
-								</Text>
-							</View>
-						)}
-
-						<View className="mb-6">
-							<TouchableOpacity
-								onPress={estimateCalories}
-								disabled={isCalculating || !exerciseName.trim() || !exerciseDuration.trim()}
-								className={`py-3 px-4 rounded-lg border-2 ${
-									isCalculating || !exerciseName.trim() || !exerciseDuration.trim()
-										? 'bg-gray-200 border-gray-300'
-										: 'bg-white border-[#E3BBA1]'
-								}`}
-							>
-								<View className="flex flex-row items-center justify-center">
-									{isCalculating ? (
-										<ActivityIndicator size="small" color="#E3BBA1" />
-									) : (
-										<Ionicons name="refresh" size={16} color="#E3BBA1" />
-									)}
-									<Text
-										className={`ml-2 font-JakartaSemiBold ${
-											isCalculating || !exerciseName.trim() || !exerciseDuration.trim()
-												? 'text-gray-500'
-												: 'text-[#E3BBA1]'
-										}`}
-									>
-										{isCalculating ? 'Re-analyzing...' : 'Analyze activity'}
-									</Text>
-								</View>
-							</TouchableOpacity>
-						</View>
-
-						{estimatedCalories && (
-							<View className="mb-6">
-								<Text className="text-sm text-center text-[#64748B] mb-1">
-									{exerciseName} for {exerciseDuration}
-								</Text>
-								<Text className="text-base text-center font-JakartaMedium">
-									~{estimatedCalories} cal
-								</Text>
-							</View>
-						)}
-
-						{estimatedCalories && (
-							<TouchableOpacity className="py-3 rounded-lg bg-[#E3BBA1]" onPress={saveActivity}>
-								<Text className="text-center font-JakartaSemiBold text-white">Save</Text>
-							</TouchableOpacity>
-						)}
-					</View>
-				</ReactNativeModal> */}
 
 				{/* HealthKit Info Modal */}
 				<ReactNativeModal

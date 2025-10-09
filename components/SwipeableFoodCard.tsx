@@ -100,7 +100,7 @@ const SwipeableFoodCard: React.FC<SwipeableFoodCardProps> = ({ food, mealId, onD
 					className="w-full bg-white py-2 px-3 rounded-xl border-solid border-[1px] border-[#F1F5F9] "
 				>
 					<View className="flex flex-row items-center justify-between my-1 ">
-						<Text className="font-JakartaSemiBold min-w-[170px]  ">{food.name} </Text>
+						<Text className="font-JakartaSemiBold w-[170px]">{food.name} </Text>
 						<Text className="text-[12px] text-[#64748B] ">• {food.weight}</Text>
 						<View className="border-solid border-black border-[.5px] px-2 rounded-xl">
 							<Text className="text-[10px] text-[#64748B] text-gray-800 capitalize">
@@ -111,7 +111,7 @@ const SwipeableFoodCard: React.FC<SwipeableFoodCardProps> = ({ food, mealId, onD
 					{food.ingredients && (
 						<View className="px-2 mb-2">
 							{food.ingredients.map((e, i) => (
-								<Text className=" text-xs">
+								<Text key={i} className=" text-xs">
 									{e[0]} - {e[1]}
 								</Text>
 							))}

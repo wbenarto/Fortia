@@ -100,6 +100,14 @@ const Layout = () => {
 					tabBarIcon: ({ focused }) => <TabIcon focused={focused} iconName="barbell" />,
 				}}
 			/>
+			<Tabs.Screen
+				name="social"
+				options={{
+					title: 'Social',
+					headerShown: false,
+					tabBarIcon: ({ focused }) => <TabIcon focused={focused} iconName="earth-outline" />,
+				}}
+			/>
 		</Tabs>
 	);
 };

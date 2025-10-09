@@ -238,12 +238,12 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 		<View className="w-full">
 			<View className="flex flex-row justify-between items-center px-4">
 				<Text className="font-JakartaSemiBold text-lg ">Weight Progress</Text>
-				<View className="flex flex-row w-24 items-center ">
+				<View className="flex flex-row w-28 items-center ">
 					<TouchableOpacity
 						onPress={handleAddWeightModal}
-						className="bg-[#E3BBA1] px-3 py-1 rounded-full"
+						className="bg-[#E3BBA1] w-full py-2 rounded-full"
 					>
-						<Text className="text-white text-xs font-JakartaSemiBold">Log Weight</Text>
+						<Text className="text-white text-xs text-center font-JakartaBold">Log Weight</Text>
 					</TouchableOpacity>
 				</View>
 			</View>
