@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PRIMARY } from '@/constants/colors';
@@ -46,23 +46,20 @@ export default function HomeSliderComponent({
 				className="w-full h-full"
 			>
 				{/* Slide 1: MiniDashboard and Mindfulness Cards */}
-				<View style={{ width: screenWidth }} className="h-full px-4">
-					<MiniDashboardTracking
+				<View style={{ width: screenWidth }} className="h-full px-4  ">
+					{/* <MiniDashboardTracking
 						totalMealsLog={totalMealsLog}
 						totalWeightsLog={totalWeightsLog}
 						totalExercisesLog={totalExercisesLog}
 						refreshTrigger={dashboardRefreshTrigger}
-					/>
+					/> */}
 					<View className="flex-1  flex justify-center mt-2 ">
-						<View className="flex-1  border-[1px] border-gray-200 p-2 px-4 rounded-xl">
+						<View className="flex-1 z-10  p-2 px-4 rounded-xl">
 							<View className="flex flex-row justify-between">
 								<View className="flex flex-row items-center">
-									<TouchableOpacity
-										onPress={onClose}
-										className="py-2 px-4 border-[1px] border-gray-200 bg-[#E3BBA1] rounded-xl"
-									>
-										<Text className="text-white font-JakartaSemiBold mr-2">Daily Quests</Text>
-									</TouchableOpacity>
+									<View className="">
+										<Text className="text-black font-JakartaSemiBold mr-2">Daily Quests</Text>
+									</View>
 
 									{questStatus.allCompleted && (
 										<View className="flex flex-row border-[1px] border-green-600 px-2 py-1 items-center rounded-lg">
@@ -110,12 +107,29 @@ export default function HomeSliderComponent({
 							</View>
 						</View>
 					</View>
+					<TouchableOpacity
+						onPress={onClose}
+						className=" flex-1 flex flex-row items-end rounded-xl  border-[1px] border-gray-200"
+					>
+						<View className="w-full flex-1 flex flex-row">
+							<View className="h-full w-1/2 rounded-lg overflow-hidden">
+								<Image
+									source={require('@/assets/images/signup.jpg')}
+									className="w-full h-full r-0 object-cover object-top"
+								/>
+							</View>
+							<View className="w-1/2 my-auto ml-4">
+								<Text className="text-black text-2xl font-JakartaBold">Fortia </Text>
+								<Text className="text-black">Personal Trainer</Text>
+							</View>
+						</View>
+					</TouchableOpacity>
 
 					{/* Mindfulness Cards Section */}
 					{/* <View className="flex flex-row justify-between px-0 mt-2 mb-6">
 						Card 1: Awakened Manifesting
 						<TouchableOpacity
-							className="flex-1 items-center bg-white rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
+							className="flex-1 items-center bg-black rounded-2xl border border-[#F5F2F0] mx-1 p-4 shadow-sm active:bg-[#F8F1ED]"
 							onPress={() => router.push('/awakened-manifesting')}
 						>
 							<View className="w-12 h-12 rounded-full bg-[#F8F1ED] flex items-center justify-center mb-2">

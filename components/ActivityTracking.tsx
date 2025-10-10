@@ -941,45 +941,6 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 							</View>
 						</View>
 					)}
-
-					{/* Activities Cards */}
-					{activities.filter(
-						activity =>
-							!activity.activity_description ||
-							(!activity.activity_description.toLowerCase().includes('basal metabolic rate') &&
-								!activity.activity_description.toLowerCase().includes('daily steps'))
-					).length > 0 ? (
-						activities
-							.filter(
-								activity =>
-									!activity.activity_description ||
-									(!activity.activity_description.toLowerCase().includes('basal metabolic rate') &&
-										!activity.activity_description.toLowerCase().includes('daily steps'))
-							)
-							.map((activity, index) => (
-								<SwipeableActivityCard
-									key={activity.id}
-									activity={activity}
-									onDelete={deleteActivity}
-								/>
-							))
-					) : scheduledExercises.length === 0 ? (
-						<View className="h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9]">
-							<View className="flex flex-row gap-2 mb-2 items-center">
-								<Ionicons name="barbell-outline" size={14} color="#5A556B" />
-								<Text className="text-xs text-[#64748B]">Today's Workout</Text>
-							</View>
-							<View className="flex flex-row justify-between items-center">
-								<Text className="text-lg font-JakartaBold text-[#64748B]">
-									No activities logged
-								</Text>
-								<View className="flex flex-row gap-2">
-									<SimpleLineIcons name="fire" size={14} colors="#5A556B" />
-									<Text className="text-[#64748B]">--</Text>
-								</View>
-							</View>
-						</View>
-					) : null}
 				</View>
 
 				{/* HealthKit Info Modal */}

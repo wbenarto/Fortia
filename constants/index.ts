@@ -8,7 +8,6 @@ import Apple from '@/assets/icons/google.png'; // Using Google icon as placehold
 import Check from '@/assets/images/check.png';
 import Home from '@/assets/icons/home.png';
 import Profile from '@/assets/icons/profile.png';
-import Chart from '@/assets/images/dummy-chart.png';
 import Calendar from '@/assets/icons/calendar.png';
 import Logo from '@/assets/images/logo-main-fortia.png';
 import Onboarding1 from '@/assets/images/onboarding-1.png';
@@ -19,7 +18,6 @@ export const images = {
 	Icon,
 	SignUp,
 	Check,
-	Chart,
 	Logo,
 	Onboarding1,
 	Onboarding2,
