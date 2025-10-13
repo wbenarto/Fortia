@@ -20,6 +20,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { useGoalsStore } from '@/store';
 import { useRouter } from 'expo-router';
 import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
+import { calculateBodyFatPercentage } from '@/lib/bodyFatUtils';
 import { getTodayDate } from '@/lib/dateUtils';
 import { fetchDataConsent, storeDataConsent, hasDataCollectionConsent } from '@/lib/consentUtils';
 
@@ -460,6 +461,14 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 			const bmr = Math.round(calculateBMR(weight, heightCm, age, formData.gender));
 			const tdee = calculateTDEE(bmr, 'moderate'); // Default to moderate activity
 
+			// Calculate body fat percentage
+			const bodyFatPercentage = calculateBodyFatPercentage(
+				weight,
+				heightInches,
+				age,
+				formData.gender
+			);
+
 			// Calculate daily calories and macros based on fitness goal
 			let dailyCalories = tdee;
 			switch (formData.fitnessGoal) {
@@ -506,6 +515,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 				dailyFats,
 				bmr,
 				tdee,
+				bodyFatPercentage,
 			};
 
 			// Create user with complete information

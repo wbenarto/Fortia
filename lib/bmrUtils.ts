@@ -5,8 +5,8 @@
 
 /**
  * Calculate BMR using Mifflin-St Jeor Equation
- * @param weight - Weight in kg
- * @param height - Height in cm
+ * @param weight - Weight in pounds (will be converted to kg)
+ * @param height - Height in centimeters
  * @param age - Age in years
  * @param gender - 'male' or 'female'
  * @returns BMR in calories per day
@@ -15,7 +15,7 @@ export function calculateBMR(weight: number, height: number, age: number, gender
 	// Convert weight from pounds to kilograms (1 lb = 0.453592 kg)
 	const weightInKg = weight * 0.453592;
 
-	// convert height from ft to centimeters
+	// Height is already in centimeters (stored in DB as cm)
 	console.log('calculating BMR ', weight, height, age, gender);
 	if (gender === 'male') {
 		return 10 * weightInKg + 6.25 * height - 5 * age + 5;

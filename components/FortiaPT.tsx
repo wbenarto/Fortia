@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import ReactNativeModal from 'react-native-modal';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -6,6 +6,12 @@ import GoalSetupModal from '../components/GoalSetupModal';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserProfile } from '@/lib/userUtils';
 import { fetchAPI } from '@/lib/fetch';
+import {
+	calculateBodyFatPercentage,
+	getBodyFatCategory,
+	calculateBMI,
+	getBMICategory,
+} from '@/lib/bodyFatUtils';
 
 interface FortiaPTProps {
 	isVisible: boolean;
@@ -85,6 +91,41 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 
 	const weightDiff = getWeightDifference();
 
+	// Calculate body fat percentage and BMI
+	const bodyFatPercentage = useMemo(() => {
+		if (
+			!nutritionGoals?.weight ||
+			!nutritionGoals?.height ||
+			!nutritionGoals?.age ||
+			!nutritionGoals?.gender
+		) {
+			return null;
+		}
+
+		// Convert height from cm to inches if needed
+		const heightInInches = nutritionGoals.height / 2.54;
+		return calculateBodyFatPercentage(
+			nutritionGoals.weight,
+			heightInInches,
+			nutritionGoals.age,
+			nutritionGoals.gender
+		);
+	}, [nutritionGoals?.weight, nutritionGoals?.height, nutritionGoals?.age, nutritionGoals?.gender]);
+
+	const bodyFatCategory = bodyFatPercentage
+		? getBodyFatCategory(bodyFatPercentage, nutritionGoals.age, nutritionGoals.gender)
+		: null;
+
+	const currentBMI = useMemo(() => {
+		if (!nutritionGoals?.weight || !nutritionGoals?.height) return null;
+
+		// Convert height from cm to inches if needed
+		const heightInInches = nutritionGoals.height / 2.54;
+		return calculateBMI(nutritionGoals.weight, heightInInches);
+	}, [nutritionGoals?.weight, nutritionGoals?.height]);
+
+	const bmiCategory = currentBMI ? getBMICategory(currentBMI) : null;
+
 	return (
 		<ReactNativeModal
 			isVisible={isVisible}
@@ -137,6 +178,18 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 							<Text className="font-JakartaSemiBold">Workout Programs:</Text>{' '}
 							{getFitnessGoalText(userProfile.fitnessGoal || '')}
 						</Text>
+						{currentBMI && (
+							<Text className="text-gray-700">
+								<Text className="font-JakartaSemiBold">BMI:</Text> {currentBMI} (
+								{bmiCategory?.category})
+							</Text>
+						)}
+						{bodyFatPercentage && (
+							<Text className="text-gray-700">
+								<Text className="font-JakartaSemiBold">Body Fat:</Text> {bodyFatPercentage}% (
+								{bodyFatCategory?.category})
+							</Text>
+						)}
 					</View>
 				</View>
 

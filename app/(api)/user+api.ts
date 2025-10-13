@@ -1,4 +1,6 @@
 import { neon } from '@neondatabase/serverless';
+import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
+import { calculateBodyFatPercentage } from '@/lib/bodyFatUtils';
 
 export async function GET(request: Request) {
 	try {
@@ -273,7 +275,34 @@ export async function PUT(request: Request) {
             custom_fats = COALESCE(${customFats}, custom_fats),
             updated_at = NOW()
         WHERE clerk_id = ${clerkId}
+        RETURNING *
         `;
+
+		// Recalculate body fat if weight, height, age, or gender changed
+		if (weight || height || age || gender) {
+			const updatedUser = response[0];
+			if (
+				updatedUser &&
+				updatedUser.weight &&
+				updatedUser.height &&
+				updatedUser.age &&
+				updatedUser.gender
+			) {
+				const heightInInches = updatedUser.height / 2.54; // Convert cm to inches
+				const bodyFatPercentage = calculateBodyFatPercentage(
+					updatedUser.weight,
+					heightInInches,
+					updatedUser.age,
+					updatedUser.gender
+				);
+
+				await sql`
+					UPDATE users 
+					SET body_fat_percentage = ${bodyFatPercentage}
+					WHERE clerk_id = ${clerkId}
+				`;
+			}
+		}
 
 		return Response.json({ success: true, data: response });
 	} catch (err) {

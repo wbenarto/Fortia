@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
+import { calculateBodyFatPercentage } from '@/lib/bodyFatUtils';
 
 export async function POST(request: Request) {
 	try {
@@ -38,13 +39,23 @@ export async function POST(request: Request) {
 				const newBMR = Math.round(calculateBMR(weight, user.height, user.age, user.gender));
 				const newTDEE = calculateTDEE(newBMR, user.activity_level);
 
-				// Update user with new weight, BMR and TDEE
+				// Calculate body fat percentage
+				const heightInInches = user.height / 2.54; // Convert cm to inches
+				const bodyFatPercentage = calculateBodyFatPercentage(
+					weight,
+					heightInInches,
+					user.age,
+					user.gender
+				);
+
+				// Update user with new weight, BMR, TDEE, and body fat percentage
 				await sql`
 					UPDATE users 
 					SET 
 						weight = ${weight},
 						bmr = ${newBMR},
 						tdee = ${newTDEE},
+						body_fat_percentage = ${bodyFatPercentage},
 						updated_at = NOW()
 					WHERE clerk_id = ${clerkId}
 				`;
@@ -59,7 +70,7 @@ export async function POST(request: Request) {
 		return new Response(
 			JSON.stringify({
 				data: weightResponse,
-				message: 'Weight logged and BMR updated successfully',
+				message: 'Weight logged, BMR and body fat percentage updated successfully',
 			}),
 			{ status: 201 }
 		);
