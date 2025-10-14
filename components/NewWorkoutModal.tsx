@@ -139,9 +139,11 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 			const validExercises = exercises.filter(
 				exercise =>
 					exercise.name.trim() !== '' &&
-					exercise.weight.trim() !== '' &&
-					exercise.reps.trim() !== '' &&
-					exercise.sets.trim() !== ''
+					(showExerciseDetails
+						? exercise.weight.trim() !== '' &&
+							exercise.reps.trim() !== '' &&
+							exercise.sets.trim() !== ''
+						: exercise.duration.trim() !== '')
 			);
 			if (validExercises.length === 0) {
 				// Show error for missing exercises or incomplete exercise data
@@ -190,9 +192,11 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 				const validExercises = exercises.filter(
 					exercise =>
 						exercise.name.trim() !== '' &&
-						exercise.weight.trim() !== '' &&
-						exercise.reps.trim() !== '' &&
-						exercise.sets.trim() !== ''
+						(showExerciseDetails
+							? exercise.weight.trim() !== '' &&
+								exercise.reps.trim() !== '' &&
+								exercise.sets.trim() !== ''
+							: exercise.duration.trim() !== '')
 				);
 
 				// Analyze each exercise for calories
@@ -570,9 +574,11 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 													exercises.filter(
 														exercise =>
 															exercise.name.trim() !== '' &&
-															exercise.weight.trim() !== '' &&
-															exercise.reps.trim() !== '' &&
-															exercise.sets.trim() !== ''
+															(showExerciseDetails
+																? exercise.weight.trim() !== '' &&
+																	exercise.reps.trim() !== '' &&
+																	exercise.sets.trim() !== ''
+																: exercise.duration.trim() !== '')
 													).length > 0
 										)
 											? 'bg-[#E3BBA1]'
@@ -586,9 +592,11 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 												exercises.filter(
 													exercise =>
 														exercise.name.trim() !== '' &&
-														exercise.weight.trim() !== '' &&
-														exercise.reps.trim() !== '' &&
-														exercise.sets.trim() !== ''
+														(showExerciseDetails
+															? exercise.weight.trim() !== '' &&
+																exercise.reps.trim() !== '' &&
+																exercise.sets.trim() !== ''
+															: exercise.duration.trim() !== '')
 												).length === 0) ||
 										isLoading ||
 										isAnalyzing
@@ -603,9 +611,11 @@ const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModal
 														exercises.filter(
 															exercise =>
 																exercise.name.trim() !== '' &&
-																exercise.weight.trim() !== '' &&
-																exercise.reps.trim() !== '' &&
-																exercise.sets.trim() !== ''
+																(showExerciseDetails
+																	? exercise.weight.trim() !== '' &&
+																		exercise.reps.trim() !== '' &&
+																		exercise.sets.trim() !== ''
+																	: exercise.duration.trim() !== '')
 														).length > 0
 											)
 												? 'text-white'
