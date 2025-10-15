@@ -206,21 +206,13 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 			});
 
 			if (response.success) {
-				console.log('Workout saved successfully:', response);
-
 				// Check if workout is scheduled for today (in user's local timezone)
 				const workoutScheduledDate = workoutData.selectedDate;
 				const today = getTodayDate();
 
-				console.log('📅 Workout scheduled date:', workoutScheduledDate);
-				console.log("📅 Today's date:", today);
-
 				// Only refresh if workout is scheduled for today
 				if (workoutScheduledDate === today) {
-					console.log('🔄 Workout scheduled for today - refreshing scheduled exercises');
 					await fetchScheduledExercises();
-				} else {
-					console.log('📅 Workout scheduled for different date - no refresh needed');
 				}
 			} else {
 				console.error('Failed to save workout:', response.error);
@@ -304,18 +296,13 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 
 		try {
 			const today = getTodayDate();
-			console.log('🔍 Fetching scheduled exercises for date:', today);
 			const response = await fetchAPI(`/api/workouts?clerkId=${user.id}&date=${today}`, {
 				method: 'GET',
 			});
 
-			console.log('📡 API Response:', response);
-
 			if (response.success) {
 				// Flatten the data: create individual cards for each exercise
 				const flattenedExercises: any[] = [];
-
-				console.log('🏋️ Processing workouts:', response.workouts);
 
 				response.workouts.forEach((workout: any) => {
 					if (workout.workout_type === 'exercise') {
@@ -346,10 +333,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 					}
 				});
 
-				console.log('✅ Flattened exercises:', flattenedExercises);
 				setScheduledExercises(flattenedExercises);
-			} else {
-				console.log('❌ API response not successful:', response);
 			}
 		} catch (error) {
 			console.error('Failed to fetch scheduled exercises:', error);

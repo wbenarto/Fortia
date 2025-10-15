@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import ReactNativeModal from 'react-native-modal';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import GoalSetupModal from '../components/GoalSetupModal';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserProfile } from '@/lib/userUtils';
@@ -19,6 +20,7 @@ interface FortiaPTProps {
 }
 
 const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
+	const router = useRouter();
 	const userProfile = useUserProfile();
 	const [nutritionGoals, setNutritionGoals] = useState<any>(null);
 
@@ -34,12 +36,11 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 			const response = await fetchAPI(`/api/user?clerkId=${userProfile.id}`, {
 				method: 'GET',
 			});
-			console.log(response);
 			if (response.success && response.data) {
 				setNutritionGoals(response.data);
 			}
 		} catch (error) {
-			console.error('Failed to fetch nutrition goals:', error);
+			// Failed to fetch nutrition goals
 		}
 	};
 
@@ -233,6 +234,26 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 						</View>
 					</View>
 				)}
+
+				{/* AI Workout Program Button */}
+				<View className="py-4 rounded-xl mb-6">
+					<Text className="font-JakartaSemiBold text-xl mb-3 text-black">AI Workout Programs</Text>
+					<TouchableOpacity
+						className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl flex-row items-center justify-center"
+						onPress={() => {
+							handleClose();
+							router.push('/workout-program-creation');
+						}}
+					>
+						<Ionicons name="fitness" size={24} color="white" />
+						<Text className="text-white font-JakartaBold text-lg ml-2">
+							Create a Workout Program
+						</Text>
+					</TouchableOpacity>
+					<Text className="text-gray-600 text-sm mt-2 text-center">
+						Get personalized AI-generated workout plans tailored to your goals
+					</Text>
+				</View>
 
 				{/* Daily Quest Reminder */}
 				<View className="bg-white p-2 rounded-xl mb-6">

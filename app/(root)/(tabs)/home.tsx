@@ -98,7 +98,6 @@ export default function Page() {
 
 		// Validate BMR value before logging
 		if (!bmr || bmr <= 0) {
-			console.warn('Invalid BMR value, skipping logging:', bmr);
 			return;
 		}
 
@@ -269,6 +268,20 @@ export default function Page() {
 							{showFortia && (
 								<FortiaPT onClose={() => setShowFortia(!showFortia)} isVisible={showFortia} />
 							)}
+
+							{/* Workout Program Button */}
+							<View className="px-6 py-4">
+								<TouchableOpacity
+									onPress={() => router.push('/workout-programs')}
+									className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl flex-row items-center justify-center"
+								>
+									<Text className="text-white font-JakartaBold text-lg">🏋️ Workout Programs</Text>
+								</TouchableOpacity>
+								<Text className="text-gray-600 text-sm mt-2 text-center">
+									AI-powered personalized workout plans
+								</Text>
+							</View>
+
 							<WeightTracking onWeightLogged={onWeightLogged} />
 							<MacrosTracking ref={macrosTrackingRef} onMealLogged={onMealLogged} />
 							<ActivityTracking
