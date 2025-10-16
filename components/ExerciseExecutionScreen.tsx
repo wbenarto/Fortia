@@ -351,7 +351,7 @@ export default function ExerciseExecutionScreen() {
 						Did you complete all reps?
 					</Text>
 
-					<View className="flex-row space-x-4">
+					<View className="flex-row space-x-4 mb-10">
 						<TouchableOpacity
 							onPress={() => updateExerciseCompletion(currentExerciseIndex, true)}
 							className={`flex-1 py-4 rounded-xl border-2 ${
@@ -390,7 +390,7 @@ export default function ExerciseExecutionScreen() {
 			</ScrollView>
 
 			{/* Complete Button */}
-			<View className="pb-6 border-t border-gray-200 flex flex-row justify-center gap-4">
+			<View className="pb-6 border-t border-gray-200 bg-white flex flex-row justify-center gap-4">
 				{currentExerciseIndex > 0 ? (
 					<TouchableOpacity
 						onPress={previousExercise}

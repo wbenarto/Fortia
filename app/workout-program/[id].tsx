@@ -1,8 +1,12 @@
-import { useLocalSearchParams } from 'expo-router';
-import WorkoutProgramScreen from '@/components/WorkoutProgramScreen';
+import { useLocalSearchParams, Stack } from 'expo-router';
+import WorkoutProgramDetailScreen from '@/components/WorkoutProgramDetailScreen';
 
 export default function WorkoutProgramDetailPage() {
 	const { id } = useLocalSearchParams();
-	return <WorkoutProgramScreen programId={id as string} />;
+	return (
+		<>
+			<Stack.Screen options={{ headerShown: false }} />
+			<WorkoutProgramDetailScreen programId={id as string} />
+		</>
+	);
 }
-

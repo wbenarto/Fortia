@@ -85,6 +85,7 @@ module.exports = {
 				branding: {
 					100: '#E3BBA1',
 					200: '#cd9c99',
+					green: '#A8C2B3',
 				},
 			},
 		},

@@ -12,6 +12,7 @@ interface WorkoutSession {
 	title: string;
 	week_number: number;
 	session_number: number;
+	session_duration: number;
 	phase_name: string;
 	completion_status: string;
 	scheduled_date: string;
@@ -44,8 +45,8 @@ export default function WorkoutSessionDetailScreen() {
 	const [loading, setLoading] = useState(true);
 
 	const fetchSessionDetails = async () => {
-		console.log(user, sessionId);
 		if (!user || !sessionId) return;
+		console.log(session);
 
 		try {
 			const result = await fetchAPI(
@@ -120,7 +121,7 @@ export default function WorkoutSessionDetailScreen() {
 	return (
 		<View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
 			{/* Header */}
-			<View className="flex-row items-center justify-between p-6 border-b border-gray-200">
+			<View className="flex-row items-center justify-between p-4">
 				<TouchableOpacity onPress={() => router.back()}>
 					<Ionicons name="arrow-back" size={24} color="#374151" />
 				</TouchableOpacity>
@@ -130,19 +131,23 @@ export default function WorkoutSessionDetailScreen() {
 
 			<ScrollView className="flex-1">
 				{/* Session Info */}
-				<View className="p-6 bg-blue-50">
+				<View className="px-6 pb-6 border-b border-gray-200">
 					<Text className="text-2xl font-JakartaBold text-gray-800 mb-2">{session.title}</Text>
 					<Text className="text-gray-600 mb-4">
-						{session.program_name} • Week {session.week_number} • {session.phase_name}
+						{session.program_name} • Week {session.week_number} • Session {session.session_number}
 					</Text>
 
 					<View className="flex-row items-center">
+						<View className="flex-row gap-1 mr-2">
+							<Ionicons name="time" size={16} color="#6B7280" />
+							<Text>{session.session_duration} mins</Text>
+						</View>
 						<View
 							className={`px-3 py-1 rounded-full ${
 								session.completion_status === 'completed'
 									? 'bg-green-100'
 									: session.completion_status === 'in_progress'
-										? 'bg-blue-100'
+										? 'bg-yellow-300'
 										: 'bg-gray-100'
 							}`}
 						>
@@ -167,7 +172,7 @@ export default function WorkoutSessionDetailScreen() {
 
 				{/* Warm-up Section */}
 				{session.warm_up_video_url && (
-					<View className="p-6 border-b border-gray-200">
+					<View className="px-6 pt-4 ">
 						<Text className="text-lg font-JakartaBold text-gray-800 mb-3">Warm-up</Text>
 						<TouchableOpacity className="flex-row items-center p-4 bg-orange-50 rounded-xl">
 							<Ionicons name="play-circle" size={24} color="#F97316" />
