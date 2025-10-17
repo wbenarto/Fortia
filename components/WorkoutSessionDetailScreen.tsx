@@ -197,7 +197,10 @@ export default function WorkoutSessionDetailScreen() {
 							key={exercise.id}
 							className="mb-4 p-4 bg-gray-50 rounded-xl"
 						>
-							<View className=" ">
+							<View className="relative ">
+								<View className="absolute top-8 right-0 ">
+									<Ionicons name="chevron-forward-outline" size={16} />
+								</View>
 								<View className="flex flex-row justify-between items-center">
 									<Text className="mb-1 font-JakartaSemiBold text-gray-800">
 										{exercise.exercise_name}
