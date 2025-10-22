@@ -79,6 +79,9 @@ export default function WorkoutProgramScreen() {
 		fetchPrograms();
 	}, [user]);
 
+	// Note: Removed useFocusEffect to prevent duplicate program fetching
+	// Programs will refresh when user navigates back from program deletion
+
 	const onRefresh = () => {
 		setRefreshing(true);
 		fetchPrograms();
@@ -121,7 +124,7 @@ export default function WorkoutProgramScreen() {
 	return (
 		<View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
 			{/* Header */}
-			<View className="flex-row relative items-center justify-center py-4 border-b border-gray-200">
+			<View className="flex-row relative items-center justify-center py-4">
 				<TouchableOpacity className="absolute left-4 pt-2 z-10" onPress={() => router.back()}>
 					<Ionicons name="arrow-back" size={24} color="#black" />
 				</TouchableOpacity>
@@ -172,7 +175,11 @@ export default function WorkoutProgramScreen() {
 							<View className="p-2 flex-1 bg-gray-800 flex justify-between">
 								{/* Program Header */}
 								<View className=" mb-3">
-									<Text className="text-lg font-JakartaSemiBold mb-1 text-white">
+									<Text
+										className="text-lg font-JakartaSemiBold mb-1 text-white"
+										numberOfLines={1}
+										ellipsizeMode="tail"
+									>
 										{program.program_name}
 									</Text>
 									<View
@@ -251,7 +258,15 @@ export default function WorkoutProgramScreen() {
 								{/* Program Actions */}
 								<View className="flex-row  space-x-2">
 									<TouchableOpacity
-										onPress={() => router.push(`/workout-program/${program.id}`)}
+										onPress={() => {
+											console.log(
+												'Navigating to program with ID:',
+												program.id,
+												'Type:',
+												typeof program.id
+											);
+											router.push(`/workout-program/${program.id}`);
+										}}
 										className="flex-1 bg-[#cd9c99] py-2 rounded-lg"
 									>
 										<Text className="text-white font-JakartaSemiBold text-center">
