@@ -9,8 +9,8 @@ export default {
 		},
 		platforms: ['ios', 'web'],
 		entryPoint: 'app/index.tsx',
-		version: '1.0.1',
-		buildNumber: '60',
+		version: '1.0.2',
+		buildNumber: '61',
 		orientation: 'portrait',
 		icon: './assets/icons/fortia-white-icon.png',
 		scheme: ['fortia'],
@@ -25,10 +25,10 @@ export default {
 		updates: {
 			url: 'https://u.expo.dev/061a67d8-c8d4-4d24-b007-4c4b50e330ee',
 		},
-		runtimeVersion: '1.0.1',
+		runtimeVersion: '1.0.2',
 		ios: {
 			supportsTablet: true,
-			buildNumber: '60',
+			buildNumber: '61',
 			icon: './assets/icons/fortia-white-icon.png',
 			entitlements: {
 				'com.apple.developer.healthkit': true,
@@ -46,6 +46,7 @@ export default {
 					'Fortia uses Apple HealthKit to record your fitness activities and workouts in your Health app for comprehensive health tracking.',
 				NSAppTransportSecurity: {
 					NSAllowsArbitraryLoads: false,
+					NSAllowsLocalNetworking: true,
 				},
 			},
 			bundleIdentifier: 'com.fortia.app',

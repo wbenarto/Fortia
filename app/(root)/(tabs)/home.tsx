@@ -255,7 +255,7 @@ export default function Page() {
 							<WeeklyCalendar />
 
 							{/* Slider Component */}
-							<HomeSliderComponent
+							{/* <HomeSliderComponent
 								totalMealsLog={0}
 								totalWeightsLog={0}
 								totalExercisesLog={0}
@@ -263,14 +263,14 @@ export default function Page() {
 								dashboardRefreshTrigger={dashboardRefreshTrigger}
 								questRefreshTrigger={questRefreshTrigger}
 								onClose={() => setShowFortia(!showFortia)}
-							/>
+							/> */}
 
-							{showFortia && (
+							{/* {showFortia && (
 								<FortiaPT onClose={() => setShowFortia(!showFortia)} isVisible={showFortia} />
-							)}
+							)} */}
 
 							{/* Workout Program Button */}
-							<View className="px-6 py-4">
+							{/* <View className="px-6 py-4">
 								<TouchableOpacity
 									onPress={() => router.push('/workout-programs')}
 									className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl flex-row items-center justify-center"
@@ -280,14 +280,14 @@ export default function Page() {
 								<Text className="text-gray-600 text-sm mt-2 text-center">
 									AI-powered personalized workout plans
 								</Text>
-							</View>
-
-							<WeightTracking onWeightLogged={onWeightLogged} />
+							</View> */}
 							<MacrosTracking ref={macrosTrackingRef} onMealLogged={onMealLogged} />
-							<ActivityTracking
+							<WeightTracking onWeightLogged={onWeightLogged} />
+							
+							{/* <ActivityTracking
 								refreshTrigger={dashboardRefreshTrigger}
 								onActivityLogged={onActivityLogged}
-							/>
+							/> */}
 						</View>
 						{/* <View className="w-full  px-8 ">
 						<Text className="text-white text-3xl font-JakartaSemiBold mt-8">Macros</Text>
