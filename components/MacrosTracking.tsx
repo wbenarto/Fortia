@@ -598,6 +598,20 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 		const targetGoals = getTargetGoals();
 		const caloriesPercentage = Math.round((currentData.calories / targetGoals.calories) * 100);
 
+		const getCalorieColor = () => {
+			if (isLoadingSummary) {
+				return { text: 'text-[#E3BBA1]', border: 'border-[#E3BBA1]', bg: 'bg-[#E3BBA1]' };
+			}
+			if (caloriesPercentage > 100) {
+				return { text: 'text-red-500', border: 'border-red-500', bg: 'bg-red-500' };
+			}
+			if (caloriesPercentage >= 90) {
+				return { text: 'text-yellow-500', border: 'border-yellow-500', bg: 'bg-yellow-500' };
+			}
+			return { text: 'text-green-500', border: 'border-green-500', bg: 'bg-green-500' };
+		};
+		const calorieColor = getCalorieColor();
+
 		// Calculate macro percentages
 		const proteinPercentage = Math.round((currentData.protein / targetGoals.protein) * 100);
 		const carbsPercentage = Math.round((currentData.carbs / targetGoals.carbs) * 100);
@@ -622,20 +636,28 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						<View>
 							<Text className="mb-2 text-[#64748B]">Calories consumed</Text>
 							<View className="flex flex-row items-end">
-								<Text className="font-JakartaBold text-3xl">
+								<Text className={`font-JakartaBold text-3xl ${calorieColor.text}`}>
 									{isLoadingSummary ? '...' : Number(currentData.calories).toLocaleString()}
 								</Text>
-								<Text className="text-[#64748B]">
+								<Text className="text-[#64748B]font-JakartaBold text-lg">
 									{' '}
-									/{targetGoals !== null ? targetGoals.calories.toLocaleString() : ''}
+									/ {targetGoals !== null ? targetGoals.calories.toLocaleString() : ''} cal
 								</Text>
 							</View>
 						</View>
-						<View className="w-16 h-16 rounded-xl flex justify-center items-center border-[2px] border-[#E3BBA1] border-solid">
-							<Text className="text-lg  font-JakartaBold text-[#E3BBA1]">
+						<View
+							className={`w-16 h-16 rounded-xl flex justify-center items-center border-[2px] border-solid ${calorieColor.border}`}
+						>
+							<Text className={`text-lg  font-JakartaBold ${calorieColor.text}`}>
 								{isLoadingSummary ? '...' : caloriesPercentage}%
 							</Text>
 						</View>
+					</View>
+					<View className="w-full h-2 bg-[#F1F5F9] rounded-full mb-4 overflow-hidden">
+						<View
+							className={`h-full rounded-full ${calorieColor.bg}`}
+							style={{ width: `${Math.min(caloriesPercentage || 0, 100)}%` }}
+						/>
 					</View>
 					<View className="flex flex-row justify-between">
 						<View className="w-[32%] h-20 rounded-2xl px-3 flex justify-center  border-solid border-[1px] border-[#F1F5F9]">
