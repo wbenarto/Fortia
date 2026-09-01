@@ -7,6 +7,7 @@ import InputField from './InputField';
 import { fetchAPI } from '@/lib/fetch';
 import { useUser } from '@clerk/clerk-expo';
 import { useGoalsStore } from '@/store';
+import { calculateNutritionTargets } from '@/lib/nutritionTargets';
 
 interface GoalSetupModalProps {
 	isVisible: boolean;
@@ -136,6 +137,23 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 
 			const existingData = existingResponse.data;
 
+			// Recompute calorie + macro targets for the new goal so the UI updates
+			// immediately. The backend independently recomputes and stores the
+			// authoritative values from the merged profile.
+			const hasProfileForCalc =
+				existingData.weight && existingData.height && existingData.age && existingData.gender;
+
+			const targets = hasProfileForCalc
+				? calculateNutritionTargets({
+						weight: existingData.weight,
+						height: existingData.height,
+						age: existingData.age,
+						gender: existingData.gender,
+						activityLevel: existingData.activity_level,
+						fitnessGoal: formData.fitnessGoal,
+					})
+				: null;
+
 			// Update user with new goals using PUT method
 			const response = await fetchAPI('/api/user', {
 				method: 'PUT',
@@ -151,12 +169,12 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 					height: existingData.height,
 					gender: existingData.gender,
 					activityLevel: existingData.activity_level,
-					dailyCalories: existingData.daily_calories,
-					dailyProtein: existingData.daily_protein,
-					dailyCarbs: existingData.daily_carbs,
-					dailyFats: existingData.daily_fats,
-					bmr: existingData.bmr,
-					tdee: existingData.tdee,
+					dailyCalories: targets?.dailyCalories ?? existingData.daily_calories,
+					dailyProtein: targets?.dailyProtein ?? existingData.daily_protein,
+					dailyCarbs: targets?.dailyCarbs ?? existingData.daily_carbs,
+					dailyFats: targets?.dailyFats ?? existingData.daily_fats,
+					bmr: targets?.bmr ?? existingData.bmr,
+					tdee: targets?.tdee ?? existingData.tdee,
 				}),
 			});
 

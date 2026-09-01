@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
-import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
 import { calculateBodyFatPercentage } from '@/lib/bodyFatUtils';
+import { calculateNutritionTargets } from '@/lib/nutritionTargets';
 
 export async function POST(request: Request) {
 	try {
@@ -27,17 +27,33 @@ export async function POST(request: Request) {
 
 		// Update BMR and TDEE in user table if they exist
 		try {
-			// Get user's data to calculate new BMR
+			// Get user's data to recalculate targets
 			const userData = await sql`
-				SELECT height, age, gender, activity_level 
-				FROM users 
+				SELECT height, age, gender, activity_level, fitness_goal
+				FROM users
 				WHERE clerk_id = ${clerkId}
 			`;
 
 			if (userData.length > 0) {
 				const user = userData[0];
-				const newBMR = Math.round(calculateBMR(weight, user.height, user.age, user.gender));
-				const newTDEE = calculateTDEE(newBMR, user.activity_level);
+
+				// Recompute BMR / TDEE / calorie + macro targets from the new weight
+				// using the shared single source of truth.
+				const {
+					bmr: newBMR,
+					tdee: newTDEE,
+					dailyCalories,
+					dailyProtein,
+					dailyCarbs,
+					dailyFats,
+				} = calculateNutritionTargets({
+					weight,
+					height: user.height,
+					age: user.age,
+					gender: user.gender,
+					activityLevel: user.activity_level,
+					fitnessGoal: user.fitness_goal,
+				});
 
 				// Calculate body fat percentage
 				const heightInInches = user.height / 2.54; // Convert cm to inches
@@ -48,13 +64,17 @@ export async function POST(request: Request) {
 					user.gender
 				);
 
-				// Update user with new weight, BMR, TDEE, and body fat percentage
+				// Update user with new weight, BMR, TDEE, targets, and body fat percentage
 				await sql`
-					UPDATE users 
-					SET 
+					UPDATE users
+					SET
 						weight = ${weight},
 						bmr = ${newBMR},
 						tdee = ${newTDEE},
+						daily_calories = ${dailyCalories},
+						daily_protein = ${dailyProtein},
+						daily_carbs = ${dailyCarbs},
+						daily_fats = ${dailyFats},
 						body_fat_percentage = ${bodyFatPercentage},
 						updated_at = NOW()
 					WHERE clerk_id = ${clerkId}
