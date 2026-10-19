@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // The DB always stores weight in lb and height in cm. This preference only changes
@@ -11,15 +10,24 @@ interface UnitStore {
 	setSystem: (system: UnitSystem) => void;
 }
 
-export const useUnitStore = create<UnitStore>()(
-	persist(
-		set => ({
-			system: 'us',
-			setSystem: system => set({ system }),
-		}),
-		{ name: 'unit-system', storage: createJSONStorage(() => AsyncStorage) }
-	)
-);
+const STORAGE_KEY = 'unit-system';
+
+// Persisted by hand rather than with zustand/middleware's persist: its ESM build
+// uses import.meta, which breaks Expo Router's server-manifest export (EAS build
+// fails with "module is not defined").
+export const useUnitStore = create<UnitStore>(set => ({
+	system: 'us',
+	setSystem: system => {
+		set({ system });
+		AsyncStorage.setItem(STORAGE_KEY, system).catch(() => {});
+	},
+}));
+
+AsyncStorage.getItem(STORAGE_KEY)
+	.then(value => {
+		if (value === 'us' || value === 'metric') useUnitStore.setState({ system: value });
+	})
+	.catch(() => {});
 
 export const useUnitSystem = () => useUnitStore(s => s.system);
 
