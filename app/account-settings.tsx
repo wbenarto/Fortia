@@ -11,7 +11,129 @@ import { fetchAPI } from '../lib/fetch';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserDisplayName, getUserLastName, useUserProfile } from '@/lib/userUtils';
 import InputField from '../components/InputField';
-import CustomButton from '../components/CustomButton';
+import { formatHeight, formatWeight, useUnitStore, type UnitSystem } from '@/lib/units';
+import { SCREEN_BG } from '@/lib/theme';
+import EditDietModal from '../components/EditDietModal';
+import {
+	DIET_INFO,
+	FASTING_INFO,
+	formatEatingWindow,
+	resolveDietType,
+	resolveFastingSchedule,
+	resolveFastingStartHour,
+} from '@/lib/diet';
+
+const UNIT_OPTIONS: { key: UnitSystem; label: string }[] = [
+	{ key: 'us', label: 'US' },
+	{ key: 'metric', label: 'Metric' },
+];
+
+const INK = '#262135';
+const DANGER = '#E08585';
+const EYEBROW_STYLE = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
+const CARD_CLASS = 'bg-white rounded-3xl border-[1px] border-[#F0EBE6] p-5 mb-8';
+const LIST_CARD_CLASS = 'bg-white rounded-3xl border-[1px] border-[#F0EBE6] overflow-hidden mb-4';
+
+const SectionLabel = ({ children }: { children: string }) => (
+	<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mb-2 ml-1" style={EYEBROW_STYLE}>
+		{children}
+	</Text>
+);
+
+const DetailRow = ({
+	label,
+	value,
+	last,
+	onPress,
+}: {
+	label: string;
+	value: string;
+	last?: boolean;
+	onPress?: () => void;
+}) => {
+	const className = `flex-row justify-between items-center py-3 ${
+		last ? '' : 'border-b-[1px] border-[#F0EBE6]'
+	}`;
+	const content = (
+		<>
+			<Text className="text-sm font-JakartaMedium text-[#94897E]">{label}</Text>
+			<View className="flex-row items-center">
+				<Text className="text-sm font-JakartaSemiBold text-[#262135]">{value}</Text>
+				{onPress && (
+					<Ionicons name="chevron-forward" size={14} color="#C9BEB4" style={{ marginLeft: 4 }} />
+				)}
+			</View>
+		</>
+	);
+	return onPress ? (
+		<TouchableOpacity onPress={onPress} activeOpacity={0.7} className={className}>
+			{content}
+		</TouchableOpacity>
+	) : (
+		<View className={className}>{content}</View>
+	);
+};
+
+const MacroStat = ({ label, grams }: { label: string; grams: number }) => (
+	<View>
+		<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+			{label}
+		</Text>
+		<View className="flex-row items-baseline mt-0.5">
+			<Text className="font-JakartaExtraBold text-[18px] text-[#262135]">{Math.round(grams)}</Text>
+			<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">g</Text>
+		</View>
+	</View>
+);
+
+const RowIcon = ({
+	name,
+	color = INK,
+}: {
+	name: keyof typeof Ionicons.glyphMap;
+	color?: string;
+}) => (
+	<View className="w-9 h-9 rounded-full bg-[#F9F9F8] border-[1px] border-[#F0EBE6] items-center justify-center">
+		<Ionicons name={name} size={18} color={color} />
+	</View>
+);
+
+const ListRow = ({
+	icon,
+	title,
+	subtitle,
+	onPress,
+	danger,
+	last,
+}: {
+	icon: keyof typeof Ionicons.glyphMap;
+	title: string;
+	subtitle: string;
+	onPress?: () => void;
+	danger?: boolean;
+	last?: boolean;
+}) => {
+	const content = (
+		<>
+			<RowIcon name={icon} color={danger ? DANGER : INK} />
+			<View className="ml-3 flex-1">
+				<Text className="font-JakartaSemiBold text-sm" style={{ color: danger ? DANGER : INK }}>
+					{title}
+				</Text>
+				<Text className="text-xs font-JakartaMedium text-[#94897E] mt-0.5">{subtitle}</Text>
+			</View>
+			{onPress && <Ionicons name="chevron-forward" size={18} color="#C9BEB4" />}
+		</>
+	);
+	const className = `flex-row items-center px-4 py-3.5 ${last ? '' : 'border-b-[1px] border-[#F0EBE6]'}`;
+	return onPress ? (
+		<TouchableOpacity onPress={onPress} activeOpacity={0.7} className={className}>
+			{content}
+		</TouchableOpacity>
+	) : (
+		<View className={className}>{content}</View>
+	);
+};
 
 interface NutritionGoals {
 	id: string;
@@ -28,11 +150,21 @@ interface NutritionGoals {
 	daily_protein: number;
 	daily_carbs: number;
 	daily_fats: number;
+	diet_type?: string;
+	fasting_schedule?: string;
+	fasting_start_hour?: number;
 	bmr: number;
 	tdee: number;
 	created_at: string;
 	updated_at: string;
 }
+
+// "16:8 · 12pm–8pm", or "Off"
+const formatFasting = (goals: NutritionGoals) => {
+	const schedule = resolveFastingSchedule(goals.fasting_schedule);
+	const window = formatEatingWindow(schedule, resolveFastingStartHour(goals.fasting_start_hour));
+	return window ? `${FASTING_INFO[schedule].label} · ${window}` : FASTING_INFO[schedule].label;
+};
 
 const AccountSettings = () => {
 	const { user } = useUser();
@@ -41,6 +173,7 @@ const AccountSettings = () => {
 	const [nutritionGoals, setNutritionGoals] = useState<NutritionGoals | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [goalSetupModal, setGoalSetupModal] = useState(false);
+	const [dietModal, setDietModal] = useState(false);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [deleteAccountModal, setDeleteAccountModal] = useState(false);
 	const [privacyPolicyModal, setPrivacyPolicyModal] = useState(false);
@@ -49,6 +182,8 @@ const AccountSettings = () => {
 	const [isValidating, setIsValidating] = useState(false);
 	const [passwordError, setPasswordError] = useState('');
 	const insets = useSafeAreaInsets();
+	const unitSystem = useUnitStore(s => s.system);
+	const setUnitSystem = useUnitStore(s => s.setSystem);
 
 	useEffect(() => {
 		if (user?.id) {
@@ -301,27 +436,22 @@ const AccountSettings = () => {
 		return age;
 	};
 
-	const convertKgToLbs = (kg: number): number => {
-		return Math.round(kg * 2.20462);
-	};
-
-	const convertCmToFeetInches = (cm: number): { feet: number; inches: number } => {
-		const totalInches = cm / 2.54;
-		const feet = Math.floor(totalInches / 12);
-		const inches = Math.round(totalInches % 12);
-		return { feet, inches };
-	};
+	const initials = getUserDisplayName(userProfile)
+		.split(' ')
+		.map(n => n[0])
+		.join('')
+		.toUpperCase();
 
 	if (isLoading) {
 		return (
 			<>
 				<Stack.Screen options={{ headerShown: false }} />
 				<View
-					className="flex-1 bg-[#262135] justify-center items-center"
-					style={{ paddingTop: insets.top }}
+					className="flex-1 justify-center items-center"
+					style={{ backgroundColor: SCREEN_BG, paddingTop: insets.top }}
 				>
 					<ActivityIndicator size="large" color="#E3BBA1" />
-					<Text className="text-white mt-4">Loading profile...</Text>
+					<Text className="text-sm font-JakartaMedium text-[#94897E] mt-4">Loading profile…</Text>
 				</View>
 			</>
 		);
@@ -330,234 +460,224 @@ const AccountSettings = () => {
 	return (
 		<>
 			<Stack.Screen options={{ headerShown: false }} />
-			<View className="flex-1 bg-[#262135]" style={{ paddingTop: insets.top }}>
+			<View className="flex-1" style={{ backgroundColor: SCREEN_BG, paddingTop: insets.top }}>
 				{/* Header */}
-				<View className="flex flex-row items-center justify-between px-6 py-4 border-b border-gray-700">
-					<TouchableOpacity onPress={() => router.back()}>
-						<Ionicons name="arrow-back" size={24} color="#E3BBA1" />
+				<View className="flex-row items-center justify-between px-5 py-3">
+					<TouchableOpacity onPress={() => router.back()} hitSlop={10}>
+						<Ionicons name="chevron-back" size={26} color={INK} />
 					</TouchableOpacity>
-					<Text className="text-white text-lg font-JakartaSemiBold">Account Settings</Text>
-					<View style={{ width: 24 }} />
+					<Text className="font-JakartaSemiBold text-[#262135] text-base">Account Settings</Text>
+					<View style={{ width: 26 }} />
 				</View>
 
-				<ScrollView className="flex-1 px-6 py-4">
-					{/* Profile Section */}
-					<View className="bg-[#2D2A3F] rounded-2xl p-6 mb-6">
-						<View className="flex flex-row items-center mb-4">
-							<View className="w-16 h-16 bg-[#E3BBA1] rounded-2xl flex justify-center items-center">
-								<Text className="text-white text-xl font-JakartaSemiBold">
-									{getUserDisplayName(userProfile)
-										.split(' ')
-										.map(n => n[0])
-										.join('')
-										.toUpperCase()}
-								</Text>
-							</View>
-							<View className="ml-4 flex-1">
-								<Text className="text-white text-lg font-JakartaSemiBold">
-									{getUserDisplayName(userProfile)}
-								</Text>
-								<Text className="text-gray-400 text-sm">
-									{user?.emailAddresses[0]?.emailAddress}
-								</Text>
-							</View>
+				<ScrollView
+					contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 60 }}
+					showsVerticalScrollIndicator={false}
+				>
+					{/* Profile */}
+					<View className="flex-row items-center mb-8">
+						<View className="w-16 h-16 rounded-full bg-[#E3BBA1] items-center justify-center">
+							<Text className="font-JakartaBold text-[20px] text-white">{initials}</Text>
+						</View>
+						<View className="ml-4 flex-1">
+							<Text className="font-JakartaBold text-[22px] text-[#262135]" numberOfLines={1}>
+								{getUserDisplayName(userProfile)}
+							</Text>
+							<Text className="text-sm font-JakartaMedium text-[#94897E] mt-0.5" numberOfLines={1}>
+								{user?.emailAddresses[0]?.emailAddress}
+							</Text>
 						</View>
 					</View>
 
-					{/* Nutrition Goals Section */}
-					<View className="mb-6">
-						<Text className="text-white text-lg font-JakartaSemiBold mb-4">Nutrition Goals</Text>
-
-						{!nutritionGoals ? (
-							<View className="bg-[#2D2A3F] rounded-2xl p-6">
-								<Text className="text-gray-400 text-center mb-4">
-									No nutrition goals set. Set up your goals to get personalized recommendations.
-								</Text>
-								<CustomButton
-									title="Set Up Goals"
-									onPress={() => setGoalSetupModal(true)}
-									className="bg-[#E3BBA1]"
-								/>
-							</View>
-						) : (
-							<View className="bg-[#2D2A3F] rounded-2xl p-6">
-								<View className="flex flex-row justify-between items-center mb-4">
-									<Text className="text-white font-JakartaSemiBold">Current Goals</Text>
-									<TouchableOpacity onPress={() => setGoalSetupModal(true)}>
-										<Ionicons name="pencil" size={20} color="#E3BBA1" />
-									</TouchableOpacity>
-								</View>
-
-								<View className="space-y-3">
-									<View className="flex flex-row justify-between">
-										<Text className="text-gray-400">Age</Text>
-										<Text className="text-white">
-											{calculateCurrentAge(nutritionGoals.dob)} years
-										</Text>
-									</View>
-									<View className="flex flex-row justify-between">
-										<Text className="text-gray-400">Weight</Text>
-										<Text className="text-white">{Math.round(nutritionGoals.weight)} lbs</Text>
-									</View>
-									<View className="flex flex-row justify-between">
-										<Text className="text-gray-400">Height</Text>
-										<Text className="text-white">
-											{convertCmToFeetInches(nutritionGoals.height).feet}'{' '}
-											{convertCmToFeetInches(nutritionGoals.height).inches}"
-										</Text>
-									</View>
-									<View className="flex flex-row justify-between">
-										<Text className="text-gray-400">Target Weight</Text>
-										<Text className="text-white">
-											{Math.round(nutritionGoals.target_weight)} lbs
-										</Text>
-									</View>
-									<View className="flex flex-row justify-between">
-										<Text className="text-gray-400">Activity Level</Text>
-										<Text className="text-white">
-											{getActivityLevelLabel(nutritionGoals.activity_level)}
-										</Text>
-									</View>
-									<View className="flex flex-row justify-between">
-										<Text className="text-gray-400">Fitness Goal</Text>
-										<Text className="text-white">
-											{getFitnessGoalLabel(nutritionGoals.fitness_goal)}
-										</Text>
-									</View>
-								</View>
-
-								<View className="mt-4 pt-4 border-t border-gray-700">
-									<Text className="text-white font-JakartaSemiBold mb-3">Daily Targets</Text>
-									<View className="space-y-2">
-										<View className="flex flex-row justify-between">
-											<Text className="text-gray-400">Calories</Text>
-											<Text className="text-white">{nutritionGoals.daily_calories} kcal</Text>
-										</View>
-										<View className="flex flex-row justify-between">
-											<Text className="text-gray-400">Protein</Text>
-											<Text className="text-white">
-												{Math.round(nutritionGoals.daily_protein)}g
-											</Text>
-										</View>
-										<View className="flex flex-row justify-between">
-											<Text className="text-gray-400">Carbs</Text>
-											<Text className="text-white">{Math.round(nutritionGoals.daily_carbs)}g</Text>
-										</View>
-										<View className="flex flex-row justify-between">
-											<Text className="text-gray-400">Fats</Text>
-											<Text className="text-white">{Math.round(nutritionGoals.daily_fats)}g</Text>
-										</View>
-									</View>
-								</View>
-							</View>
-						)}
-					</View>
-
-					{/* App Settings Section */}
-					<View className="mb-6">
-						<Text className="text-white text-lg font-JakartaSemiBold mb-4">App Settings</Text>
-						<View className="space-y-3">
+					{/* Nutrition Goals */}
+					<SectionLabel>Nutrition Goals</SectionLabel>
+					{!nutritionGoals ? (
+						<View className={CARD_CLASS}>
+							<Text className="text-sm font-JakartaMedium text-[#94897E] text-center mb-4">
+								No nutrition goals set. Set up your goals to get personalized recommendations.
+							</Text>
 							<TouchableOpacity
-								onPress={() => router.push('/help-support')}
-								className="bg-[#2D2A3F] rounded-xl p-4 flex flex-row items-center"
+								onPress={() => setGoalSetupModal(true)}
+								className="bg-[#E3BBA1] rounded-xl py-3"
 							>
-								<Ionicons name="help-circle-outline" size={24} color="#E3BBA1" />
-								<View className="ml-4 flex-1">
-									<Text className="text-white font-JakartaSemiBold">Help & Support</Text>
-									<Text className="text-gray-400 text-sm">Get help and contact support</Text>
-								</View>
-								<Ionicons name="chevron-forward" size={20} color="gray" />
-							</TouchableOpacity>
-
-							<TouchableOpacity
-								onPress={() => setPrivacyPolicyModal(true)}
-								className="bg-[#2D2A3F] rounded-xl p-4 flex flex-row items-center"
-							>
-								<Ionicons name="shield-outline" size={24} color="#E3BBA1" />
-								<View className="ml-4 flex-1">
-									<Text className="text-white font-JakartaSemiBold">Privacy Policy</Text>
-									<Text className="text-gray-400 text-sm">Read our privacy policy</Text>
-								</View>
-								<Ionicons name="chevron-forward" size={20} color="gray" />
-							</TouchableOpacity>
-
-							<TouchableOpacity
-								onPress={() => setTermsAndConditionsModal(true)}
-								className="bg-[#2D2A3F] rounded-xl p-4 flex flex-row items-center"
-							>
-								<Ionicons name="document-text-outline" size={24} color="#E3BBA1" />
-								<View className="ml-4 flex-1">
-									<Text className="text-white font-JakartaSemiBold">Terms & Conditions</Text>
-									<Text className="text-gray-400 text-sm">Read our terms of service</Text>
-								</View>
-								<Ionicons name="chevron-forward" size={20} color="gray" />
+								<Text className="text-white text-center font-JakartaSemiBold">Set Up Goals</Text>
 							</TouchableOpacity>
 						</View>
-					</View>
-
-					{/* Account Actions Section */}
-					<View className="mb-6">
-						<Text className="text-white text-lg font-JakartaSemiBold mb-4">Account Actions</Text>
-						<View className="space-y-3">
-							{/* Only show Change Password for email/password users */}
-							{isEmailPasswordUser() && (
+					) : (
+						<View className={CARD_CLASS}>
+							<View className="flex-row justify-between items-center mb-1">
+								<Text className="font-JakartaBold text-[15px] text-[#262135]">Current Goals</Text>
 								<TouchableOpacity
-									onPress={() => router.push('/(auth)/change-password')}
-									className="bg-[#2D2A3F] rounded-xl p-4 flex flex-row items-center"
+									onPress={() => setGoalSetupModal(true)}
+									hitSlop={10}
+									className="flex-row items-center"
 								>
-									<Ionicons name="lock-closed-outline" size={24} color="#E3BBA1" />
-									<View className="ml-4 flex-1">
-										<Text className="text-white font-JakartaSemiBold">Change Password</Text>
-										<Text className="text-gray-400 text-sm">Update your account password</Text>
-									</View>
-									<Ionicons name="chevron-forward" size={20} color="gray" />
+									<Ionicons name="pencil-outline" size={14} color="#C98B67" />
+									<Text className="text-xs font-JakartaSemiBold ml-1" style={{ color: '#C98B67' }}>
+										Edit
+									</Text>
 								</TouchableOpacity>
+							</View>
+
+							<DetailRow label="Age" value={`${calculateCurrentAge(nutritionGoals.dob)} years`} />
+							<DetailRow
+								label="Weight"
+								value={formatWeight(nutritionGoals.weight, unitSystem, 0)}
+							/>
+							<DetailRow label="Height" value={formatHeight(nutritionGoals.height, unitSystem)} />
+							<DetailRow
+								label="Target Weight"
+								value={formatWeight(nutritionGoals.target_weight, unitSystem, 0)}
+							/>
+							<DetailRow
+								label="Activity Level"
+								value={getActivityLevelLabel(nutritionGoals.activity_level)}
+							/>
+							<DetailRow
+								label="Fitness Goal"
+								value={getFitnessGoalLabel(nutritionGoals.fitness_goal)}
+							/>
+							<DetailRow
+								label="Diet"
+								value={DIET_INFO[resolveDietType(nutritionGoals.diet_type)].label}
+								onPress={() => setDietModal(true)}
+							/>
+							<DetailRow
+								label="Fasting"
+								value={formatFasting(nutritionGoals)}
+								onPress={() => setDietModal(true)}
+								last
+							/>
+
+							<View className="h-[1px] bg-[#F0EBE6] my-4" />
+
+							<Text
+								className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+								style={EYEBROW_STYLE}
+							>
+								Daily Targets
+							</Text>
+							<View className="flex-row items-baseline mt-1">
+								<Text className="font-JakartaExtraBold text-[28px] text-[#262135]">
+									{nutritionGoals.daily_calories}
+								</Text>
+								<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">kcal</Text>
+							</View>
+							<View className="flex-row justify-between mt-4">
+								<MacroStat label="Protein" grams={nutritionGoals.daily_protein} />
+								<MacroStat label="Carbs" grams={nutritionGoals.daily_carbs} />
+								<MacroStat label="Fats" grams={nutritionGoals.daily_fats} />
+							</View>
+						</View>
+					)}
+
+					{/* App Settings */}
+					<SectionLabel>App Settings</SectionLabel>
+					<View className={LIST_CARD_CLASS}>
+						<View className="flex-row items-center px-4 py-3.5 border-b-[1px] border-[#F0EBE6]">
+							<RowIcon name="speedometer-outline" />
+							<View className="ml-3 flex-1">
+								<Text className="font-JakartaSemiBold text-sm text-[#262135]">Units</Text>
+								<Text className="text-xs font-JakartaMedium text-[#94897E] mt-0.5">
+									{unitSystem === 'metric' ? 'kg · cm' : 'lbs · ft/in'}
+								</Text>
+							</View>
+							<View className="flex-row bg-[#F1F1F1] rounded-full p-1">
+								{UNIT_OPTIONS.map(option => {
+									const selected = unitSystem === option.key;
+									return (
+										<TouchableOpacity
+											key={option.key}
+											onPress={() => setUnitSystem(option.key)}
+											accessibilityRole="button"
+											accessibilityState={{ selected }}
+											className={`px-3 py-1.5 rounded-full ${selected ? 'bg-[#E3BBA1]' : ''}`}
+										>
+											<Text
+												className={`text-xs font-JakartaSemiBold ${
+													selected ? 'text-white' : 'text-[#64748B]'
+												}`}
+											>
+												{option.label}
+											</Text>
+										</TouchableOpacity>
+									);
+								})}
+							</View>
+						</View>
+						<ListRow
+							icon="help-circle-outline"
+							title="Help & Support"
+							subtitle="Get help and contact support"
+							onPress={() => router.push('/help-support')}
+						/>
+						<ListRow
+							icon="shield-outline"
+							title="Privacy Policy"
+							subtitle="Read our privacy policy"
+							onPress={() => setPrivacyPolicyModal(true)}
+						/>
+						<ListRow
+							icon="document-text-outline"
+							title="Terms & Conditions"
+							subtitle="Read our terms of service"
+							onPress={() => setTermsAndConditionsModal(true)}
+							last
+						/>
+					</View>
+
+					{/* Account Actions */}
+					<SectionLabel>Account Actions</SectionLabel>
+					<View className={LIST_CARD_CLASS}>
+						{/* Only show Change Password for email/password users */}
+						{isEmailPasswordUser() && (
+							<ListRow
+								icon="lock-closed-outline"
+								title="Change Password"
+								subtitle="Update your account password"
+								onPress={() => router.push('/(auth)/change-password')}
+							/>
+						)}
+
+						{/* Show OAuth info for OAuth-only users */}
+						{!isEmailPasswordUser() &&
+							user?.externalAccounts &&
+							user.externalAccounts.length > 0 && (
+								<ListRow
+									icon="information-circle-outline"
+									title="Password Management"
+									subtitle={`Password changes are managed through your ${user?.externalAccounts[0]?.provider} account`}
+								/>
 							)}
 
-							{/* Show OAuth info for OAuth-only users */}
-							{!isEmailPasswordUser() &&
-								user?.externalAccounts &&
-								user.externalAccounts.length > 0 && (
-									<View className="bg-[#2D2A3F] rounded-xl p-4 flex flex-row items-center border border-gray-600">
-										<Ionicons name="information-circle-outline" size={24} color="#E3BBA1" />
-										<View className="ml-4 flex-1">
-											<Text className="text-white font-JakartaSemiBold">Password Management</Text>
-											<Text className="text-gray-400 text-sm">
-												Password changes are managed through your{' '}
-												{user?.externalAccounts[0]?.provider} account
-											</Text>
-										</View>
-									</View>
-								)}
+						<ListRow
+							icon="log-out-outline"
+							title="Sign Out"
+							subtitle="Sign out of your account"
+							onPress={handleSignOut}
+							last
+						/>
+					</View>
 
-							<TouchableOpacity
-								onPress={handleSignOut}
-								className="bg-[#2D2A3F] rounded-xl p-4 flex flex-row items-center"
-							>
-								<Ionicons name="log-out-outline" size={24} color="#E3BBA1" />
-								<View className="ml-4 flex-1">
-									<Text className="text-white font-JakartaSemiBold">Sign Out</Text>
-									<Text className="text-gray-400 text-sm">Sign out of your account</Text>
-								</View>
-								<Ionicons name="chevron-forward" size={20} color="gray" />
-							</TouchableOpacity>
-
-							<TouchableOpacity
-								onPress={handleDeleteAccount}
-								className="bg-red-500/20 rounded-xl p-4 flex flex-row items-center border border-red-500/30"
-							>
-								<Ionicons name="trash-outline" size={24} color="#ef4444" />
-								<View className="ml-4 flex-1">
-									<Text className="text-red-400 font-JakartaSemiBold">Delete Account</Text>
-									<Text className="text-red-400/70 text-sm">Permanently delete your account</Text>
-								</View>
-								<Ionicons name="chevron-forward" size={20} color="#ef4444" />
-							</TouchableOpacity>
-						</View>
+					<View className={LIST_CARD_CLASS}>
+						<ListRow
+							icon="trash-outline"
+							title="Delete Account"
+							subtitle="Permanently delete your account"
+							onPress={handleDeleteAccount}
+							danger
+							last
+						/>
 					</View>
 				</ScrollView>
 
 				{/* Modals */}
+				<EditDietModal
+					isVisible={dietModal}
+					onClose={() => setDietModal(false)}
+					onSaved={fetchNutritionGoals}
+				/>
+
 				<GoalSetupModal
 					isVisible={goalSetupModal}
 					onClose={() => setGoalSetupModal(false)}
@@ -583,15 +703,21 @@ const AccountSettings = () => {
 					animationOut="slideOutDown"
 					className="m-0 justify-end"
 				>
-					<View className="bg-[#2D2A3F] rounded-t-3xl p-6">
-						<View className="flex items-center mb-6">
-							<View className="w-16 h-16 bg-red-500/20 rounded-full flex justify-center items-center mb-4">
-								<Ionicons name="warning" size={32} color="#ef4444" />
+					<View
+						className="bg-white rounded-t-3xl p-6"
+						style={{ paddingBottom: 24 + insets.bottom }}
+					>
+						<View className="items-center mb-6">
+							<View
+								className="w-14 h-14 rounded-full items-center justify-center mb-4"
+								style={{ backgroundColor: `${DANGER}1F` }}
+							>
+								<Ionicons name="warning-outline" size={28} color={DANGER} />
 							</View>
-							<Text className="text-white text-xl font-JakartaSemiBold text-center mb-2">
+							<Text className="text-xl font-JakartaExtraBold text-[#262135] text-center mb-2">
 								Delete Account
 							</Text>
-							<Text className="text-gray-400 text-center leading-6">
+							<Text className="text-sm font-JakartaMedium text-[#94897E] text-center leading-5">
 								This action cannot be undone. All your data will be permanently deleted.
 							</Text>
 						</View>
@@ -599,7 +725,7 @@ const AccountSettings = () => {
 						{/* Show password field only for password-based users */}
 						{isEmailPasswordUser() && (
 							<View className="mb-6">
-								<Text className="text-white font-JakartaSemiBold mb-2">
+								<Text className="text-xs font-JakartaSemiBold text-[#262135] mb-2">
 									Enter your password to confirm:
 								</Text>
 								<InputField
@@ -615,27 +741,28 @@ const AccountSettings = () => {
 						{/* Show different message for OAuth users */}
 						{!isEmailPasswordUser() && (
 							<View className="mb-6">
-								<Text className="text-white font-JakartaSemiBold mb-2">
+								<Text className="text-sm font-JakartaSemiBold text-[#262135] mb-1">
 									Confirm Account Deletion
 								</Text>
-								<Text className="text-gray-400 text-sm">
+								<Text className="text-xs font-JakartaMedium text-[#94897E] leading-5">
 									This will permanently delete your account and all associated data. This action
 									cannot be undone.
 								</Text>
 							</View>
 						)}
 
-						<View className="flex flex-row space-x-3">
+						<View className="flex-row" style={{ columnGap: 12 }}>
 							<TouchableOpacity
 								onPress={closeDeleteModal}
-								className="flex-1 bg-gray-600 rounded-xl py-4"
+								className="flex-1 bg-[#F1F1F1] rounded-xl py-3"
 							>
-								<Text className="text-white text-center font-JakartaSemiBold">Cancel</Text>
+								<Text className="text-[#262135] text-center font-JakartaSemiBold">Cancel</Text>
 							</TouchableOpacity>
 							<TouchableOpacity
 								onPress={handlePasswordValidation}
 								disabled={isValidating}
-								className="flex-1 bg-red-500 rounded-xl py-4"
+								className="flex-1 rounded-xl py-3"
+								style={{ backgroundColor: DANGER }}
 							>
 								{isValidating ? (
 									<ActivityIndicator size="small" color="white" />

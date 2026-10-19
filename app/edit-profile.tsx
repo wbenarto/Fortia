@@ -15,6 +15,16 @@ import { fetchAPI } from '../lib/fetch';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { triggerUserProfileRefresh } from '../lib/userUtils';
+import { getActivityLevelDescription } from '../lib/bmrUtils';
+import { cmToFeetInches, feetInchesToCm, useUnitSystem } from '../lib/units';
+
+const ACTIVITY_LEVELS = [
+	{ key: 'sedentary', title: 'Sedentary' },
+	{ key: 'light', title: 'Lightly Active' },
+	{ key: 'moderate', title: 'Moderately Active' },
+	{ key: 'active', title: 'Very Active' },
+	{ key: 'very_active', title: 'Extremely Active' },
+];
 
 interface UserProfile {
 	clerkId: string;
@@ -61,6 +71,9 @@ const EditProfileContent = () => {
 	const [dobYear, setDobYear] = useState('');
 	const [heightFeet, setHeightFeet] = useState('');
 	const [heightInches, setHeightInches] = useState('');
+	const [heightCmInput, setHeightCmInput] = useState('');
+	const unitSystem = useUnitSystem();
+	const [activityLevel, setActivityLevel] = useState('');
 
 	useEffect(() => {
 		if (user?.id) {
@@ -95,11 +108,14 @@ const EditProfileContent = () => {
 
 				// Parse height
 				if (userData.height) {
-					const totalInches = userData.height / 2.54;
-					const feet = Math.floor(totalInches / 12);
-					const inches = Math.round(totalInches % 12);
+					const { feet, inches } = cmToFeetInches(userData.height);
 					setHeightFeet(feet.toString());
 					setHeightInches(inches.toString());
+					setHeightCmInput(Math.round(userData.height).toString());
+				}
+
+				if (userData.activity_level) {
+					setActivityLevel(userData.activity_level);
 				}
 			}
 		} catch (error) {
@@ -125,10 +141,13 @@ const EditProfileContent = () => {
 		return age;
 	};
 
-	const convertFeetInchesToCm = (feet: string, inches: string): number => {
-		const totalInches = (parseInt(feet) || 0) * 12 + (parseInt(inches) || 0);
-		return totalInches * 2.54;
-	};
+	const convertFeetInchesToCm = (feet: string, inches: string): number =>
+		feetInchesToCm(parseInt(feet) || 0, parseInt(inches) || 0);
+
+	const enteredHeightCm = (): number =>
+		unitSystem === 'metric'
+			? parseFloat(heightCmInput) || 0
+			: convertFeetInchesToCm(heightFeet, heightInches);
 
 	const validateForm = (): boolean => {
 		if (!firstName.trim()) {
@@ -143,7 +162,7 @@ const EditProfileContent = () => {
 			Alert.alert('Error', 'Date of birth is required');
 			return false;
 		}
-		if (!heightFeet || !heightInches) {
+		if (unitSystem === 'metric' ? !heightCmInput : !heightFeet || !heightInches) {
 			Alert.alert('Error', 'Height is required');
 			return false;
 		}
@@ -156,7 +175,7 @@ const EditProfileContent = () => {
 		setIsSaving(true);
 		try {
 			const age = calculateAge(dobMonth, dobDay, dobYear);
-			const heightCm = convertFeetInchesToCm(heightFeet, heightInches);
+			const heightCm = enteredHeightCm();
 			// Format date as YYYY-MM-DD for database DATE type
 			const dob = `${dobYear}-${dobMonth.padStart(2, '0')}-${dobDay.padStart(2, '0')}`;
 
@@ -169,6 +188,7 @@ const EditProfileContent = () => {
 					dob,
 					age: Number(age),
 					height: Number(heightCm),
+					...(activityLevel ? { activityLevel } : {}),
 				}),
 			});
 
@@ -299,32 +319,83 @@ const EditProfileContent = () => {
 					{/* Height */}
 					<View className="mb-4">
 						<Text className="text-gray-300 text-sm font-JakartaMedium mb-2">Height</Text>
-						<View className="flex-row space-x-2">
-							<View className="flex-1 bg-[#262135] rounded-xl p-4">
+						{unitSystem === 'metric' ? (
+							<View className="bg-[#262135] rounded-xl p-4">
 								<TextInput
-									value={heightFeet}
-									onChangeText={setHeightFeet}
-									placeholder="Feet"
+									value={heightCmInput}
+									onChangeText={setHeightCmInput}
+									placeholder="Centimeters"
 									placeholderTextColor="#666"
-									maxLength={1}
+									maxLength={3}
 									keyboardType="numeric"
 									className="text-white font-JakartaMedium text-base"
 									style={{ color: '#FFFFFF', textAlign: 'center' }}
 								/>
 							</View>
-							<View className="flex-1 bg-[#262135] rounded-xl p-4">
-								<TextInput
-									value={heightInches}
-									onChangeText={setHeightInches}
-									placeholder="Inches"
-									placeholderTextColor="#666"
-									maxLength={2}
-									keyboardType="numeric"
-									className="text-white font-JakartaMedium text-base"
-									style={{ color: '#FFFFFF', textAlign: 'center' }}
-								/>
+						) : (
+							<View className="flex-row space-x-2">
+								<View className="flex-1 bg-[#262135] rounded-xl p-4">
+									<TextInput
+										value={heightFeet}
+										onChangeText={setHeightFeet}
+										placeholder="Feet"
+										placeholderTextColor="#666"
+										maxLength={1}
+										keyboardType="numeric"
+										className="text-white font-JakartaMedium text-base"
+										style={{ color: '#FFFFFF', textAlign: 'center' }}
+									/>
+								</View>
+								<View className="flex-1 bg-[#262135] rounded-xl p-4">
+									<TextInput
+										value={heightInches}
+										onChangeText={setHeightInches}
+										placeholder="Inches"
+										placeholderTextColor="#666"
+										maxLength={2}
+										keyboardType="numeric"
+										className="text-white font-JakartaMedium text-base"
+										style={{ color: '#FFFFFF', textAlign: 'center' }}
+									/>
+								</View>
 							</View>
-						</View>
+						)}
+					</View>
+				</View>
+
+				{/* Activity Level */}
+				<View className="bg-[#2D2A3F] rounded-2xl p-6 mb-6">
+					<Text className="text-white text-lg font-JakartaSemiBold mb-1">Activity Level</Text>
+					<Text className="text-gray-400 text-xs font-JakartaMedium mb-4">
+						Used to estimate your daily calorie needs
+					</Text>
+					<View style={{ gap: 8 }}>
+						{ACTIVITY_LEVELS.map(level => (
+							<TouchableOpacity
+								key={level.key}
+								onPress={() => setActivityLevel(level.key)}
+								className={`p-4 rounded-xl border ${
+									activityLevel === level.key
+										? 'bg-[#E3BBA1] border-[#E3BBA1]'
+										: 'bg-[#262135] border-transparent'
+								}`}
+							>
+								<Text
+									className={`font-JakartaSemiBold ${
+										activityLevel === level.key ? 'text-black' : 'text-white'
+									}`}
+								>
+									{level.title}
+								</Text>
+								<Text
+									className={`text-xs ${
+										activityLevel === level.key ? 'text-black' : 'text-gray-400'
+									}`}
+								>
+									{getActivityLevelDescription(level.key)}
+								</Text>
+							</TouchableOpacity>
+						))}
 					</View>
 				</View>
 			</ScrollView>

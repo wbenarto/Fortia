@@ -1,8 +1,17 @@
-import { Stack, Tabs } from 'expo-router';
-import { View, Image, ImageSourcePropType } from 'react-native';
+import { withLayoutContext } from 'expo-router';
+import { View, Image, ImageSourcePropType, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+	createMaterialTopTabNavigator,
+	type MaterialTopTabBarProps,
+	type MaterialTopTabNavigationEventMap,
+	type MaterialTopTabNavigationOptions,
+} from '@react-navigation/material-top-tabs';
+import type { ParamListBase, TabNavigationState } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { icons } from '@/constants/index';
 import { Ionicons } from '@expo/vector-icons';
+import QuickLogButton from '@/components/QuickLogButton';
+import { SCREEN_BG } from '@/lib/theme';
 
 const TabIcon = ({
 	iconName,
@@ -44,71 +53,85 @@ const TabIcon = ({
 	</View>
 );
 
+// Pager-backed tabs so a horizontal swipe moves to the adjacent screen. Bottom tabs
+// can't do this; material-top-tabs can, with our own floating pill as the tab bar.
+const { Navigator } = createMaterialTopTabNavigator();
+const Tabs = withLayoutContext<
+	MaterialTopTabNavigationOptions,
+	typeof Navigator,
+	TabNavigationState<ParamListBase>,
+	MaterialTopTabNavigationEventMap
+>(Navigator);
+
+const TAB_ICONS: Record<string, string> = {
+	home: 'stats-chart',
+	meal: 'fast-food',
+	workout: 'barbell',
+	social: 'earth-outline',
+};
+
+const FloatingTabBar = ({ state, descriptors, navigation }: MaterialTopTabBarProps) => (
+	<View
+		style={{
+			position: 'absolute',
+			left: 20,
+			right: 120,
+			bottom: 20,
+			height: 60,
+			borderRadius: 50,
+			overflow: 'hidden',
+		}}
+	>
+		<BlurView intensity={20} tint="light" style={[StyleSheet.absoluteFill, { borderRadius: 50 }]} />
+		<View className="flex-1 flex-row items-center justify-around">
+			{state.routes.map((route, index) => {
+				const focused = state.index === index;
+				const onPress = () => {
+					const event = navigation.emit({
+						type: 'tabPress',
+						target: route.key,
+						canPreventDefault: true,
+					});
+					if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+				};
+				return (
+					<TouchableOpacity
+						key={route.key}
+						onPress={onPress}
+						activeOpacity={0.8}
+						accessibilityRole="button"
+						accessibilityState={focused ? { selected: true } : {}}
+						accessibilityLabel={descriptors[route.key].options.title}
+					>
+						<TabIcon focused={focused} iconName={TAB_ICONS[route.name]} />
+					</TouchableOpacity>
+				);
+			})}
+		</View>
+	</View>
+);
+
 const Layout = () => {
 	return (
-		<Tabs
-			initialRouteName="home"
-			screenOptions={{
-				tabBarActiveTintColor: 'white',
-				tabBarInactiveTintColor: 'white',
-				tabBarShowLabel: false,
-				tabBarStyle: {
-					backgroundColor: 'transparent',
-					display: 'flex',
-					borderRadius: 50,
-					marginHorizontal: 20,
-					marginRight: 120,
-					paddingTop: 5,
-					overflow: 'hidden',
-					padding: 0,
-					marginBottom: 20,
-					height: 60,
-					flexDirection: 'row',
-					justifyContent: 'space-between',
-					alignItems: 'center',
-					position: 'absolute',
-					elevation: 0,
-					shadowOpacity: 0,
-					borderTopWidth: 0,
-				},
-				tabBarBackground: () => (
-					<BlurView intensity={20} tint="light" style={{ flex: 1, borderRadius: 50 }} />
-				),
-			}}
-		>
-			<Tabs.Screen
-				name="home"
-				options={{
-					title: 'Home',
-					headerShown: false,
-					tabBarIcon: ({ focused }) => <TabIcon focused={focused} iconName="stats-chart" />,
+		<View style={{ flex: 1 }}>
+			<Tabs
+				initialRouteName="home"
+				tabBarPosition="bottom"
+				tabBar={props => <FloatingTabBar {...props} />}
+				screenOptions={{
+					sceneStyle: { backgroundColor: SCREEN_BG },
+					// Mount lazily, but keep the neighbours ready so a swipe never lands on a blank screen
+					lazy: true,
+					lazyPreloadDistance: 1,
 				}}
-			/>
-			<Tabs.Screen
-				name="meal"
-				options={{
-					title: 'Meal',
-					headerShown: false,
-					tabBarIcon: ({ focused }) => <TabIcon focused={focused} iconName="fast-food" />,
-				}}
-			/>
-			<Tabs.Screen
-				name="workout"
-				options={{
-					title: 'Workout',
-					headerShown: false,
-					tabBarIcon: ({ focused }) => <TabIcon focused={focused} iconName="barbell" />,
-				}}
-			/>
-			<Tabs.Screen
-				name="social"
-				options={{
-					title: 'Social',
-					headerShown: false,
-					tabBarIcon: ({ focused }) => <TabIcon focused={focused} iconName="earth-outline" />,
-				}}
-			/>
-		</Tabs>
+			>
+				<Tabs.Screen name="home" options={{ title: 'Home' }} />
+				<Tabs.Screen name="meal" options={{ title: 'Meal' }} />
+				<Tabs.Screen name="workout" options={{ title: 'Workout' }} />
+				<Tabs.Screen name="social" options={{ title: 'Social' }} />
+			</Tabs>
+			<QuickLogButton />
+		</View>
 	);
 };
 

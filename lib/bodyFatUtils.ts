@@ -123,6 +123,26 @@ export function calculateBMI(weight: number, height: number): number {
 }
 
 /**
+ * Get the healthy weight range (BMI 18.5–24.9) for a given height
+ * @param height - Height in inches
+ * @returns Object with min and max weight in pounds
+ */
+export function getHealthyWeightRangeLbs(height: number): { min: number; max: number } {
+	if (!height || height <= 0) {
+		return { min: 0, max: 0 };
+	}
+
+	const heightInM = height * 0.0254;
+	const minKg = 18.5 * heightInM * heightInM;
+	const maxKg = 24.9 * heightInM * heightInM;
+
+	return {
+		min: Math.round(minKg / 0.453592),
+		max: Math.round(maxKg / 0.453592),
+	};
+}
+
+/**
  * Get BMI category and description
  * @param bmi - BMI value
  * @returns Object with category and description

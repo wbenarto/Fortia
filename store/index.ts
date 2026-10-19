@@ -52,3 +52,31 @@ export const useGoalsStore = create<GoalsStore>(set => ({
 	triggerGoalsUpdate: () => set({ goalsUpdated: true }),
 	resetGoalsUpdate: () => set({ goalsUpdated: false }),
 }));
+
+// Store for the quick-log FAB — signals which logging modal a host screen
+// should open once it becomes focused.
+export type QuickLogType = 'meal' | 'weight' | 'activity';
+
+interface QuickLogStore {
+	pending: QuickLogType | null;
+	requestLog: (type: QuickLogType) => void;
+	consume: () => void;
+}
+
+export const useQuickLogStore = create<QuickLogStore>(set => ({
+	pending: null,
+	requestLog: type => set({ pending: type }),
+	consume: () => set({ pending: null }),
+}));
+
+// Bumped by fetchAPI after every successful write. Tab screens compare it on focus
+// (see useRefetchOnFocus) so swiping between tabs only refetches when data changed.
+interface DataVersionStore {
+	version: number;
+	bump: () => void;
+}
+
+export const useDataVersionStore = create<DataVersionStore>(set => ({
+	version: 0,
+	bump: () => set(state => ({ version: state.version + 1 })),
+}));

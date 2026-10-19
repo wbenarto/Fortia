@@ -1,54 +1,21 @@
-import Navbar from '@/components/Navbar';
-import { SignedIn, useUser } from '@clerk/clerk-expo';
+import { SignedIn } from '@clerk/clerk-expo';
 import { View, Text, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import WeeklyCalendar from '@/components/WeeklyCalendar';
 import ActivityTracking from '@/components/ActivityTracking';
 import { Ionicons } from '@expo/vector-icons';
 import CustomButton from '@/components/CustomButton';
 import WorkoutScheduleCard from '@/components/WorkoutScheduleCard';
 import NewWorkoutModal from '@/components/NewWorkoutModal';
-import { fetchAPI } from '@/lib/fetch';
+import { SCREEN_BG } from '@/lib/theme';
 
 const Workout = () => {
 	const insets = useSafeAreaInsets();
-	const { user } = useUser();
 	const [workoutModal, setWorkoutModal] = useState(false);
 	const [refreshTrigger, setRefreshTrigger] = useState(0);
 
 	const handleWorkoutModal = () => {
 		setWorkoutModal(!workoutModal);
-	};
-
-	const handleSaveWorkout = async (workoutData: any) => {
-		try {
-			if (!user?.id) {
-				console.error('No user ID available');
-				return;
-			}
-
-			const response = await fetchAPI('/api/workouts', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					...workoutData,
-					clerkId: user.id,
-				}),
-			});
-
-			if (response.success) {
-				console.log('Workout saved successfully:', response);
-				// Trigger refresh of ActivityTracking component
-				setRefreshTrigger(prev => prev + 1);
-			} else {
-				console.error('Failed to save workout:', response.error);
-			}
-		} catch (error) {
-			console.error('Error saving workout:', error);
-		}
 	};
 
 	const scheduledWorkout = [
@@ -199,52 +166,24 @@ const Workout = () => {
 		},
 	];
 	return (
-		<View className="flex-1 bg-[#ffffff]" style={{ paddingTop: insets.top }}>
+		<View
+			className="flex-1"
+			style={{ flex: 1, backgroundColor: SCREEN_BG, paddingTop: insets.top }}
+		>
 			<SignedIn>
-				<ScrollView stickyHeaderIndices={[0]} className="w-full h-full ">
-					<Navbar />
-					<View className="w-full pb-20">
-						<WeeklyCalendar />
-						<View className="flex flex-row justify-center items-center  px-2">
-							{/* <View className="flex flex-row justify-between items-center">
-								<CustomButton
-									title="Schedule a Workout"
-									textVariant="primary"
-									className="rounded-full px-6 s py-3 border-[1px] border-[#E3BBA1] border-solid bg-white "
-									IconLeft={() => <Ionicons name="add" size={20} color="#E3BBA1" />}
-									onPress={handleWorkoutModal}
-								/>
-							</View> */}
-							{/* <View className="flex flex-row justify-between items-center">
-								<CustomButton
-									title="AI Assistant"
-									textVariant="primary"
-									className="rounded-full px-6 s py-3 border-[1px] border-[#E3BBA1] border-solid bg-white"
-									IconLeft={() => <Ionicons name="mic-outline" size={20} color="#E3BBA1" />}
-									onPress={() => {}}
-								/>
-							</View> */}
-						</View>
-
-						<ActivityTracking refreshTrigger={refreshTrigger} />
-						{/* <View className="w-full px-4">
-							<View className="flex flex-row justify-between items-center ">
-								<Text className="font-JakartaSemiBold text-lg">This Week's Workout</Text>
-							</View>
-							<View></View>
-							{scheduledWorkout.map(workout => (
-								<WorkoutScheduleCard key={workout.id} workout={workout} />
-							))}
-						</View> */}
-					</View>
+				<ScrollView
+					className="w-full h-full"
+					style={{ backgroundColor: SCREEN_BG }}
+					contentContainerStyle={{ paddingTop: 16, paddingBottom: 120, backgroundColor: SCREEN_BG }}
+				>
+					<ActivityTracking refreshTrigger={refreshTrigger} />
 				</ScrollView>
 
 				{/* New Workout Modal */}
 				<NewWorkoutModal
 					isVisible={workoutModal}
 					onClose={() => setWorkoutModal(false)}
-					onSave={handleSaveWorkout}
-					userId={user?.id}
+					onSaved={() => setRefreshTrigger(prev => prev + 1)}
 				/>
 			</SignedIn>
 		</View>

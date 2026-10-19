@@ -9,7 +9,7 @@ export default {
 		},
 		platforms: ['ios', 'web'],
 		entryPoint: 'app/index.tsx',
-		version: '1.0.2',
+		version: '1.0.3',
 		buildNumber: '61',
 		orientation: 'portrait',
 		icon: './assets/icons/fortia-white-icon.png',
@@ -25,7 +25,7 @@ export default {
 		updates: {
 			url: 'https://u.expo.dev/061a67d8-c8d4-4d24-b007-4c4b50e330ee',
 		},
-		runtimeVersion: '1.0.2',
+		runtimeVersion: '1.0.3',
 		ios: {
 			supportsTablet: true,
 			buildNumber: '61',

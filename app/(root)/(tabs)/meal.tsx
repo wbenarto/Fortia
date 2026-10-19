@@ -1,71 +1,40 @@
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { useState, useEffect, useRef } from 'react';
-import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo';
-import ReactNativeModal from 'react-native-modal';
-import WeeklyCalendar from '@/components/WeeklyCalendar';
-import Navbar from '@/components/Navbar';
-import MacrosTracking from '@/components/MacrosTracking';
+import { View, ScrollView } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { SignedIn, useUser } from '@clerk/clerk-expo';
+import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
+import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import SwipeableFoodCard from '@/components/SwipeableFoodCard';
-import SuggestedMeals from '@/components/SuggestedMeals';
+import FoodLogCard, { type LoggedMeal, type MacroGoals } from '@/components/FoodLogCard';
+import LogMealModal from '@/components/LogMealModal';
 import { fetchAPI } from '@/lib/fetch';
 import { getTodayDate } from '@/lib/dateUtils';
-
-interface Meal {
-	id: string;
-	user_id: string;
-	food_name: string;
-	portion_size: string;
-	calories: number;
-	protein: number;
-	carbs: number;
-	fats: number;
-	fiber: number;
-	sugar: number;
-	sodium: number;
-	confidence_score: number;
-	meal_type: string;
-	ingredients: string[][];
-	created_at: string;
-	updated_at: string;
-}
-
-interface FoodItem {
-	name: string;
-	weight: string;
-	calories: number;
-	protein: number;
-	carbs: number;
-	fats: number;
-	mealType: string;
-	ingredients: string[][];
-}
+import { useQuickLogStore } from '@/store';
+import { SCREEN_BG } from '@/lib/theme';
 
 const Meal = () => {
-	const [addMealModal, setAddMealModal] = useState(false);
-	const [meals, setMeals] = useState<Meal[]>([]);
+	const [meals, setMeals] = useState<LoggedMeal[]>([]);
 	const [isLoadingMeals, setIsLoadingMeals] = useState(false);
 	const [error, setError] = useState('');
+	const [calorieGoal, setCalorieGoal] = useState<number | undefined>();
+	const [macroGoals, setMacroGoals] = useState<MacroGoals | undefined>();
+	const [logMealModal, setLogMealModal] = useState(false);
+	// No date picker on this screen — always today, re-read on focus so it rolls over at midnight
+	const [today, setToday] = useState(getTodayDate());
 
 	const insets = useSafeAreaInsets();
 	const { user } = useUser();
+	const isFocused = useIsFocused();
+	const quickLogPending = useQuickLogStore(s => s.pending);
+	const consumeQuickLog = useQuickLogStore(s => s.consume);
 
-	// Fetch meals on component mount
-	useEffect(() => {
-		if (user?.id) {
-			fetchMeals();
-		}
-	}, [user?.id]);
-
-	const fetchMeals = async () => {
+	const fetchMeals = useCallback(async (date: string = today) => {
 		if (!user?.id) return;
 
 		setIsLoadingMeals(true);
 		setError('');
 
 		try {
-			const today = getTodayDate();
-			const response = await fetchAPI(`/api/meals?clerkId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/api/meals?clerkId=${user.id}&date=${date}`, {
 				method: 'GET',
 			});
 
@@ -82,54 +51,49 @@ const Meal = () => {
 		} finally {
 			setIsLoadingMeals(false);
 		}
-	};
+	}, [user?.id, today]);
 
-	// Transform database meals to Food component format
-	const transformMealsToFoodItems = (meals: Meal[]): FoodItem[] => {
-		const mealTypeOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
-		const foodList = meals.map(meal => {
-			return {
-				name: meal.food_name,
-				weight: meal.portion_size,
-				calories: meal.calories,
-				protein: meal.protein,
-				carbs: meal.carbs,
-				fats: meal.fats,
-				mealType: meal.meal_type,
-				ingredients: meal.ingredients || [],
-			};
-		});
-
-		return foodList.sort((a, b) => {
-			const aIndex = mealTypeOrder.indexOf(a.mealType);
-			const bIndex = mealTypeOrder.indexOf(b.mealType);
-
-			const aOrder = aIndex === -1 ? mealTypeOrder.length : aIndex;
-			const bOrder = bIndex === -1 ? mealTypeOrder.length : bIndex;
-
-			return aOrder - bOrder;
-		});
-	};
-
-	const foodItems = transformMealsToFoodItems(meals);
-
-	// Callback to refresh meals when a new meal is logged
-	const handleMealLogged = () => {
-		fetchMeals();
-	};
-
-	// Reference to MacrosTracking refresh function
-	const macrosRefreshRef = useRef<{ refresh: () => void } | null>(null);
-
-	// Callback to refresh macros when a meal is deleted
-	const handleMealDeleted = () => {
-		// Call the MacrosTracking refresh function directly
-		if (macrosRefreshRef.current) {
-			macrosRefreshRef.current.refresh();
+	// daily_calories is recomputed server-side on every profile/goal write, so it's the
+	// same target the home screen shows. No goal → the card just hides the target UI.
+	const fetchGoals = useCallback(async () => {
+		if (!user?.id) return;
+		try {
+			const response = await fetchAPI(`/api/user?clerkId=${user.id}`, { method: 'GET' });
+			const data = response?.data;
+			const calories = Math.round(Number(data?.daily_calories) || 0);
+			setCalorieGoal(calories > 0 ? calories : undefined);
+			setMacroGoals(
+				calories > 0
+					? {
+							protein: Math.round(Number(data.daily_protein) || 0),
+							carbs: Math.round(Number(data.daily_carbs) || 0),
+							fats: Math.round(Number(data.daily_fats) || 0),
+						}
+					: undefined
+			);
+		} catch (error) {
+			console.error('Failed to fetch nutrition goals:', error);
 		}
-	};
+	}, [user?.id]);
 
-	// Handle meal deletion
+	useRefetchOnFocus(
+		useCallback(() => {
+			const date = getTodayDate();
+			setToday(date);
+			fetchMeals(date);
+			fetchGoals();
+		}, [fetchMeals, fetchGoals]),
+		user?.id ?? ''
+	);
+
+	// Open the meal modal when the quick-log FAB (or the card's "Add" buttons) request it
+	useEffect(() => {
+		if (quickLogPending === 'meal' && isFocused && !logMealModal) {
+			setLogMealModal(true);
+			consumeQuickLog();
+		}
+	}, [quickLogPending, isFocused]);
+
 	const handleDeleteMeal = async (mealId: string) => {
 		try {
 			const response = await fetchAPI(`/api/meals?id=${mealId}`, {
@@ -137,12 +101,8 @@ const Meal = () => {
 			});
 
 			if (response.success) {
-				// Remove the meal from local state
 				setMeals(prevMeals => prevMeals.filter(meal => meal.id !== mealId));
-				// Refresh meals list
-				handleMealLogged();
-				// Trigger macros refresh immediately
-				handleMealDeleted();
+				fetchMeals();
 			} else {
 				console.error('Failed to delete meal:', response.error);
 			}
@@ -152,55 +112,30 @@ const Meal = () => {
 	};
 
 	return (
-		<View className="flex-1 bg-[#ffffff]" style={{ paddingTop: insets.top }}>
+		<View className="flex-1" style={{ flex: 1, backgroundColor: SCREEN_BG, paddingTop: insets.top }}>
 			<SignedIn>
-				<ScrollView stickyHeaderIndices={[0]} className="w-full h-full">
-					<Navbar />
-					<View className="w-full pb-20">
-						<WeeklyCalendar />
-						<MacrosTracking onMealLogged={handleMealLogged} ref={macrosRefreshRef} />
-						<View className="w-full ">
-							<View className="flex flex-row justify-between items-center px-4">
-								<Text className="font-JakartaSemiBold text-lg">Today's Food Log</Text>
-							</View>
-							<View className="px-4   ">
-								{isLoadingMeals ? (
-									<View className="py-8 flex items-center justify-center">
-										<ActivityIndicator size="large" color="#E3BBA1" />
-										<Text className="text-gray-500 mt-2">Loading meals...</Text>
-									</View>
-								) : error ? (
-									<View className="py-8 flex items-center justify-center">
-										<Text className="text-red-500 text-center">{error}</Text>
-										<TouchableOpacity
-											onPress={fetchMeals}
-											className="mt-2 px-4 py-2 bg-[#E3BBA1] rounded-lg"
-										>
-											<Text className="text-white font-JakartaSemiBold">Retry</Text>
-										</TouchableOpacity>
-									</View>
-								) : foodItems.length === 0 ? (
-									<View className="py-8 flex items-center justify-center">
-										<Text className="text-gray-500 text-center">No meals logged today</Text>
-										<Text className="text-gray-400 text-sm text-center mt-1">
-											Log your first meal to see it here
-										</Text>
-									</View>
-								) : (
-									foodItems.map((food, index) => (
-										<SwipeableFoodCard
-											key={meals[index].id}
-											food={food}
-											mealId={meals[index].id}
-											onDelete={handleDeleteMeal}
-										/>
-									))
-								)}
-							</View>
-						</View>
-						{/* <SuggestedMeals /> */}
-					</View>
+				<ScrollView
+					className="w-full h-full"
+					style={{ backgroundColor: SCREEN_BG }}
+					contentContainerStyle={{ paddingTop: 16, paddingBottom: 120, backgroundColor: SCREEN_BG }}
+				>
+					<FoodLogCard
+						meals={meals}
+						calorieGoal={calorieGoal}
+						macroGoals={macroGoals}
+						isToday
+						isLoading={isLoadingMeals}
+						error={error}
+						onRetry={fetchMeals}
+						onDelete={handleDeleteMeal}
+					/>
 				</ScrollView>
+				<LogMealModal
+					visible={logMealModal}
+					date={today}
+					onClose={() => setLogMealModal(false)}
+					onMealLogged={fetchMeals}
+				/>
 			</SignedIn>
 		</View>
 	);

@@ -72,7 +72,7 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 			case 'gain_muscle':
 				return "We're providing a calorie surplus to support muscle growth and recovery. Focus on hitting your protein goal while keeping fats and carbs under target.";
 			case 'improve_fitness':
-				return "We're maintaining a slight deficit to help you improve body composition. Focus on hitting your protein goal while keeping fats and carbs under target.";
+				return "We're keeping you at maintenance calories so you can train hard and improve body composition. Focus on hitting your protein goal while keeping fats and carbs under target.";
 			case 'maintain':
 				return "We're maintaining your current weight with balanced calorie intake. Focus on hitting your protein goal while keeping fats and carbs under target.";
 			default:

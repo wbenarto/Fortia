@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { getGeminiGenerateContentUrl, getGeminiGenerationConfig, extractGeminiResponseText } from '@/lib/gemini';
 
 // Load environment variables
 dotenv.config();
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
   }
 }`;
 
-		const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+		const GEMINI_API_URL = getGeminiGenerateContentUrl(GEMINI_API_KEY);
 
 		// Use retry logic for the Gemini API call
 		const response = await retryWithBackoff(async () => {
@@ -106,12 +107,12 @@ export async function POST(request: Request) {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					contents: [{ parts: [{ text: prompt }] }],
-					generationConfig: {
+					generationConfig: getGeminiGenerationConfig({
 						temperature: 0.1,
 						maxOutputTokens: 2000,
 						topP: 0.8,
 						topK: 40,
-					},
+					}),
 				}),
 			});
 
@@ -125,7 +126,7 @@ export async function POST(request: Request) {
 		});
 
 		const data = await response.json();
-		const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+		const text = extractGeminiResponseText(data);
 
 		let result;
 		try {

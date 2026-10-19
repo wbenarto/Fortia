@@ -5,13 +5,14 @@ import Swiper from 'react-native-swiper';
 import { useRef, useState } from 'react';
 import { onboardingPages } from '@/constants';
 import CustomButton from '@/components/CustomButton';
+import { SCREEN_BG } from '@/lib/theme';
 
 const Onboarding = () => {
 	const swiperRef = useRef<Swiper>(null);
 	const [activeIndex, setActiveIndex] = useState(0);
 	const isLastSlide = activeIndex === onboardingPages.length - 1;
 	return (
-		<SafeAreaView className="h-full bg-white">
+		<SafeAreaView className="h-full" style={{ backgroundColor: SCREEN_BG }}>
 			{/* Background Image */}
 			{/* <Image
 				source={require('@/assets/images/half-dome.jpg')}

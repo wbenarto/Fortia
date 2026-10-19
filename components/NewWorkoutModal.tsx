@@ -1,635 +1,453 @@
-import React, { useState, useEffect } from 'react';
-import {
-	View,
-	Text,
-	TouchableOpacity,
-	ActivityIndicator,
-	ScrollView,
-	Alert,
-	KeyboardAvoidingView,
-	Platform,
-} from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import ReactNativeModal from 'react-native-modal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import CalendarPicker from 'react-native-calendar-picker';
+import { useUser } from '@clerk/clerk-expo';
 import { fetchAPI } from '@/lib/fetch';
-import { getLocalDate, getTodayDate } from '@/lib/dateUtils';
+import { getTodayDate } from '@/lib/dateUtils';
+import { useCyclingPlaceholder } from '@/lib/useCyclingPlaceholder';
 
-import CustomButton from './CustomButton';
-import InputField from './InputField';
+type ModalView = 'list' | 'new' | 'result';
 
-interface Exercise {
-	id: string;
+// Plain activity names plus a duration, distance or sets×reps — the shape the
+// exercise-analysis prompt estimates calories from most reliably.
+const EXERCISE_PLACEHOLDERS = [
+	{ exercise: 'Running', amount: '30 min' },
+	{ exercise: 'Cycling', amount: '45 min' },
+	{ exercise: 'Walking', amount: '2 miles' },
+	{ exercise: 'Bench press', amount: '3x10 135 lb' },
+	{ exercise: 'Swimming laps', amount: '20 min' },
+	{ exercise: 'Squats', amount: '4x8 185 lb' },
+	{ exercise: 'Yoga', amount: '1 hour' },
+	{ exercise: 'Rowing machine', amount: '2000 m' },
+	{ exercise: 'Push-ups', amount: '3x20' },
+	{ exercise: 'Pickleball', amount: '1 hour' },
+	{ exercise: 'Hiking', amount: '5 miles' },
+	{ exercise: 'Jump rope', amount: '15 min' },
+];
+
+const RECENT_LIMIT = 15;
+
+interface ExerciseEntry {
 	name: string;
-	sets: string;
-	reps: string;
-	weight: string;
-	duration: string; // Will store either cardio duration or strength format: "{weight} lbs * {reps} reps * {sets} sets"
+	duration: string;
+	calories_burned: number | null;
 }
 
-interface NewWorkoutModalProps {
+interface ExerciseRow {
+	exercise: string;
+	amount: string;
+}
+
+const roundValue = (value: unknown) => Math.round(Number(value) || 0);
+
+const eyebrowStyle = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
+
+const inputClass =
+	'text-sm font-JakartaMedium text-[#262135] border-b-[1px] border-[#E3BBA1] pb-2 mb-5';
+
+const emptyRow = (): ExerciseRow => ({ exercise: '', amount: '' });
+
+// Logging an exercise: pick a recent one to re-log in one tap, or enter new ones and
+// they're analyzed and saved for today. Each exercise is its own entry — no dates,
+// no multi-exercise sessions.
+const NewWorkoutModal = ({
+	isVisible,
+	onClose,
+	onSaved,
+}: {
 	isVisible: boolean;
 	onClose: () => void;
-	onSave: (workout: any) => void;
-	userId?: string;
-}
+	onSaved?: () => void;
+}) => {
+	const { user } = useUser();
+	const insets = useSafeAreaInsets();
+	const [view, setView] = useState<ModalView>('list');
+	const [search, setSearch] = useState('');
+	const [recents, setRecents] = useState<ExerciseEntry[]>([]);
+	const [rows, setRows] = useState<ExerciseRow[]>([emptyRow()]);
+	const [isSaving, setIsSaving] = useState(false);
+	const [error, setError] = useState('');
+	const [saved, setSaved] = useState<ExerciseEntry[]>([]);
+	const { index: placeholderIndex, opacity: placeholderOpacity } = useCyclingPlaceholder(
+		EXERCISE_PLACEHOLDERS.length
+	);
 
-type TabType = 'exercise' | 'barbell';
-
-const NewWorkoutModal = ({ isVisible, onClose, onSave, userId }: NewWorkoutModalProps) => {
-	// Exercise tab state
-	const [exerciseTitle, setExerciseTitle] = useState('');
-	const [exerciseDuration, setExerciseDuration] = useState('');
-
-	// Barbell tab state
-	const [workoutTitle, setWorkoutTitle] = useState('');
-	const [exercises, setExercises] = useState<Exercise[]>([]);
-
-	// Shared state
-	const [isLoading, setIsLoading] = useState(false);
-	const [isAnalyzing, setIsAnalyzing] = useState(false);
-	const [activeTab, setActiveTab] = useState<TabType>('exercise');
-	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-	const [showCalendar, setShowCalendar] = useState(false);
-	const [showExerciseDetails, setShowExerciseDetails] = useState(true); // For toggling between weight/reps/sets and duration mode
-
-	// Reset to exercise tab when modal opens
-	useEffect(() => {
-		if (isVisible) {
-			setActiveTab('exercise');
+	// Most recent first, one entry per name + amount, from everything the user has logged
+	const fetchRecents = async () => {
+		if (!user?.id) return;
+		try {
+			const response = await fetchAPI(`/api/workouts?clerkId=${user.id}`, { method: 'GET' });
+			const sessions: any[] = response.success ? response.workouts || [] : [];
+			const seen = new Set<string>();
+			const entries: ExerciseEntry[] = [];
+			sessions
+				.slice()
+				.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+				.forEach(session =>
+					(session.exercises || []).forEach((exercise: any) => {
+						const name = String(exercise.name || '').trim();
+						const duration = String(exercise.duration || '').trim();
+						const key = `${name.toLowerCase()}|${duration.toLowerCase()}`;
+						if (!name || !duration || seen.has(key)) return;
+						seen.add(key);
+						entries.push({ name, duration, calories_burned: exercise.calories_burned });
+					})
+				);
+			setRecents(entries.slice(0, RECENT_LIMIT));
+		} catch (err) {
+			console.error('Failed to load recent exercises:', err);
+			setRecents([]);
 		}
+	};
+
+	useEffect(() => {
+		if (!isVisible) return;
+		setView('list');
+		setSearch('');
+		setRows([emptyRow()]);
+		setError('');
+		setSaved([]);
+		fetchRecents();
 	}, [isVisible]);
 
-	// Handle tab switching and clear forms
-	const handleTabSwitch = (newTab: TabType) => {
-		if (newTab !== activeTab) {
-			// Clear forms when switching tabs
-			if (newTab === 'exercise') {
-				setWorkoutTitle('');
-				setExercises([]);
-			} else {
-				setExerciseTitle('');
-				setExerciseDuration('');
-			}
-			setActiveTab(newTab);
-		}
-	};
+	const trimmedSearch = search.trim().toLowerCase();
+	const visibleRecents = trimmedSearch
+		? recents.filter(entry => entry.name.toLowerCase().includes(trimmedSearch))
+		: recents;
 
-	const addExercise = () => {
-		const newExercise: Exercise = {
-			id: Date.now().toString(),
-			name: '',
-			sets: '',
-			reps: '',
-			weight: '',
-			duration: '',
-		};
-		setExercises([...exercises, newExercise]);
-	};
+	const postExercise = (entry: ExerciseEntry) =>
+		fetchAPI('/api/workouts', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				clerkId: user?.id,
+				type: 'exercise',
+				title: entry.name,
+				duration: entry.duration,
+				calories_burned: entry.calories_burned,
+				selectedDate: getTodayDate(),
+			}),
+		});
 
-	const updateExercise = (id: string, field: keyof Exercise, value: string) => {
-		setExercises(
-			exercises.map(exercise => {
-				if (exercise.id === id) {
-					const updatedExercise = { ...exercise, [field]: value };
-
-					// Auto-format duration for strength training
-					if (showExerciseDetails && (field === 'weight' || field === 'reps' || field === 'sets')) {
-						const weight = field === 'weight' ? value : exercise.weight;
-						const reps = field === 'reps' ? value : exercise.reps;
-						const sets = field === 'sets' ? value : exercise.sets;
-
-						// Only format if we have all three values
-						if (weight && reps && sets) {
-							updatedExercise.duration = `${weight} lbs * ${reps} reps * ${sets} sets`;
-						} else {
-							updatedExercise.duration = '';
-						}
-					}
-
-					return updatedExercise;
-				}
-				return exercise;
-			})
-		);
-	};
-
-	const removeExercise = (id: string) => {
-		setExercises(exercises.filter(exercise => exercise.id !== id));
-	};
-
-	const handleSave = async () => {
-		// Get current tab's data
-		const currentTitle = activeTab === 'exercise' ? exerciseTitle : workoutTitle;
-
-		// Validation for both tabs
-		if (!currentTitle.trim()) {
-			// Show error for missing title
-			return;
-		}
-
-		// Additional validation for exercise tab
-		if (activeTab === 'exercise' && !exerciseDuration.trim()) {
-			// Show error for missing duration
-			return;
-		}
-
-		// Additional validation for barbell tab
-		if (activeTab === 'barbell') {
-			const validExercises = exercises.filter(
-				exercise =>
-					exercise.name.trim() !== '' &&
-					(showExerciseDetails
-						? exercise.weight.trim() !== '' &&
-							exercise.reps.trim() !== '' &&
-							exercise.sets.trim() !== ''
-						: exercise.duration.trim() !== '')
-			);
-			if (validExercises.length === 0) {
-				// Show error for missing exercises or incomplete exercise data
+	const logRecent = async (entry: ExerciseEntry) => {
+		if (!user?.id) return;
+		setError('');
+		try {
+			const response = await postExercise(entry);
+			if (!response.success) {
+				setError(response.error || 'Failed to log exercise');
 				return;
 			}
-		}
-
-		setIsLoading(true);
-		try {
-			let calories_burned = null;
-			let analyzedExercises = [];
-
-			// For single exercises, analyze calories first
-			if (activeTab === 'exercise') {
-				setIsAnalyzing(true);
-				try {
-					const analysisResponse = await fetchAPI('/api/exercise-analysis', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							exerciseDescription: currentTitle.trim(),
-							duration: exerciseDuration,
-							userId: userId || 'temp-user-id',
-						}),
-					});
-
-					if (analysisResponse.success) {
-						calories_burned = analysisResponse.data.calories_burned;
-					} else {
-						console.error('Exercise analysis failed:', analysisResponse.error);
-						// Continue without calories if analysis fails
-					}
-				} catch (error) {
-					console.error('Error analyzing exercise:', error);
-					// Continue without calories if analysis fails
-				} finally {
-					setIsAnalyzing(false);
-				}
-			}
-
-			// For barbell sessions, analyze each exercise individually
-			if (activeTab === 'barbell') {
-				setIsAnalyzing(true);
-				const validExercises = exercises.filter(
-					exercise =>
-						exercise.name.trim() !== '' &&
-						(showExerciseDetails
-							? exercise.weight.trim() !== '' &&
-								exercise.reps.trim() !== '' &&
-								exercise.sets.trim() !== ''
-							: exercise.duration.trim() !== '')
-				);
-
-				// Analyze each exercise for calories
-				for (let i = 0; i < validExercises.length; i++) {
-					const exercise = validExercises[i];
-					try {
-						const analysisResponse = await fetchAPI('/api/exercise-analysis', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							body: JSON.stringify({
-								exerciseDescription: exercise.name.trim(),
-								duration: exercise.duration,
-								userId: userId || 'temp-user-id',
-							}),
-						});
-
-						if (analysisResponse.success) {
-							analyzedExercises.push({
-								...exercise,
-								calories_burned: analysisResponse.data.calories_burned,
-							});
-						} else {
-							console.error(`Exercise ${i + 1} analysis failed:`, analysisResponse.error);
-							// Continue without calories if analysis fails
-							analyzedExercises.push({
-								...exercise,
-								calories_burned: null,
-							});
-						}
-					} catch (error) {
-						console.error(`Error analyzing exercise ${i + 1}:`, error);
-						// Continue without calories if analysis fails
-						analyzedExercises.push({
-							...exercise,
-							calories_burned: null,
-						});
-					}
-				}
-				setIsAnalyzing(false);
-			}
-
-			const workoutData = {
-				type: activeTab,
-				title: currentTitle.trim(),
-				selectedDate: selectedDate ? getLocalDate(selectedDate) : getTodayDate(),
-				duration: activeTab === 'exercise' ? exerciseDuration : undefined,
-				calories_burned: calories_burned,
-				exercises: activeTab === 'barbell' ? analyzedExercises : [],
-			};
-
-			await onSave(workoutData);
-
-			// Reset form based on active tab
-			if (activeTab === 'exercise') {
-				setExerciseTitle('');
-				setExerciseDuration('');
-			} else {
-				setWorkoutTitle('');
-				setExercises([]);
-			}
+			onSaved?.();
 			onClose();
-		} catch (error) {
-			console.error('Error saving workout:', error);
-		} finally {
-			setIsLoading(false);
+		} catch (err) {
+			console.error('Log recent exercise error:', err);
+			setError('Failed to log exercise. Please try again.');
 		}
 	};
 
-	const resetForm = () => {
-		setExerciseTitle('');
-		setExerciseDuration('');
-		setWorkoutTitle('');
-		setExercises([]);
-		setSelectedDate(null);
-		setShowCalendar(false);
-		setActiveTab('exercise'); // Always reset to exercise tab
-		onClose();
+	const analyzeCalories = async (row: ExerciseRow): Promise<number | null> => {
+		try {
+			const response = await fetchAPI('/api/exercise-analysis', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					exerciseDescription: row.exercise.trim(),
+					duration: row.amount.trim(),
+					userId: user?.id,
+				}),
+			});
+			return response.success ? roundValue(response.data?.calories_burned) : null;
+		} catch (err) {
+			// Still save the exercise; it just won't count toward calories burned
+			console.error('Exercise analysis failed:', err);
+			return null;
+		}
 	};
 
-	const handleDateSelect = (date: Date) => {
-		setSelectedDate(date);
-		setShowCalendar(false);
+	const saveNew = async () => {
+		if (!user?.id) return;
+
+		const validRows = rows.filter(row => row.exercise.trim() && row.amount.trim());
+		if (validRows.length === 0) {
+			setError('Add at least one exercise with an amount');
+			return;
+		}
+
+		setIsSaving(true);
+		setError('');
+		try {
+			const calories = await Promise.all(validRows.map(analyzeCalories));
+			const entries = validRows.map((row, i) => ({
+				name: row.exercise.trim(),
+				duration: row.amount.trim(),
+				calories_burned: calories[i],
+			}));
+
+			const savedEntries: ExerciseEntry[] = [];
+			for (const entry of entries) {
+				const response = await postExercise(entry);
+				if (response.success) savedEntries.push(entry);
+			}
+
+			if (savedEntries.length === 0) {
+				setError('Failed to save exercise. Please try again.');
+				return;
+			}
+			if (savedEntries.length < entries.length) {
+				setError(`Saved ${savedEntries.length} of ${entries.length} exercises.`);
+			}
+
+			setSaved(savedEntries);
+			setView('result');
+			onSaved?.();
+		} catch (err) {
+			console.error('Save exercise error:', err);
+			setError('Failed to save exercise. Please try again.');
+		} finally {
+			setIsSaving(false);
+		}
 	};
 
-	const formatDate = (date: Date) => {
-		return date.toLocaleDateString('en-US', {
-			weekday: 'short',
-			month: 'short',
-			day: 'numeric',
-		});
+	const updateRow = (index: number, field: keyof ExerciseRow, value: string) => {
+		setRows(rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
 	};
 
-	// Helper function to filter numeric input
-	const filterNumericInput = (value: string) => {
-		return value.replace(/[^0-9]/g, '');
+	const removeRow = (index: number) => {
+		setRows(rows.filter((_, i) => i !== index));
+	};
+
+	const renderErrorText = () =>
+		error ? <Text className="text-xs text-[#E08585] mb-3">{error}</Text> : null;
+
+	const renderCalories = (calories: number | null) =>
+		calories == null ? '— cal' : `${roundValue(calories)} cal`;
+
+	const renderList = () => (
+		<View>
+			<View className="flex-row justify-between items-center mb-5">
+				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Log exercise</Text>
+				<TouchableOpacity onPress={onClose}>
+					<Ionicons name="close" size={24} color="#64748B" />
+				</TouchableOpacity>
+			</View>
+
+			<TextInput
+				value={search}
+				onChangeText={setSearch}
+				placeholder="Search your exercises"
+				placeholderTextColor="#94897E"
+				className={inputClass}
+			/>
+
+			<Text className="text-[10px] font-JakartaSemiBold text-[#94897E] mb-1" style={eyebrowStyle}>
+				{trimmedSearch ? 'Results' : 'Recent'}
+			</Text>
+
+			{visibleRecents.length === 0 ? (
+				<Text className="text-sm text-[#94897E] py-3">
+					{trimmedSearch
+						? 'No matches. Try a new exercise below.'
+						: 'No exercises yet. Log your first one below.'}
+				</Text>
+			) : (
+				visibleRecents.map((entry, index) => (
+					<TouchableOpacity
+						key={`${entry.name}|${entry.duration}`}
+						onPress={() => logRecent(entry)}
+						activeOpacity={0.7}
+						className={`flex-row items-center justify-between py-3 ${
+							index < visibleRecents.length - 1 ? 'border-b-[1px] border-[#F0EBE6]' : ''
+						}`}
+					>
+						<View className="flex-1 pr-3">
+							<Text className="text-sm font-JakartaBold text-[#262135]" numberOfLines={1}>
+								{entry.name}
+							</Text>
+							<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-0.5">
+								{`${entry.duration} · ${renderCalories(entry.calories_burned)}`}
+							</Text>
+						</View>
+						<View className="w-7 h-7 rounded-full bg-[#F9F9F8] border-[1px] border-[#F0EBE6] items-center justify-center">
+							<Ionicons name="add" size={16} color="#262135" />
+						</View>
+					</TouchableOpacity>
+				))
+			)}
+
+			<View className="mt-3">{renderErrorText()}</View>
+		</View>
+	);
+
+	const renderNew = () => (
+		<View>
+			<View className="flex-row justify-between items-center mb-5">
+				<TouchableOpacity
+					onPress={() => {
+						setError('');
+						setView('list');
+					}}
+				>
+					<Ionicons name="chevron-back" size={24} color="#262135" />
+				</TouchableOpacity>
+				<Text className="text-xl font-JakartaExtraBold text-[#262135]">New exercise</Text>
+				<TouchableOpacity onPress={onClose}>
+					<Ionicons name="close" size={24} color="#64748B" />
+				</TouchableOpacity>
+			</View>
+
+			<Text className="text-xs font-JakartaSemiBold text-black mb-1">Exercises</Text>
+			<View className="mb-4">
+				{rows.map((row, index) => (
+					<View key={index} className="flex-row items-center gap-2 mb-3">
+						<View className="flex-1 justify-center">
+							<TextInput
+								value={row.exercise}
+								onChangeText={value => updateRow(index, 'exercise', value)}
+								className="text-sm text-[#262135] border-b-[1px] border-[#F0EBE6] pb-1"
+							/>
+							{!row.exercise && (
+								<Animated.Text
+									pointerEvents="none"
+									style={{ opacity: placeholderOpacity }}
+									className="absolute left-0 pb-1 text-sm text-[#94897E]"
+									numberOfLines={1}
+								>
+									{EXERCISE_PLACEHOLDERS[placeholderIndex].exercise}
+								</Animated.Text>
+							)}
+						</View>
+						<View className="w-28 justify-center">
+							<TextInput
+								value={row.amount}
+								onChangeText={value => updateRow(index, 'amount', value)}
+								className="text-sm text-[#262135] border-b-[1px] border-[#F0EBE6] pb-1"
+							/>
+							{!row.amount && (
+								<Animated.Text
+									pointerEvents="none"
+									style={{ opacity: placeholderOpacity }}
+									className="absolute left-0 pb-1 text-sm text-[#94897E]"
+									numberOfLines={1}
+								>
+									{EXERCISE_PLACEHOLDERS[placeholderIndex].amount}
+								</Animated.Text>
+							)}
+						</View>
+						{rows.length > 1 && (
+							<TouchableOpacity onPress={() => removeRow(index)}>
+								<Ionicons name="close-circle-outline" size={18} color="#94A3B8" />
+							</TouchableOpacity>
+						)}
+					</View>
+				))}
+				<TouchableOpacity onPress={() => setRows([...rows, emptyRow()])}>
+					<Text className="text-xs font-JakartaSemiBold text-[#64748B]">+ Add another</Text>
+				</TouchableOpacity>
+			</View>
+
+			{renderErrorText()}
+
+			<TouchableOpacity
+				onPress={saveNew}
+				disabled={isSaving}
+				className={`rounded-xl py-3 mt-4 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#E3BBA1]'}`}
+			>
+				<Text
+					className={`text-center font-JakartaSemiBold ${isSaving ? 'text-[#64748B]' : 'text-white'}`}
+				>
+					{isSaving ? 'Analyzing and saving…' : 'Save exercise'}
+				</Text>
+			</TouchableOpacity>
+		</View>
+	);
+
+	const renderResult = () => {
+		const total = saved.reduce((sum, entry) => sum + (entry.calories_burned || 0), 0);
+		return (
+			<View>
+				<View className="flex-row justify-between items-center mb-5">
+					<Text className="text-xl font-JakartaExtraBold text-[#262135]">Saved</Text>
+					<TouchableOpacity onPress={onClose}>
+						<Ionicons name="close" size={24} color="#64748B" />
+					</TouchableOpacity>
+				</View>
+
+				<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+					Calories burned
+				</Text>
+				<View className="flex-row items-baseline">
+					<Text className="font-JakartaExtraBold text-[30px] text-[#262135]">{total}</Text>
+					<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">cal</Text>
+				</View>
+
+				<View className="mt-4">
+					{saved.map((entry, index) => (
+						<View key={index} className="flex-row items-center justify-between mt-2">
+							<Text
+								className="font-JakartaMedium text-xs text-[#64748B] flex-1 pr-3"
+								numberOfLines={1}
+							>
+								{entry.name} · {entry.duration}
+							</Text>
+							<Text className="text-[11px] font-JakartaSemiBold text-[#94897E]">
+								{renderCalories(entry.calories_burned)}
+							</Text>
+						</View>
+					))}
+				</View>
+
+				<View className="mt-3">{renderErrorText()}</View>
+			</View>
+		);
 	};
 
 	return (
 		<ReactNativeModal
-			className="w-full h-full m-0 mt-14 "
 			isVisible={isVisible}
-			onBackdropPress={resetForm}
-			avoidKeyboard={true}
+			onBackdropPress={onClose}
+			onBackButtonPress={onClose}
+			avoidKeyboard
+			className="m-0 w-full h-full"
 		>
-			<KeyboardAvoidingView
-				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-				className="flex-1"
-			>
-				<View className="bg-white w-full h-full rounded-2xl">
-					{/* Header */}
-					<View className="p-4 flex bg-white flex-row justify-between items-cente rounded-xl ">
-						<Text className="text-xl text-center font-JakartaSemiBold">Schedule New Workout</Text>
-						<TouchableOpacity onPress={resetForm}>
-							<Ionicons name="close" size={24} color="black" />
-						</TouchableOpacity>
-					</View>
+			<View className="bg-white w-full" style={{ flex: 1, paddingTop: insets.top }}>
+				<ScrollView
+					className="px-6 pt-6"
+					contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}
+					keyboardShouldPersistTaps="handled"
+					showsVerticalScrollIndicator={false}
+					style={{ flex: 1 }}
+				>
+					{view === 'list' && renderList()}
+					{view === 'new' && renderNew()}
+					{view === 'result' && renderResult()}
+				</ScrollView>
 
-					{/* Tabs */}
-					<View className="flex flex-row justify-between items-center my-4 px-20">
-						<View className="items-center">
+				{view !== 'new' && (
+					<View
+						className="px-6 pt-3 border-t-[1px] border-[#F0EBE6]"
+						style={{ paddingBottom: 24 + insets.bottom }}
+					>
+						{view === 'list' ? (
 							<TouchableOpacity
-								onPress={() => handleTabSwitch('exercise')}
-								className={`flex justify-center items-center rounded-full p-6 border-[1px] ${
-									activeTab === 'exercise' ? 'bg-green-200 border-gray-400' : 'bg-white'
-								}`}
+								onPress={() => {
+									setError('');
+									setView('new');
+								}}
+								className="bg-[#E3BBA1] rounded-xl py-3"
 							>
-								<Ionicons
-									name="heart-outline"
-									size={30}
-									color={activeTab === 'exercise' ? 'black' : 'black'}
-								/>
+								<Text className="text-white text-center font-JakartaSemiBold">New exercise</Text>
 							</TouchableOpacity>
-							<Text className="text-xs font-JakartaSemiBold mt-2 text-black">Exercise</Text>
-						</View>
-						<View className="items-center">
-							<TouchableOpacity
-								onPress={() => handleTabSwitch('barbell')}
-								className={`flex justify-center items-center rounded-full p-6 border-[1px] ${
-									activeTab === 'barbell' ? 'bg-blue-200 border-gray-400' : 'bg-white'
-								}`}
-							>
-								<Ionicons
-									name="barbell-outline"
-									size={30}
-									color={activeTab === 'barbell' ? 'black' : 'black'}
-								/>
-							</TouchableOpacity>
-							<Text className="text-xs font-JakartaSemiBold mt-2 text-black">Plan a Session</Text>
-						</View>
-					</View>
-
-					<ScrollView className="flex-1 w-full pt-2 px-4" showsVerticalScrollIndicator={false}>
-						<TouchableOpacity
-							onPress={() => setShowCalendar(!showCalendar)}
-							className="flex flex-row items-center justify-between bg-white rounded-xl border-[1px] border-gray-400 p-2 mb-4"
-						>
-							<Ionicons name="calendar-outline" size={20} color="black" />
-							<Text className="text-xs ml-4 font-JakartaSemiBold text-gray-400">
-								{selectedDate ? formatDate(selectedDate) : 'Select Date'}
-							</Text>
-							<Ionicons
-								name={showCalendar ? 'chevron-up-outline' : 'chevron-down-outline'}
-								size={20}
-								color="black"
-							/>
-						</TouchableOpacity>
-
-						{showCalendar && (
-							<View className="mb-4 bg-white rounded-xl border-[1px] border-gray-400 p-4">
-								<CalendarPicker
-									onDateChange={handleDateSelect}
-									selectedStartDate={selectedDate || undefined}
-									minDate={new Date()} // Disable previous dates
-									selectedDayColor="#E3BBA1"
-									selectedDayTextColor="#FFFFFF"
-									todayBackgroundColor="#F1F5F9"
-									todayTextStyle={{ color: '#000000' }}
-									textStyle={{ fontFamily: 'PlusJakartaSans-Regular' }}
-									previousTitle="Previous"
-									nextTitle="Next"
-									previousTitleStyle={{ color: '#E3BBA1' }}
-									nextTitleStyle={{ color: '#E3BBA1' }}
-									monthTitleStyle={{
-										fontFamily: 'PlusJakartaSans-SemiBold',
-										color: '#000000',
-										fontSize: 16,
-									}}
-									yearTitleStyle={{
-										fontFamily: 'PlusJakartaSans-SemiBold',
-										color: '#000000',
-										fontSize: 16,
-									}}
-									width={320}
-								/>
-							</View>
-						)}
-
-						{activeTab === 'exercise' ? (
-							// Biking tab: only ask for workout title
-							<>
-								<View className="mb-4 bg-white rounded-xl">
-									<InputField
-										label="Exercise Name"
-										labelStyle="text-sm"
-										placeholder="e.g. Morning Bike Ride, Light Run, Swimming, etc..."
-										value={exerciseTitle}
-										onChangeText={setExerciseTitle}
-										className="text-left text-sm placeholder:text-xs border-none"
-									/>
-								</View>
-
-								<View className="mb-4 bg-white rounded-xl">
-									<InputField
-										label="Exercise Duration"
-										labelStyle="text-sm"
-										placeholder="e.g. 30 minutes or 2 miles..."
-										value={exerciseDuration}
-										onChangeText={setExerciseDuration}
-										className="text-left text-sm placeholder:text-xs border-none"
-									/>
-								</View>
-								<View className="mb-4 bg-white rounded-xl">
-									<Text className="text-[8px] text-center font-JakartaLight text-black">
-										The idea is to describe the exercises in a more natural way. E.g. "Ran 3 miles",
-										"Swam 20 laps", "Walked 5 miles", "Played 18 holes of golf"
-									</Text>
-								</View>
-							</>
 						) : (
-							// Barbell tab: show full workout form
-							<>
-								<View className="mb-4 bg-white rounded-xl">
-									<InputField
-										label="Workout Title"
-										labelStyle="text-sm"
-										placeholder="e.g. Upper Body Strength, Cardio Circuit..."
-										value={workoutTitle}
-										onChangeText={setWorkoutTitle}
-										className="text-left text-sm placeholder:text-xs border-none"
-									/>
-								</View>
-
-								<View className="mb-4 rounded-xl">
-									<View className="flex flex-row justify-between items-center mb-3">
-										<Text className="text-md font-JakartaSemiBold text-black">Exercises</Text>
-										<TouchableOpacity
-											onPress={addExercise}
-											className=" px-3 py-1 border-[1px] border-gray-400 rounded-full"
-										>
-											<Text className="text-black text-xs ">Add Exercise</Text>
-										</TouchableOpacity>
-									</View>
-									{exercises.length === 0 ? (
-										<View className="h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9] bg-white">
-											<Text className="text-center text-[#64748B] font-JakartaMedium">
-												No exercises added yet
-											</Text>
-										</View>
-									) : (
-										exercises.map((exercise, index) => (
-											<View
-												key={exercise.id}
-												className="mb-3 p-2 rounded-2xl border-[1px] border-[#F1F5F9] border-solid bg-white"
-											>
-												{/* Exercise Name */}
-												<View className="mb-3">
-													<InputField
-														placeholder="Exercise name"
-														value={exercise.name}
-														onChangeText={value => updateExercise(exercise.id, 'name', value)}
-														className="text-left text-xs"
-													/>
-												</View>
-												{/* Exercise Details Row */}
-												<View className="flex flex-row">
-													{showExerciseDetails ? (
-														<>
-															<View className="w-1/3">
-																<InputField
-																	placeholder="Weight (lbs)"
-																	value={exercise.weight}
-																	onChangeText={value =>
-																		updateExercise(exercise.id, 'weight', filterNumericInput(value))
-																	}
-																	keyboardType="numeric"
-																	className="text-center text-xs"
-																/>
-															</View>
-															<View className="flex justify-center items-center">
-																<Text className="text-xs font-JakartaBold">X</Text>
-															</View>
-
-															<View className="w-1/5">
-																<InputField
-																	placeholder="Reps"
-																	value={exercise.reps}
-																	onChangeText={value =>
-																		updateExercise(exercise.id, 'reps', filterNumericInput(value))
-																	}
-																	keyboardType="numeric"
-																	className="text-center text-xs"
-																/>
-															</View>
-															<View className="flex justify-center items-center">
-																<Text className="text-xs font-JakartaBold">X</Text>
-															</View>
-															<View className=" w-1/5">
-																<InputField
-																	placeholder="Sets"
-																	value={exercise.sets}
-																	onChangeText={value =>
-																		updateExercise(exercise.id, 'sets', filterNumericInput(value))
-																	}
-																	keyboardType="numeric"
-																	className="text-center text-xs"
-																/>
-															</View>
-														</>
-													) : (
-														<>
-															<View className="w-3/4 bg-white rounded-xl">
-																<InputField
-																	labelStyle="text-sm"
-																	placeholder="e.g. 30 minutes or 2 miles..."
-																	value={exercise.duration || ''}
-																	onChangeText={value =>
-																		updateExercise(exercise.id, 'duration', value)
-																	}
-																	className="text-left text-sm placeholder:text-xs border-none"
-																/>
-															</View>
-														</>
-													)}
-
-													<View className="flex flex-row flex-1 justify-end">
-														<View className=" w-8  flex justify-center items-center">
-															<TouchableOpacity
-																onPress={() => setShowExerciseDetails(!showExerciseDetails)}
-															>
-																<Ionicons name="swap-horizontal-outline" size={16} color="black" />
-															</TouchableOpacity>
-														</View>
-														<View className=" w-8   flex justify-center items-center">
-															<TouchableOpacity onPress={() => removeExercise(exercise.id)}>
-																<Ionicons name="trash-outline" size={16} color="#F56565" />
-															</TouchableOpacity>
-														</View>
-													</View>
-												</View>
-											</View>
-										))
-									)}
-								</View>
-							</>
+							<TouchableOpacity onPress={onClose} className="bg-[#E3BBA1] rounded-xl py-3">
+								<Text className="text-white text-center font-JakartaSemiBold">Done</Text>
+							</TouchableOpacity>
 						)}
-
-						{/* Save Button */}
-						<View className="pt-4 mb-4 bg-white p-2 rounded-xl">
-							{isLoading || isAnalyzing ? (
-								<View className="py-3 rounded-lg bg-gray-200 flex flex-row items-center justify-center">
-									<ActivityIndicator size="small" color="#E3BBA1" />
-									<Text className="ml-2 font-JakartaSemiBold text-gray-500">
-										{isAnalyzing ? 'Analyzing exercise...' : 'Saving...'}
-									</Text>
-								</View>
-							) : (
-								<TouchableOpacity
-									className={`py-3 rounded-lg ${
-										(
-											activeTab === 'exercise'
-												? exerciseTitle.trim() && exerciseDuration.trim()
-												: workoutTitle.trim() &&
-													exercises.filter(
-														exercise =>
-															exercise.name.trim() !== '' &&
-															(showExerciseDetails
-																? exercise.weight.trim() !== '' &&
-																	exercise.reps.trim() !== '' &&
-																	exercise.sets.trim() !== ''
-																: exercise.duration.trim() !== '')
-													).length > 0
-										)
-											? 'bg-[#E3BBA1]'
-											: 'bg-gray-200'
-									}`}
-									onPress={handleSave}
-									disabled={
-										(activeTab === 'exercise'
-											? !exerciseTitle.trim() || !exerciseDuration.trim()
-											: !workoutTitle.trim() ||
-												exercises.filter(
-													exercise =>
-														exercise.name.trim() !== '' &&
-														(showExerciseDetails
-															? exercise.weight.trim() !== '' &&
-																exercise.reps.trim() !== '' &&
-																exercise.sets.trim() !== ''
-															: exercise.duration.trim() !== '')
-												).length === 0) ||
-										isLoading ||
-										isAnalyzing
-									}
-								>
-									<Text
-										className={`text-center font-JakartaSemiBold ${
-											(
-												activeTab === 'exercise'
-													? exerciseTitle.trim() && exerciseDuration.trim()
-													: workoutTitle.trim() &&
-														exercises.filter(
-															exercise =>
-																exercise.name.trim() !== '' &&
-																(showExerciseDetails
-																	? exercise.weight.trim() !== '' &&
-																		exercise.reps.trim() !== '' &&
-																		exercise.sets.trim() !== ''
-																	: exercise.duration.trim() !== '')
-														).length > 0
-											)
-												? 'text-white'
-												: 'text-gray-500'
-										}`}
-									>
-										Save Workout
-									</Text>
-								</TouchableOpacity>
-							)}
-						</View>
-					</ScrollView>
-				</View>
-			</KeyboardAvoidingView>
+					</View>
+				)}
+			</View>
 		</ReactNativeModal>
 	);
 };

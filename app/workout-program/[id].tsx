@@ -1,6 +1,7 @@
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { View, Text } from 'react-native';
 import WorkoutProgramDetailScreen from '@/components/WorkoutProgramDetailScreen';
+import { SCREEN_BG } from '@/lib/theme';
 
 export default function WorkoutProgramDetailPage() {
 	const { id } = useLocalSearchParams();
@@ -15,7 +16,7 @@ export default function WorkoutProgramDetailPage() {
 		return (
 			<>
 				<Stack.Screen options={{ headerShown: false }} />
-				<View className="flex-1 bg-white items-center justify-center">
+				<View className="flex-1 items-center justify-center" style={{ backgroundColor: SCREEN_BG }}>
 					<Text className="text-gray-500">Program not found</Text>
 				</View>
 			</>

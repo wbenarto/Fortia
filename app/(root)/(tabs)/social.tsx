@@ -2,17 +2,16 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo';
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ScreenBackground from '@/components/ScreenBackground';
 import { Ionicons } from '@expo/vector-icons';
 
 type SocialTabType = 'challenges' | 'friends';
 
 const Social = () => {
-	const insets = useSafeAreaInsets();
 	const [activeTab, setActiveTab] = useState<SocialTabType>('challenges');
 
 	return (
-		<View className="flex-1 bg-[#ffffff]" style={{ paddingTop: insets.top }}>
+		<ScreenBackground>
 			<SignedIn>
 				<Navbar />
 
@@ -66,7 +65,7 @@ const Social = () => {
 				</View>
 
 				{/* Tab Content */}
-				<ScrollView className="flex-1 px-4 mt-4">
+				<ScrollView className="flex-1 px-4 mt-4 bg-transparent">
 					{activeTab === 'challenges' && (
 						<View>
 							<Text className="text-lg font-JakartaSemiBold mb-4">Challenges</Text>
@@ -86,7 +85,7 @@ const Social = () => {
 					)}
 				</ScrollView>
 			</SignedIn>
-		</View>
+		</ScreenBackground>
 	);
 };
 

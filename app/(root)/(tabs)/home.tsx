@@ -1,6 +1,7 @@
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo';
 // import { CartesianChart, Line } from 'victory-native';
-import { Link, useFocusEffect, useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
+import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import {
 	View,
 	Text,
@@ -12,9 +13,10 @@ import {
 	ActivityIndicator,
 	Alert,
 } from 'react-native';
-import Navbar from '@/components/Navbar';
+import HomeHeader from '@/components/HomeHeader';
 import WeightTracking from '@/components/WeightTracking';
 import WeeklyCalendar from '@/components/WeeklyCalendar';
+import { getTodayDate } from '@/lib/dateUtils';
 import ActivityTracking from '@/components/ActivityTracking';
 import HomeSliderComponent from '@/components/HomeSliderComponent';
 import FortiaPT from '@/components/FortiaPT';
@@ -29,8 +31,9 @@ import MacrosTracking from '@/components/MacrosTracking';
 import RecipeBreakdownModal from '@/components/RecipeBreakdownModal';
 import UsernameCollectionModal from '@/components/UsernameCollectionModal';
 import { logDailyBMR } from '@/lib/bmrLogging';
-import { useUserProfile } from '@/lib/userUtils';
+import { useUserProfile, triggerUserProfileRefresh } from '@/lib/userUtils';
 import { getUnifiedBMR } from '@/lib/unifiedBMRCalculator';
+import { SCREEN_BG } from '@/lib/theme';
 // import { DATA } from '@/lib/data'
 
 export default function Page() {
@@ -47,6 +50,7 @@ export default function Page() {
 	const [chartRefreshTrigger, setChartRefreshTrigger] = useState(0);
 	const [dashboardRefreshTrigger, setDashboardRefreshTrigger] = useState(0);
 	const [questRefreshTrigger, setQuestRefreshTrigger] = useState(0);
+	const [selectedDate, setSelectedDate] = useState(getTodayDate());
 
 	// Ref for MacrosTracking component
 	const macrosTrackingRef = useRef<{ refresh: () => void }>(null);
@@ -87,6 +91,8 @@ export default function Page() {
 		refreshQuests();
 		// Refresh MacrosTracking to update macro targets based on new BMR/TDEE
 		macrosTrackingRef.current?.refresh();
+		// Refresh the shared user profile so the BMI card picks up the new weight
+		triggerUserProfileRefresh();
 	}, [refreshCalorieChart, refreshDashboardCounts, refreshQuests]);
 
 	// Function to log daily BMR
@@ -131,7 +137,7 @@ export default function Page() {
 	]);
 
 	// Check if user has completed onboarding
-	useFocusEffect(
+	useRefetchOnFocus(
 		useCallback(() => {
 			const checkOnboarding = async () => {
 				if (!user?.id) return;
@@ -205,7 +211,8 @@ export default function Page() {
 			};
 
 			checkOnboarding();
-		}, [user?.id])
+		}, [user?.id]),
+		user?.id ?? ''
 	);
 
 	// Log BMR when userProfile is loaded and user has completed onboarding
@@ -245,14 +252,19 @@ export default function Page() {
 	// Note: We removed the early return to allow modals to render even when onboarding is not completed
 
 	return (
-		<View className="flex-1 bg-[#ffffff]" style={{ paddingTop: insets.top }}>
+		<View className="flex-1" style={{ flex: 1, backgroundColor: SCREEN_BG, paddingTop: insets.top }}>
 			<SignedIn>
 				{/* Show main content only if onboarding is completed */}
 				{hasCompletedOnboarding && (
-					<ScrollView stickyHeaderIndices={[0]} className="w-full h-full ">
-						<Navbar />
-						<View className="w-full pb-10">
-							<WeeklyCalendar />
+					<ScrollView
+						className="w-full h-full"
+						style={{ backgroundColor: SCREEN_BG }}
+						contentContainerStyle={{ paddingBottom: 120, backgroundColor: SCREEN_BG }}
+					>
+						<HomeHeader />
+						<View className="w-full mt-5">
+							{/* Hidden for now — keep for later */}
+							{/* <WeeklyCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} /> */}
 
 							{/* Slider Component */}
 							{/* <HomeSliderComponent
@@ -281,9 +293,17 @@ export default function Page() {
 									AI-powered personalized workout plans
 								</Text>
 							</View> */}
-							<MacrosTracking ref={macrosTrackingRef} onMealLogged={onMealLogged} />
-							<WeightTracking onWeightLogged={onWeightLogged} />
-							
+							<MacrosTracking
+								ref={macrosTrackingRef}
+								onMealLogged={onMealLogged}
+								selectedDate={selectedDate}
+							/>
+							<WeightTracking
+								onWeightLogged={onWeightLogged}
+								onDietChanged={onWeightLogged}
+								selectedDate={selectedDate}
+							/>
+
 							{/* <ActivityTracking
 								refreshTrigger={dashboardRefreshTrigger}
 								onActivityLogged={onActivityLogged}

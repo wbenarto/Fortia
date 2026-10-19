@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
-import { calculateBMR, calculateTDEE } from '@/lib/bmrUtils';
 import { calculateBodyFatPercentage } from '@/lib/bodyFatUtils';
+import { calculateNutritionTargets } from '@/lib/nutritionTargets';
 
 export async function GET(request: Request) {
 	try {
@@ -79,12 +79,6 @@ export async function POST(request: Request) {
 			gender,
 			activityLevel,
 			fitnessGoal,
-			dailyCalories,
-			dailyProtein,
-			dailyCarbs,
-			dailyFats,
-			bmr,
-			tdee,
 		} = await request.json();
 
 		email = emailParam;
@@ -94,6 +88,18 @@ export async function POST(request: Request) {
 			console.error('Missing required fields in POST request');
 			return Response.json({ error: 'Missing required fields' }, { status: 400 });
 		}
+
+		// Derive BMR / TDEE / calorie + macro targets server-side (single source
+		// of truth); client-supplied daily_* / bmr / tdee are ignored.
+		const { bmr, tdee, dailyCalories, dailyProtein, dailyCarbs, dailyFats } =
+			calculateNutritionTargets({
+				weight,
+				height,
+				age,
+				gender,
+				activityLevel,
+				fitnessGoal,
+			});
 
 		// First check if user already exists
 		const existingUser = await sql`
@@ -218,12 +224,6 @@ export async function PUT(request: Request) {
 			gender,
 			activityLevel,
 			fitnessGoal,
-			dailyCalories,
-			dailyProtein,
-			dailyCarbs,
-			dailyFats,
-			bmr,
-			tdee,
 			customCalories,
 			customProtein,
 			customCarbs,
@@ -235,9 +235,10 @@ export async function PUT(request: Request) {
 			return Response.json({ error: 'Clerk ID is required' }, { status: 400 });
 		}
 
-		// First check if user exists
+		// First check if user exists (load the full row so we can recompute
+		// nutrition targets from the merged profile)
 		const existingUser = await sql`
-			SELECT id FROM users WHERE clerk_id = ${clerkId}
+			SELECT * FROM users WHERE clerk_id = ${clerkId}
 		`;
 
 		if (existingUser.length === 0) {
@@ -247,6 +248,32 @@ export async function PUT(request: Request) {
 				{ status: 404 }
 			);
 		}
+
+		// If anything that feeds BMR / TDEE / calorie targets changed, recompute
+		// and store the derived values; otherwise leave the stored values alone.
+		const current = existingUser[0];
+		const profileInputsChanged = Boolean(
+			weight || height || age || gender || activityLevel || fitnessGoal
+		);
+
+		const canCompute = Boolean(
+			(weight ?? current.weight) &&
+				(height ?? current.height) &&
+				(age ?? current.age) &&
+				(gender ?? current.gender)
+		);
+
+		const targets =
+			profileInputsChanged && canCompute
+				? calculateNutritionTargets({
+						weight: weight ?? current.weight,
+						height: height ?? current.height,
+						age: age ?? current.age,
+						gender: gender ?? current.gender,
+						activityLevel: activityLevel ?? current.activity_level,
+						fitnessGoal: fitnessGoal ?? current.fitness_goal,
+					})
+				: null;
 
 		// Only update fields that are provided (not undefined)
 		const response = await sql`
@@ -263,12 +290,12 @@ export async function PUT(request: Request) {
             gender = COALESCE(${gender}, gender),
             activity_level = COALESCE(${activityLevel}, activity_level),
             fitness_goal = COALESCE(${fitnessGoal}, fitness_goal),
-            daily_calories = COALESCE(${dailyCalories}, daily_calories),
-            daily_protein = COALESCE(${dailyProtein}, daily_protein),
-            daily_carbs = COALESCE(${dailyCarbs}, daily_carbs),
-            daily_fats = COALESCE(${dailyFats}, daily_fats),
-            bmr = COALESCE(${bmr}, bmr),
-            tdee = COALESCE(${tdee}, tdee),
+            daily_calories = COALESCE(${targets?.dailyCalories ?? null}, daily_calories),
+            daily_protein = COALESCE(${targets?.dailyProtein ?? null}, daily_protein),
+            daily_carbs = COALESCE(${targets?.dailyCarbs ?? null}, daily_carbs),
+            daily_fats = COALESCE(${targets?.dailyFats ?? null}, daily_fats),
+            bmr = COALESCE(${targets?.bmr ?? null}, bmr),
+            tdee = COALESCE(${targets?.tdee ?? null}, tdee),
             custom_calories = COALESCE(${customCalories}, custom_calories),
             custom_protein = COALESCE(${customProtein}, custom_protein),
             custom_carbs = COALESCE(${customCarbs}, custom_carbs),

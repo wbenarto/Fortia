@@ -1,6 +1,6 @@
 import { useUser } from '@clerk/clerk-expo';
 import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import ReactNativeModal from 'react-native-modal';
@@ -21,8 +21,10 @@ import {
 
 import CustomButton from './CustomButton';
 import InputField from './InputField';
-import SwipeableActivityCard from './SwipeableActivityCard';
-import SwipeableExerciseCard from './SwipeableExerciseCard';
+import ActivityRow from './ActivityRow';
+import { SCREEN_BG } from '@/lib/theme';
+
+const eyebrowStyle = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
 
 interface ActivityTrackingProps {
 	refreshTrigger?: number;
@@ -185,41 +187,6 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 		}
 		// Always fetch from backend after potential upload
 		await fetchStepDataFromBackend();
-	};
-
-	const handleSaveWorkout = async (workoutData: any) => {
-		try {
-			if (!user?.id) {
-				console.error('No user ID available');
-				return;
-			}
-
-			const response = await fetchAPI('/api/workouts', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					...workoutData,
-					clerkId: user.id,
-				}),
-			});
-
-			if (response.success) {
-				// Check if workout is scheduled for today (in user's local timezone)
-				const workoutScheduledDate = workoutData.selectedDate;
-				const today = getTodayDate();
-
-				// Only refresh if workout is scheduled for today
-				if (workoutScheduledDate === today) {
-					await fetchScheduledExercises();
-				}
-			} else {
-				console.error('Failed to save workout:', response.error);
-			}
-		} catch (error) {
-			console.error('Error saving workout:', error);
-		}
 	};
 
 	const requestHealthKitAccess = async () => {
@@ -437,8 +404,8 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 		}
 	}, [user?.id, nutritionGoals, healthKitStatus?.isAuthorized]);
 
-	// Refresh data when screen comes into focus
-	useFocusEffect(
+	// Refresh data when screen comes into focus, if anything changed since last time
+	useRefetchOnFocus(
 		React.useCallback(() => {
 			if (user?.id) {
 				fetchNutritionGoals();
@@ -451,7 +418,8 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 					fetchAndUploadDeviceSteps();
 				}
 			}
-		}, [user?.id, healthKitStatus?.isAuthorized])
+		}, [user?.id, healthKitStatus?.isAuthorized]),
+		`${user?.id ?? ''}|${healthKitStatus?.isAuthorized ?? ''}`
 	);
 
 	// Refresh scheduled exercises when refreshTrigger changes
@@ -795,239 +763,285 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 		}
 	};
 
-	return (
-		<View className="w-full">
-			<View className="flex flex-row justify-between items-center px-4">
-				<Text className="font-JakartaSemiBold text-lg">Activity Summary</Text>
-				<View className="flex flex-row  w-28 items-center ">
-					<TouchableOpacity
-						onPress={handleWorkoutModal}
-						className="bg-[#E3BBA1] w-full px-3 py-2 rounded-full"
-					>
-						<Text className="text-white text-center text-xs font-JakartaBold">Log Exercise</Text>
-					</TouchableOpacity>
-				</View>
-			</View>
-			<View className=" pb-6 px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
-				<View className="py-6 flex flex-row justify-between items-end ">
-					<View>
-						<View className="flex flex-row items-center gap-2 mb-2">
-							<Text className=" text-[#64748B]">Calories Burned</Text>
-							{totalCaloriesBurned >= storedTDEE && storedTDEE > 0 ? (
-								<View className="flex flex-row items-center  rounded-lg px-2 border-[1px] border-green-600 py-1">
-									<Ionicons name="sparkles-outline" size={14} color="green" />
-									<Text className="text-xs font-JakartaSemiBold ml-1 text-green-600">
-										Goal reached!
-									</Text>
-								</View>
-							) : (
-								<Text>{''}</Text>
-							)}
-						</View>
+	// Manual activities, minus the BMR / daily-steps rows that are already counted separately
+	const loggedActivities = activities.filter(activity => {
+		const description = (activity.activity_description || '').toLowerCase();
+		return !description.includes('basal metabolic rate') && !description.includes('daily steps');
+	});
+	const exerciseTotalCalories = activitiesCalories + exercisesCalories;
+	const exerciseCount = scheduledExercises.length + loggedActivities.length;
+	const stepsEnabled = !!healthKitStatus?.isAuthorized;
 
-						<View className="flex flex-row items-end">
-							<Text className="font-JakartaBold text-3xl">
-								{isLoading ? '...' : totalCaloriesBurned.toLocaleString()}
-							</Text>
-							<Text className="text-[#64748B]"> /{storedTDEE.toLocaleString()}</Text>
-						</View>
+	const goalPct = storedTDEE > 0 ? (totalCaloriesBurned / storedTDEE) * 100 : 0;
+	const goalReached = storedTDEE > 0 && totalCaloriesBurned >= storedTDEE;
+	const barScale = Math.max(storedTDEE, totalCaloriesBurned) || 1;
+	const sources = [
+		{ key: 'resting', label: 'Resting', value: storedBMR, color: '#E3BBA1' },
+		{ key: 'steps', label: 'Steps', value: stepCalories, color: '#8FA9BA' },
+		{ key: 'exercise', label: 'Exercise', value: exerciseTotalCalories, color: '#7DB88A' },
+	];
+
+	return (
+		<View className="w-full px-6 pt-2">
+			<Text className="text-[11px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+				{`Today · ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`}
+			</Text>
+			<Text className="font-JakartaBold text-[28px] text-[#262135] mt-1">Activity</Text>
+
+			<View className="flex-row items-end justify-between mt-6">
+				<View>
+					<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+						Burned
+					</Text>
+					<View className="flex-row items-baseline mt-1">
+						<Text className="font-JakartaExtraBold text-[36px] text-[#262135]">
+							{isLoading ? '...' : Math.round(totalCaloriesBurned).toLocaleString()}
+						</Text>
+						<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">
+							{storedTDEE > 0 ? `/ ${Math.round(storedTDEE).toLocaleString()} cal` : 'cal'}
+						</Text>
 					</View>
-					<View className="w-16 h-16 rounded-xl flex justify-center items-center border-[2px] border-[#9ED5A0] border-solid">
-						{totalCaloriesBurned >= storedTDEE ? (
-							<Ionicons name="checkmark-sharp" size={30} color="#9ED5A0" />
-						) : (
-							<Text className="text-lg text-[#9ED5A0] font-JakartaBold ">
-								{storedTDEE > 0 ? Math.round((totalCaloriesBurned / storedTDEE) * 100) : 0}%
+				</View>
+				{storedTDEE > 0 && !isLoading && (
+					<View
+						className="flex-row items-center rounded-full px-2.5 py-1"
+						style={{ backgroundColor: goalReached ? '#7DB88A26' : '#F1F1F1' }}
+					>
+						{goalReached && (
+							<Ionicons name="sparkles" size={11} color="#5f9a6c" style={{ marginRight: 4 }} />
+						)}
+						<Text className="text-[10px] font-JakartaBold text-[#262135]">
+							{goalReached ? 'Goal reached' : `${Math.round(goalPct)}% of daily burn`}
+						</Text>
+					</View>
+				)}
+			</View>
+
+			{/* Burn toward TDEE, one segment per source. Scales past 100% so overage stays visible. */}
+			<View className="h-1.5 rounded-full bg-[#EEEEEE] overflow-hidden flex-row mt-4">
+				{sources
+					.filter(source => source.value > 0)
+					.map((source, i, arr) => (
+						<View
+							key={source.key}
+							style={{
+								width: `${(source.value / barScale) * 100}%`,
+								backgroundColor: source.color,
+								borderRightWidth: i < arr.length - 1 ? 2 : 0,
+								borderColor: SCREEN_BG,
+							}}
+						/>
+					))}
+			</View>
+
+			{/* columnGap, not NativeWind's gap-*: v2 fakes gap with a negative margin */}
+			<View className="flex-row items-stretch mt-6" style={{ columnGap: 20 }}>
+				{sources.map(source => (
+					<View key={source.key} className="flex-1">
+						<View className="flex-row items-center">
+							<View
+								className="w-1.5 h-1.5 rounded-full mr-1.5"
+								style={{ backgroundColor: source.color }}
+							/>
+							<Text
+								className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+								style={eyebrowStyle}
+							>
+								{source.label}
+							</Text>
+						</View>
+						<Text className="font-JakartaBold text-[15px] text-[#262135] mt-1" numberOfLines={1}>
+							{isLoading || (source.key === 'steps' && !stepsEnabled)
+								? '--'
+								: Math.round(source.value).toLocaleString()}
+							<Text className="font-JakartaMedium text-[11px] text-[#94897E]"> cal</Text>
+						</Text>
+						{source.key === 'resting' && (
+							<Text className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5">
+								BMR, at rest
+							</Text>
+						)}
+						{source.key === 'steps' &&
+							(stepsEnabled && stepData ? (
+								<TouchableOpacity onPress={() => setShowHealthKitInfo(true)} hitSlop={6}>
+									<Text
+										className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5"
+										numberOfLines={1}
+									>
+										{stepData.steps.toLocaleString()} / {stepData.goal.toLocaleString()} steps
+									</Text>
+								</TouchableOpacity>
+							) : healthKitStatus?.isAvailable ? (
+								<TouchableOpacity onPress={requestHealthKitAccess} hitSlop={6}>
+									<Text className="font-JakartaSemiBold text-[11px] text-[#cd9c99] mt-0.5">
+										Enable steps
+									</Text>
+								</TouchableOpacity>
+							) : (
+								<TouchableOpacity onPress={() => setShowHealthKitInfo(true)} hitSlop={6}>
+									<Text className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5">
+										Not available
+									</Text>
+								</TouchableOpacity>
+							))}
+						{source.key === 'exercise' && (
+							<Text
+								className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5"
+								numberOfLines={1}
+							>
+								{scheduledExercises.length > 0
+									? `${completedExercisesCount}/${scheduledExercises.length} done`
+									: `${exerciseCount} logged`}
 							</Text>
 						)}
 					</View>
+				))}
+			</View>
+
+			<View className="flex-row items-center justify-between mt-10 mb-1">
+				<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+					Exercises{exerciseCount > 0 ? `  ·  ${exerciseCount}` : ''}
+				</Text>
+				<TouchableOpacity
+					onPress={handleWorkoutModal}
+					hitSlop={8}
+					className="flex-row items-center rounded-full border-[1px] border-[#E3BBA1] px-2.5 py-1"
+				>
+					<Ionicons name="add" size={12} color="#cd9c99" />
+					<Text className="ml-0.5 font-JakartaSemiBold text-[11px] text-[#cd9c99]">Add</Text>
+				</TouchableOpacity>
+			</View>
+
+			{exerciseCount === 0 ? (
+				<View className="py-10 items-center">
+					<View
+						className="w-12 h-12 rounded-full items-center justify-center"
+						style={{ backgroundColor: '#E3BBA126' }}
+					>
+						<Ionicons name="barbell-outline" size={22} color="#cd9c99" />
+					</View>
+					<Text className="font-JakartaSemiBold text-[14px] text-[#262135] mt-3">
+						No exercises yet today
+					</Text>
+					<Text className="font-JakartaMedium text-[12px] text-[#94897E] mt-1">
+						Log a workout to count it toward your burn.
+					</Text>
 				</View>
-				<View className="flex gap-2 justify-between">
-					{/* BMR Card - First on the list */}
-					{nutritionGoals && (
-						<View className="h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9]">
-							<View className="flex flex-row gap-2 mb-2 items-center">
-								<Ionicons name="heart-outline" size={14} color="#5A556B" />
-								<Text className="text-xs text-[#64748B]">Basal Metabolic Rate</Text>
-							</View>
-							<View className="flex flex-row justify-between items-center">
-								<Text className="text-lg font-JakartaBold">
-									{isLoading
-										? '...'
-										: `${Math.round(Number(nutritionGoals.bmr || 0)).toLocaleString()} kcal/day`}
-								</Text>
-								<View className="flex flex-row gap-2">
-									<Ionicons name="information-circle-outline" size={14} color="#5A556B" />
-									<Text className="text-[#64748B] text-xs">At rest</Text>
-								</View>
-							</View>
-						</View>
-					)}
+			) : (
+				<View>
+					{scheduledExercises.map((exercise, i) => (
+						<ActivityRow
+							key={exercise.id}
+							title={exercise.name}
+							subtitle={[
+								exercise.workout_type === 'barbell' ? exercise.session_title : null,
+								exercise.duration !== 'No duration' ? exercise.duration : null,
+							]
+								.filter(Boolean)
+								.join('  ·  ')}
+							calories={exercise.calories_burned}
+							icon={exercise.workout_type === 'barbell' ? 'barbell-outline' : 'heart-outline'}
+							isLast={i === exerciseCount - 1}
+							isCompleted={completedExercises.has(exercise.id)}
+							onToggleCompletion={() =>
+								toggleExerciseCompletion(exercise.id, !completedExercises.has(exercise.id))
+							}
+							onDelete={() => deleteScheduledExercise(exercise.id)}
+							deleteLabel={exercise.name}
+						/>
+					))}
+					{loggedActivities.map((activity, i) => (
+						<ActivityRow
+							key={activity.id}
+							title={activity.activity_description}
+							subtitle="Logged activity"
+							calories={activity.estimated_calories}
+							icon="walk-outline"
+							isLast={scheduledExercises.length + i === exerciseCount - 1}
+							onDelete={() => deleteActivity(activity.id)}
+							deleteLabel={activity.activity_description}
+						/>
+					))}
+				</View>
+			)}
 
-					<View className=" h-20 rounded-2xl px-3 flex justify-center  border-solid border-[1px] border-[#F1F5F9]">
-						<View className="flex flex-row gap-2 mb-2 items-center">
-							<Ionicons name="footsteps-outline" size={14} color="#5A556B" />
-							<Text className="text-xs text-[#64748B]">Steps</Text>
-
-							<TouchableOpacity
-								onPress={() => setShowHealthKitInfo(true)}
-								className="flex-row items-center"
-							>
-								<Ionicons name="medical" size={12} color="#E3BBA1" />
-								<Text className="text-xs text-[#E3BBA1] ml-1">HealthKit</Text>
-							</TouchableOpacity>
-
-							{!healthKitStatus?.isAuthorized && healthKitStatus?.isAvailable ? (
-								<TouchableOpacity
-									onPress={requestHealthKitAccess}
-									className="bg-[#E3BBA1] px-2 py-1 rounded-lg"
-								>
-									<Text className="text-white text-xs">Enable</Text>
-								</TouchableOpacity>
-							) : null}
-						</View>
-						<View className="flex flex-row justify-between items-center">
-							<Text className="text-lg font-JakartaBold">
-								{stepData && healthKitStatus?.isAuthorized ? (
-									<>
-										{stepData.steps.toLocaleString()}{' '}
-										<Text className="text-xs text-[#64748B]">
-											/ {stepData.goal.toLocaleString()}
-										</Text>
-									</>
-								) : (
-									<Text className="text-xs text-[#64748B]">Enable step tracking</Text>
-								)}
-							</Text>
-							<View className="flex flex-row gap-2">
-								<SimpleLineIcons name="fire" size={14} colors="#5A556B" />
-								<Text className="text-[#64748B]">
-									{stepCalories > 0 && healthKitStatus?.isAuthorized ? `${stepCalories} cal` : '--'}
-								</Text>
-							</View>
-						</View>
+			{/* HealthKit Info Modal */}
+			<ReactNativeModal
+				isVisible={showHealthKitInfo}
+				onBackdropPress={() => setShowHealthKitInfo(false)}
+				onBackButtonPress={() => setShowHealthKitInfo(false)}
+				className="mt-32 mb-0 mx-0 "
+			>
+				<ScrollView className="bg-white rounded-3xl p-6 max-h-[100%] ">
+					<View className="flex-row justify-between items-center mb-6">
+						<Text className="text-xl font-JakartaBold">HealthKit Integration</Text>
+						<TouchableOpacity onPress={() => setShowHealthKitInfo(false)}>
+							<Ionicons name="close" size={24} color="#64748B" />
+						</TouchableOpacity>
 					</View>
 
-					{/* Scheduled Exercises Cards */}
-					{scheduledExercises.length > 0 ? (
-						scheduledExercises.map((exercise, index) => (
-							<SwipeableExerciseCard
-								key={exercise.id}
-								exercise={exercise}
-								isCompleted={completedExercises.has(exercise.id)}
-								onDelete={deleteScheduledExercise}
-								onToggleCompletion={toggleExerciseCompletion}
-							/>
-						))
-					) : (
-						<View className="h-20 rounded-2xl px-3 flex justify-center border-solid border-[1px] border-[#F1F5F9]">
-							<View className="flex flex-row gap-2 mb-2 items-center">
-								<Ionicons name="calendar-outline" size={14} color="#5A556B" />
-								<Text className="text-xs text-[#64748B]">Scheduled Exercises</Text>
-								{scheduledExercises.length > 0 && (
-									<View className="bg-green-100 px-2 py-1 rounded-lg">
-										<Text className="text-xs text-green-700 font-JakartaSemiBold">
-											{completedExercisesCount}/{scheduledExercises.length} completed
-										</Text>
-									</View>
-								)}
-							</View>
-							<View className="flex flex-row justify-between items-center">
-								<Text className="text-lg font-JakartaBold text-[#64748B]">
-									{scheduledExercises.length > 0
-										? `${scheduledExercises.length} exercises scheduled`
-										: 'No exercises scheduled'}
-								</Text>
-								<View className="flex flex-row gap-2">
-									<Ionicons name="time-outline" size={14} color="#5A556B" />
-									<Text className="text-[#64748B]">
-										{scheduledExercises.length > 0 ? `${completedExercisesCount} done` : '--'}
-									</Text>
-								</View>
-							</View>
+					<View className="mb-6">
+						<View className="flex-row items-center mb-3">
+							<Ionicons name="medical" size={20} color="#E3BBA1" />
+							<Text className="text-lg font-JakartaSemiBold ml-2">What is Motion & Fitness?</Text>
 						</View>
-					)}
-				</View>
+						<Text className="text-gray-700 leading-6">
+							Fortia uses Apple's Motion & Fitness framework to securely access your step count and
+							activity data to provide personalized fitness insights and accurate calorie
+							calculations.
+						</Text>
+					</View>
 
-				{/* HealthKit Info Modal */}
-				<ReactNativeModal
-					isVisible={showHealthKitInfo}
-					onBackdropPress={() => setShowHealthKitInfo(false)}
-					onBackButtonPress={() => setShowHealthKitInfo(false)}
-					className="mt-32 mb-0 mx-0 "
-				>
-					<ScrollView className="bg-white rounded-3xl p-6 max-h-[100%] ">
-						<View className="flex-row justify-between items-center mb-6">
-							<Text className="text-xl font-JakartaBold">HealthKit Integration</Text>
-							<TouchableOpacity onPress={() => setShowHealthKitInfo(false)}>
-								<Ionicons name="close" size={24} color="#64748B" />
-							</TouchableOpacity>
+					<View className="mb-6">
+						<View className="flex-row items-center mb-3">
+							<Ionicons name="shield-checkmark" size={20} color="#E3BBA1" />
+							<Text className="text-lg font-JakartaSemiBold ml-2">Data Security</Text>
 						</View>
+						<Text className="text-gray-700 leading-6">
+							• Your health data is encrypted and stored securely on your device{'\n'}• We only
+							access step count and basic activity data{'\n'}• Data is never shared with third
+							parties without your consent{'\n'}• You can revoke access at any time in Settings
+						</Text>
+					</View>
 
-						<View className="mb-6">
-							<View className="flex-row items-center mb-3">
-								<Ionicons name="medical" size={20} color="#E3BBA1" />
-								<Text className="text-lg font-JakartaSemiBold ml-2">What is Motion & Fitness?</Text>
-							</View>
-							<Text className="text-gray-700 leading-6">
-								Fortia uses Apple's Motion & Fitness framework to securely access your step count
-								and activity data to provide personalized fitness insights and accurate calorie
-								calculations.
-							</Text>
+					<View className="mb-6">
+						<View className="flex-row items-center mb-3">
+							<Ionicons name="analytics" size={20} color="#E3BBA1" />
+							<Text className="text-lg font-JakartaSemiBold ml-2">How We Use Your Data</Text>
 						</View>
+						<Text className="text-gray-700 leading-6">
+							• Track your daily step count and activity levels{'\n'}• Calculate calories burned
+							from your activity{'\n'}• Provide personalized fitness recommendations{'\n'}• Sync
+							data across your devices securely
+						</Text>
+					</View>
 
-						<View className="mb-6">
-							<View className="flex-row items-center mb-3">
-								<Ionicons name="shield-checkmark" size={20} color="#E3BBA1" />
-								<Text className="text-lg font-JakartaSemiBold ml-2">Data Security</Text>
-							</View>
-							<Text className="text-gray-700 leading-6">
-								• Your health data is encrypted and stored securely on your device{'\n'}• We only
-								access step count and basic activity data{'\n'}• Data is never shared with third
-								parties without your consent{'\n'}• You can revoke access at any time in Settings
-							</Text>
+					<View className="mb-6">
+						<View className="flex-row items-center mb-3">
+							<Ionicons name="settings" size={20} color="#E3BBA1" />
+							<Text className="text-lg font-JakartaSemiBold ml-2">Managing Permissions</Text>
 						</View>
+						<Text className="text-gray-700 leading-6">
+							You can manage Motion & Fitness permissions in your device Settings {'>'} Privacy &
+							Security {'>'} Motion & Fitness {'>'} Fortia.
+						</Text>
+					</View>
 
-						<View className="mb-6">
-							<View className="flex-row items-center mb-3">
-								<Ionicons name="analytics" size={20} color="#E3BBA1" />
-								<Text className="text-lg font-JakartaSemiBold ml-2">How We Use Your Data</Text>
-							</View>
-							<Text className="text-gray-700 leading-6">
-								• Track your daily step count and activity levels{'\n'}• Calculate calories burned
-								from your activity{'\n'}• Provide personalized fitness recommendations{'\n'}• Sync
-								data across your devices securely
-							</Text>
-						</View>
+					<TouchableOpacity
+						onPress={() => setShowHealthKitInfo(false)}
+						className="bg-[#E3BBA1] py-3 rounded-xl mt-4 mb-20"
+					>
+						<Text className="text-white text-center font-JakartaSemiBold">Got it</Text>
+					</TouchableOpacity>
+				</ScrollView>
+			</ReactNativeModal>
 
-						<View className="mb-6">
-							<View className="flex-row items-center mb-3">
-								<Ionicons name="settings" size={20} color="#E3BBA1" />
-								<Text className="text-lg font-JakartaSemiBold ml-2">Managing Permissions</Text>
-							</View>
-							<Text className="text-gray-700 leading-6">
-								You can manage Motion & Fitness permissions in your device Settings {'>'} Privacy &
-								Security {'>'} Motion & Fitness {'>'} Fortia.
-							</Text>
-						</View>
-
-						<TouchableOpacity
-							onPress={() => setShowHealthKitInfo(false)}
-							className="bg-[#E3BBA1] py-3 rounded-xl mt-4 mb-20"
-						>
-							<Text className="text-white text-center font-JakartaSemiBold">Got it</Text>
-						</TouchableOpacity>
-					</ScrollView>
-				</ReactNativeModal>
-
-				{/* New Workout Modal */}
-				<NewWorkoutModal
-					isVisible={workoutModal}
-					onClose={() => setWorkoutModal(false)}
-					onSave={handleSaveWorkout}
-					userId={user?.id}
-				/>
-			</View>
+			{/* New Workout Modal */}
+			<NewWorkoutModal
+				isVisible={workoutModal}
+				onClose={() => setWorkoutModal(false)}
+				onSaved={fetchScheduledExercises}
+			/>
 		</View>
 	);
 };
