@@ -21,6 +21,9 @@ export interface UserProfile {
 	dailyProtein?: number;
 	dailyCarbs?: number;
 	dailyFats?: number;
+	dietType?: string;
+	fastingSchedule?: string;
+	fastingStartHour?: number;
 	username: string;
 }
 
@@ -113,6 +116,9 @@ export const useUserProfile = (): UserProfile & { refresh: () => void } => {
 		dailyProtein: dbUserData?.daily_protein,
 		dailyCarbs: dbUserData?.daily_carbs,
 		dailyFats: dbUserData?.daily_fats,
+		dietType: dbUserData?.diet_type,
+		fastingSchedule: dbUserData?.fasting_schedule,
+		fastingStartHour: dbUserData?.fasting_start_hour,
 	};
 
 	return {

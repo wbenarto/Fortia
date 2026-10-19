@@ -99,22 +99,43 @@ const SwipeableFoodCard: React.FC<SwipeableFoodCardProps> = ({ food, mealId, onD
 					}}
 					className="w-full bg-white py-2 px-3 rounded-xl border-solid border-[1px] border-[#F1F5F9] "
 				>
-					<View className="flex flex-row items-center justify-between my-1 ">
-						<Text className="font-JakartaSemiBold w-[170px]">{food.name} </Text>
-						<Text className="text-[12px] text-[#64748B] ">• {food.weight}</Text>
+					<View className="flex flex-row justify-end my-1">
 						<View className="border-solid border-black border-[.5px] px-2 rounded-xl">
 							<Text className="text-[10px] text-[#64748B] text-gray-800 capitalize">
 								{food.mealType}
 							</Text>
 						</View>
 					</View>
-					{food.ingredients && (
-						<View className="px-2 mb-2">
+					{food.ingredients && food.ingredients.length > 0 ? (
+						<View className="mb-2">
 							{food.ingredients.map((e, i) => (
-								<Text key={i} className=" text-xs">
-									{e[0]} - {e[1]}
-								</Text>
+								<View key={i} className="flex-row items-center justify-between mt-1">
+									<Text className="font-JakartaMedium text-xs text-[#64748B] flex-1 pr-2">
+										{e[0]}
+									</Text>
+									<Text
+										className="text-xs text-[#64748B] w-20 text-right"
+										numberOfLines={1}
+									>
+										{'•'} {e[1]}
+									</Text>
+								</View>
 							))}
+						</View>
+					) : (
+						<View className="flex-row items-center justify-between mb-2">
+							<Text
+								className="font-JakartaMedium text-sm text-[#262135] flex-1 pr-2"
+								numberOfLines={1}
+							>
+								{food.name}
+							</Text>
+							<Text
+								className="text-[12px] text-[#64748B] w-20 text-right"
+								numberOfLines={1}
+							>
+								{'•'} {food.weight}
+							</Text>
 						</View>
 					)}
 					<View className="flex flex-row justify-between items-center">

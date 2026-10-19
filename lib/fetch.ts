@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useDataVersionStore } from '@/store';
 
 // Get the base URL from environment variables
 const getBaseURL = () => {
@@ -10,6 +11,24 @@ const getBaseURL = () => {
 	}
 
 	return serverURL.replace(/\/$/, ''); // Remove trailing slash
+};
+
+// Writes that shouldn't mark data stale: AI analysis endpoints only compute a result, and
+// the HealthKit step sync runs on every Workout focus, so counting it would make every
+// tab refetch on every swipe.
+const NON_MUTATING_POSTS = [
+	'/api/exercise-analysis',
+	'/api/recipe-analysis',
+	'/api/recipe-breakdown',
+	'/api/meal-analysis',
+	'/api/steps',
+];
+
+const isMutation = (endpoint: string, options?: RequestInit) => {
+	const method = (options?.method || 'GET').toUpperCase();
+	if (method === 'GET' || method === 'HEAD') return false;
+	const path = endpoint.split('?')[0];
+	return !NON_MUTATING_POSTS.some(p => path.endsWith(p));
 };
 
 export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
@@ -38,6 +57,8 @@ export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
 		}
 
 		const data = await response.json();
+
+		if (isMutation(endpoint, options)) useDataVersionStore.getState().bump();
 
 		return data;
 	} catch (error) {

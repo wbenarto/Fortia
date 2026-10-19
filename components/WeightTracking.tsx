@@ -1,17 +1,30 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { SignedIn, SignedOut, useUser, useAuth } from '@clerk/clerk-expo';
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, router } from 'expo-router';
+import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
+import {
+	formatWeight,
+	toDisplayWeight,
+	toStoredWeight,
+	useUnitSystem,
+	weightUnit,
+} from '@/lib/units';
+import { useIsFocused } from '@react-navigation/native';
 import ReactNativeModal from 'react-native-modal';
 import { fetchAPI, useFetch } from '@/lib/fetch';
 import InputField from '@/components/InputField';
 import CustomButton from '@/components/CustomButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LineChart } from 'react-native-gifted-charts';
-import Ionicons from '@expo/vector-icons/build/Ionicons';
-import { getTodayDate } from '@/lib/dateUtils';
-import { useGoalsStore } from '@/store';
+import { getLocalDate, getTodayDate, parseLocalDate } from '@/lib/dateUtils';
+import { Ionicons } from '@expo/vector-icons';
+import EditDietModal from '@/components/EditDietModal';
+import { formatDietLabel, resolveDietType, resolveFastingSchedule } from '@/lib/diet';
+import { useGoalsStore, useQuickLogStore } from '@/store';
 import { useUserProfile } from '@/lib/userUtils';
+import { calculateBMI, getBMICategory } from '@/lib/bodyFatUtils';
+import { SCREEN_BG } from '@/lib/theme';
 
 interface WeightEntry {
 	date: string;
@@ -26,9 +39,14 @@ interface ChartDataPoint {
 
 interface WeightTrackingProps {
 	onWeightLogged?: () => void;
+	onDietChanged?: () => void;
+	selectedDate?: string;
 }
 
-const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
+const CHART_WIDTH = 260;
+
+const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightTrackingProps) => {
+	const [rawWeights, setRawWeights] = useState<WeightEntry[]>([]);
 	const [userWeights, setUserWeights] = useState<ChartDataPoint[]>([]);
 	const [addWeightModal, setAddWeightModal] = useState(false);
 	const [weightForm, setWeightForm] = useState({
@@ -39,6 +57,8 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 	const [focusedPoint, setFocusedPoint] = useState(null);
 	const [targetWeight, setTargetWeight] = useState<number | null>(null);
 	const [startingWeight, setStartingWeight] = useState<number | null>(null);
+	const unitSystem = useUnitSystem();
+	const [dietModal, setDietModal] = useState(false);
 
 	const { user } = useUser();
 	const userProfile = useUserProfile();
@@ -58,8 +78,40 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 	};
 
 	const { getToken } = useAuth();
+	const viewDate = selectedDate || getTodayDate();
 
-	// Get the last weight entry for display
+	const weightDateKey = (date: string) => {
+		if (/^\d{4}-\d{2}-\d{2}/.test(date)) {
+			return date.slice(0, 10);
+		}
+		return getLocalDate(new Date(date));
+	};
+
+	const toChartPoints = (entries: WeightEntry[]): ChartDataPoint[] =>
+		entries.map(({ date, weight }) => {
+			const dateObj = parseLocalDate(weightDateKey(date));
+			const thisYear = new Date().getFullYear();
+			const label =
+				dateObj.getFullYear() === thisYear
+					? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+					: dateObj.toLocaleDateString('en-US', {
+							month: 'short',
+							day: 'numeric',
+							year: '2-digit',
+						});
+
+			return {
+				label,
+				value: +weight,
+				dataPointText: `${weight}`,
+			};
+		});
+
+	const applyWeightsForDate = (data: WeightEntry[], date: string) => {
+		const upToDate = data.filter(entry => weightDateKey(entry.date) <= date);
+		setUserWeights(toChartPoints(upToDate.slice(-8)));
+	};
+
 	const lastWeightEntry = userWeights.length > 0 ? userWeights[userWeights.length - 1] : null;
 
 	// Check if last weight entry is from today
@@ -91,7 +143,7 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 		}
 	};
 
-	useFocusEffect(
+	useRefetchOnFocus(
 		useCallback(() => {
 			const fetchData = async () => {
 				if (!user?.id) return;
@@ -107,53 +159,40 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 					});
 
 					if (!response.data) {
+						setRawWeights([]);
 						setUserWeights([]);
 						return;
 					}
 
-					const data = response.data;
-
-					// Process weight data for chart - data is already sorted ASC from API
-					// Take last 8 entries to show recent data
-					const sortedData = data.slice(-8);
-
-					const processedData = sortedData.map(({ date, weight }: WeightEntry) => {
-						const dateObj = new Date(date);
-						const today = new Date();
-						const isThisYear = dateObj.getFullYear() === today.getFullYear();
-
-						// Format label based on whether it's this year
-						let label;
-						if (isThisYear) {
-							label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-						} else {
-							label = dateObj.toLocaleDateString('en-US', {
-								month: 'short',
-								day: 'numeric',
-								year: '2-digit',
-							});
-						}
-
-						return {
-							label,
-							value: +weight,
-							dataPointText: `${weight}`,
-						};
-					});
-
-					setUserWeights(processedData);
+					setRawWeights(response.data);
+					applyWeightsForDate(response.data, viewDate);
 				} catch (error) {
 					console.error('Error fetching weight data:', error);
+					setRawWeights([]);
 					setUserWeights([]);
 				}
 			};
 
 			fetchData();
 			fetchTargetWeight();
-		}, [user?.id])
+		}, [user?.id]),
+		user?.id ?? ''
 	);
 
-	const handleAddWeightModal = () => setAddWeightModal(!addWeightModal);
+	useEffect(() => {
+		applyWeightsForDate(rawWeights, viewDate);
+	}, [viewDate, rawWeights]);
+
+	// Open the weight modal when the quick-log FAB requests it (once focused)
+	const isFocused = useIsFocused();
+	const quickLogPending = useQuickLogStore(s => s.pending);
+	const consumeQuickLog = useQuickLogStore(s => s.consume);
+	useEffect(() => {
+		if (quickLogPending === 'weight' && isFocused && !addWeightModal) {
+			setAddWeightModal(true);
+			consumeQuickLog();
+		}
+	}, [quickLogPending, isFocused]);
 
 	const handleWeightSubmission = async () => {
 		// Handle weight form submission
@@ -165,13 +204,13 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 		}
 
 		try {
-			// Use today's date in user's local timezone (same as meal logging)
-			const dateString = getTodayDate();
+			const dateString = viewDate;
 
 			await fetchAPI('/api/weight', {
 				method: 'POST',
 				body: JSON.stringify({
-					weight: weightForm.weight,
+					// Entered in the user's unit; stored in lbs
+					weight: Math.round(toStoredWeight(Number(weightForm.weight), unitSystem) * 10) / 10,
 					date: dateString,
 					clerkId: user?.id,
 				}),
@@ -193,31 +232,14 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 				const data = response.data;
 
 				// Process weight data for chart (same logic as above)
-				const processedData = data.slice(-8).map(({ date, weight }: WeightEntry) => {
-					const dateObj = new Date(date);
-					const today = new Date();
-					const isThisYear = dateObj.getFullYear() === today.getFullYear();
+				if (!data) {
+					setRawWeights([]);
+					setUserWeights([]);
+					return;
+				}
 
-					// Format label based on whether it's this year
-					let label;
-					if (isThisYear) {
-						label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-					} else {
-						label = dateObj.toLocaleDateString('en-US', {
-							month: 'short',
-							day: 'numeric',
-							year: '2-digit',
-						});
-					}
-
-					return {
-						label,
-						value: +weight,
-						dataPointText: `${weight}`,
-					};
-				});
-
-				setUserWeights(processedData);
+				setRawWeights(data);
+				applyWeightsForDate(data, viewDate);
 			};
 
 			fetchData();
@@ -234,109 +256,189 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 			console.error('Weight logging error:', error);
 		}
 	};
+	const weightValue = lastWeightEntry ? lastWeightEntry.value : null;
+	const displayWeight = weightValue !== null ? toDisplayWeight(weightValue, unitSystem) : null;
+	const profileWeight = weightValue ?? userProfile.weight ?? null;
+	const heightInches = userProfile.height ? userProfile.height / 2.54 : 0;
+	const dietLabel = formatDietLabel(
+		resolveDietType(userProfile.dietType),
+		resolveFastingSchedule(userProfile.fastingSchedule)
+	);
+	const bmi = profileWeight && heightInches ? calculateBMI(profileWeight, heightInches) : null;
+	const bmiCategory = bmi !== null ? getBMICategory(bmi) : null;
+
+	const losingWeight = Boolean(
+		startingWeight && targetWeight && startingWeight > Number(targetWeight)
+	);
+	const remainingLbs =
+		weightValue !== null && targetWeight
+			? losingWeight
+				? weightValue - Number(targetWeight)
+				: Number(targetWeight) - weightValue
+			: null;
+	const toGoLabel =
+		remainingLbs === null
+			? null
+			: remainingLbs <= 0
+				? 'Goal reached'
+				: `${formatWeight(remainingLbs, unitSystem)} to go`;
+
 	return (
 		<View className="w-full">
-			<View className="flex flex-row justify-between items-center px-4">
-				<Text className="font-JakartaSemiBold text-lg ">Weight Progress</Text>
-				<View className="flex flex-row w-28 items-center ">
+			<View className="px-6 mt-12 mb-2">
+				<Text className="font-JakartaBold text-[18px] text-[#262135] mb-5">Body</Text>
+				<View className="flex-row items-stretch">
+					<View className="flex-1">
+						<Text
+							className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
+						>
+							Weight
+						</Text>
+						<View className="flex-row items-baseline mt-1">
+							<Text className="font-JakartaExtraBold text-[30px] text-[#262135]">
+								{displayWeight !== null ? displayWeight.toFixed(1) : '--'}
+							</Text>
+							<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">
+								{weightUnit(unitSystem)}
+							</Text>
+						</View>
+						{toGoLabel && (
+							<Text className="text-xs font-JakartaSemiBold text-[#94897E] mt-1">{toGoLabel}</Text>
+						)}
+					</View>
+
+					<View className="w-px bg-[#F0EBE6] mx-4" />
+
 					<TouchableOpacity
-						onPress={handleAddWeightModal}
-						className="bg-[#E3BBA1] w-full py-2 rounded-full"
+						className="flex-1 items-end"
+						activeOpacity={0.85}
+						onPress={() => router.push(bmi !== null ? '/bmi-calculator' : '/edit-profile')}
 					>
-						<Text className="text-white text-xs text-center font-JakartaBold">Log Weight</Text>
+						<Text
+							className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
+						>
+							BMI
+						</Text>
+						<Text className="font-JakartaExtraBold text-[30px] text-[#262135] mt-1">
+							{bmi !== null ? bmi.toFixed(1) : '--'}
+						</Text>
+						{bmiCategory && (
+							<Text
+								className="text-xs font-JakartaSemiBold mt-1"
+								style={{ color: bmiCategory.color }}
+							>
+								{bmiCategory.category}
+							</Text>
+						)}
 					</TouchableOpacity>
 				</View>
-			</View>
-			<View className=" px-4 m-4 border-[1px] border-[#F1F5F9] border-solid rounded-2xl ">
-				<View className="py-6 flex flex-row justify-between items-center ">
-					<Text>
-						<Text className="font-JakartaBold text-3xl">
-							{lastWeightEntry ? lastWeightEntry.value.toFixed(1) : '--'}
-						</Text>{' '}
-						<Text className="text-[#64748B]">lbs</Text>
-					</Text>
-					<Text className="text-[10px] text-[#64748B]">
-						Goal:{' '}
-						{lastWeightEntry && targetWeight
-							? (() => {
-									const goalDifference = lastWeightEntry.value - Number(targetWeight);
-									const needsToLose = goalDifference > 0;
-									return `${needsToLose ? 'Lose' : 'Gain'} ${Math.abs(goalDifference).toFixed(1)}`;
-								})()
-							: '--'}{' '}
-						lbs
-					</Text>
-				</View>
-				<View className=" h-32 overflow-hidden ml-[-20px] border-b-[1px] border-[#F1F5F9] border-solid">
+
+				<View className="h-[1px] bg-[#F0EBE6] my-4" />
+
+				<View className="h-24 flex-row items-center justify-center">
 					{userWeights.length > 0 ? (
-						<LineChart
-							color={'#E3BBA1'}
-							data={userWeights}
-							height={80}
-							width={300}
-							curved
-							textColor={'transparent'}
-							spacing={30}
-							thickness={3}
-							xAxisLabelTextStyle={{ color: 'transparent', fontSize: 12 }}
-							yAxisTextStyle={{ color: 'transparent', fontSize: 12 }}
-							hideYAxisText
-							hideAxesAndRules
-							focusEnabled
-							showDataPointOnFocus
-							focusedDataPointShape="circle"
-							focusedDataPointWidth={15}
-							focusedDataPointHeight={15}
-							focusedDataPointColor="#E3BBA1"
-							focusedDataPointRadius={6}
-							onFocus={(item: any) => {
-								setFocusedPoint(item);
-							}}
-							yAxisOffset={calculateYAxisOffset(userWeights)}
-						/>
+						<>
+							<View className="overflow-hidden" style={{ width: CHART_WIDTH }}>
+								<LineChart
+									color={'#E3BBA1'}
+									data={userWeights.map((point, index) =>
+										index === userWeights.length - 1
+											? {
+													...point,
+													customDataPoint: () => (
+														<View
+															style={{
+																width: 10,
+																height: 10,
+																borderRadius: 5,
+																backgroundColor: '#E3BBA1',
+																borderWidth: 2,
+																borderColor: SCREEN_BG,
+															}}
+														/>
+													),
+												}
+											: point
+									)}
+									height={80}
+									width={CHART_WIDTH}
+									curved
+									textColor={'transparent'}
+									spacing={30}
+									thickness={3}
+									xAxisLabelTextStyle={{ color: 'transparent', fontSize: 12 }}
+									yAxisTextStyle={{ color: 'transparent', fontSize: 12 }}
+									hideYAxisText
+									hideAxesAndRules
+									focusEnabled
+									showDataPointOnFocus
+									focusedDataPointShape="circle"
+									focusedDataPointWidth={15}
+									focusedDataPointHeight={15}
+									focusedDataPointColor="#E3BBA1"
+									focusedDataPointRadius={6}
+									onFocus={(item: any) => {
+										setFocusedPoint(item);
+									}}
+									yAxisOffset={calculateYAxisOffset(userWeights)}
+								/>
+							</View>
+							<View className="ml-2 items-start">
+								<Text
+									className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+									style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
+								>
+									Now
+								</Text>
+								<Text className="text-xs font-JakartaBold text-[#262135]">
+									{displayWeight !== null ? displayWeight.toFixed(1) : '--'}
+								</Text>
+							</View>
+						</>
 					) : (
 						<View className="h-[100px] flex justify-center items-center">
 							<Text className="text-gray-400 text-sm">No weight data available</Text>
 						</View>
 					)}
 				</View>
-				<View className="flex flex-row justify-between py-4">
-					<View className="flex justify-center items-center gap-1 ">
-						<Text className="text-xs text-[#64748B]">Starting</Text>
-						<Text className="text-sm">
-							{startingWeight ? `${Number(startingWeight).toFixed(1)} lbs` : '--'}
+
+				<View className="flex-row justify-between items-end mt-1">
+					<View>
+						<Text
+							className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
+						>
+							Target
+						</Text>
+						<Text className="text-sm font-JakartaBold text-[#262135] mt-1">
+							{targetWeight ? formatWeight(Number(targetWeight), unitSystem) : '--'}
 						</Text>
 					</View>
-					<View className="flex justify-center items-center gap-1 ">
-						<Text className="text-xs text-[#64748B]">Change</Text>
-						<View className="flex flex-row items-center gap-1">
-							{lastWeightEntry &&
-								startingWeight &&
-								(() => {
-									const weightChange = startingWeight - lastWeightEntry.value;
-									const hasLostWeight = weightChange > 0;
-									return (
-										<Ionicons
-											name={hasLostWeight ? 'trending-down' : 'trending-up'}
-											size={14}
-											color={hasLostWeight ? '#DC2626' : '#16A34A'}
-										/>
-									);
-								})()}
-							<Text className="text-sm text-black font-JakartaSemiBold">
-								{lastWeightEntry && startingWeight
-									? (startingWeight - lastWeightEntry.value).toFixed(1)
-									: '--'}{' '}
-								lbs
-							</Text>
+					<TouchableOpacity
+						className="items-end"
+						activeOpacity={0.7}
+						onPress={() => setDietModal(true)}
+						accessibilityRole="button"
+						accessibilityLabel="Edit diet program"
+					>
+						<Text
+							className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
+						>
+							Diet
+						</Text>
+						<View className="flex-row items-center mt-1">
+							<Text className="text-sm font-JakartaBold text-[#262135]">{dietLabel}</Text>
+							<Ionicons
+								name="chevron-forward"
+								size={14}
+								color="#C9BEB4"
+								style={{ marginLeft: 2 }}
+							/>
 						</View>
-					</View>
-					<View className="flex justify-center items-center gap-1 ">
-						<Text className="text-xs text-[#64748B]">Target</Text>
-						<Text className="text-sm">
-							{targetWeight ? `${Number(targetWeight).toFixed(1)} lbs` : '--'}
-						</Text>
-					</View>
+					</TouchableOpacity>
 				</View>
 
 				<ReactNativeModal
@@ -351,7 +453,7 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 						<View className="flex mx-auto  my-8 w-full justify-center">
 							<InputField
 								label=""
-								placeholder="lbs"
+								placeholder={weightUnit(unitSystem)}
 								keyboardType="numeric"
 								value={weightForm.weight}
 								className="text-center flex p-4 "
@@ -362,6 +464,12 @@ const WeightTracking = ({ onWeightLogged }: WeightTrackingProps) => {
 						<CustomButton onPress={handleWeightSubmission} title="Save" />
 					</View>
 				</ReactNativeModal>
+
+				<EditDietModal
+					isVisible={dietModal}
+					onClose={() => setDietModal(false)}
+					onSaved={onDietChanged}
+				/>
 			</View>
 		</View>
 	);

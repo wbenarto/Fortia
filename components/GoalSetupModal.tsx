@@ -8,6 +8,7 @@ import { fetchAPI } from '@/lib/fetch';
 import { useUser } from '@clerk/clerk-expo';
 import { useGoalsStore } from '@/store';
 import { calculateNutritionTargets } from '@/lib/nutritionTargets';
+import { toDisplayWeight, toStoredWeight, useUnitSystem, weightUnit } from '@/lib/units';
 
 interface GoalSetupModalProps {
 	isVisible: boolean;
@@ -40,6 +41,8 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 
 	const { user } = useUser();
 	const { triggerGoalsUpdate } = useGoalsStore();
+	const unitSystem = useUnitSystem();
+	const unitWord = unitSystem === 'metric' ? 'kilograms' : 'pounds';
 
 	// Fetch existing nutrition goals when modal opens
 	useEffect(() => {
@@ -66,11 +69,13 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 	};
 
 	const populateFormWithExistingGoals = (goals: ExistingNutritionGoals) => {
-		// Target weight is already in lbs, just convert to string
-		const targetWeightLbs = goals.targetWeight ? Math.round(goals.targetWeight).toString() : '';
+		// Stored in lbs; shown in the user's unit
+		const targetWeight = goals.targetWeight
+			? Math.round(toDisplayWeight(goals.targetWeight, unitSystem)).toString()
+			: '';
 
 		setFormData({
-			targetWeight: targetWeightLbs,
+			targetWeight,
 			fitnessGoal: goals.fitnessGoal,
 		});
 	};
@@ -106,8 +111,8 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 		setFormData(prev => ({ ...prev, [field]: value }));
 	};
 
-	const convertWeightToLbs = (weightLbs: string): number => {
-		return parseFloat(weightLbs);
+	const convertWeightToLbs = (weight: string): number => {
+		return toStoredWeight(parseFloat(weight), unitSystem);
 	};
 
 	const saveGoals = async () => {
@@ -210,13 +215,13 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 					<Text className="text-lg font-JakartaSemiBold mb-4 text-center">Target Weight</Text>
 					<View className="mb-4">
 						<Text className="text-xs text-black font-JakartaSemiBold mb-2">
-							Target Weight (lbs)
+							Target Weight ({weightUnit(unitSystem)})
 						</Text>
 						<InputField
 							placeholder={
 								existingGoals
-									? formData.targetWeight || 'Enter your target weight in pounds'
-									: 'Enter your target weight in pounds'
+									? formData.targetWeight || `Enter your target weight in ${unitWord}`
+									: `Enter your target weight in ${unitWord}`
 							}
 							keyboardType="numeric"
 							value={formData.targetWeight}
