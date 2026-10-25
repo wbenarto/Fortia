@@ -2,13 +2,34 @@ import { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import ReactNativeModal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUser } from '@clerk/clerk-expo';
 import { fetchAPI } from '@/lib/fetch';
 import { getTodayDate } from '@/lib/dateUtils';
 import { useCyclingPlaceholder } from '@/lib/useCyclingPlaceholder';
+import { useUserProfile } from '@/lib/userUtils';
+import { formatWeight, useUnitSystem } from '@/lib/units';
+import {
+	INTENSITIES,
+	activityCalories,
+	distanceCalories,
+	distanceStep,
+	distanceUnitFor,
+	formatPace,
+	iconForActivityName,
+	toMiles,
+	useActivityTypes,
+	type ActivityType,
+	type Intensity,
+} from '@/lib/activityTypes';
 
-type ModalView = 'list' | 'new' | 'result';
+type ModalView = 'list' | 'details' | 'new' | 'result';
+
+const ACCENT = '#E3BBA1';
+const INK = '#262135';
+const DURATION_PRESETS = [15, 30, 45, 60, 90];
+const DEFAULT_MINUTES = 30;
+const FALLBACK_WEIGHT_LBS = 160;
 
 // Plain activity names plus a duration, distance or sets×reps — the shape the
 // exercise-analysis prompt estimates calories from most reliably.
@@ -44,14 +65,12 @@ const roundValue = (value: unknown) => Math.round(Number(value) || 0);
 
 const eyebrowStyle = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
 
-const inputClass =
-	'text-sm font-JakartaMedium text-[#262135] border-b-[1px] border-[#E3BBA1] pb-2 mb-5';
-
 const emptyRow = (): ExerciseRow => ({ exercise: '', amount: '' });
 
-// Logging an exercise: pick a recent one to re-log in one tap, or enter new ones and
-// they're analyzed and saved for today. Each exercise is its own entry — no dates,
-// no multi-exercise sessions.
+// Logging an activity: pick a type (running, cycling, swimming…), set duration and
+// intensity, and calories come from the activity's MET value and the user's weight
+// (activity_types in the DB — no AI call). Recents re-log in one tap. Only "Other"
+// (free text) still asks Gemini to estimate calories.
 const NewWorkoutModal = ({
 	isVisible,
 	onClose,
@@ -70,6 +89,17 @@ const NewWorkoutModal = ({
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState('');
 	const [saved, setSaved] = useState<ExerciseEntry[]>([]);
+	const [selectedType, setSelectedType] = useState<ActivityType | null>(null);
+	const [minutes, setMinutes] = useState(DEFAULT_MINUTES);
+	const [intensity, setIntensity] = useState<Intensity>('moderate');
+	const [distance, setDistance] = useState('');
+	// Distance activities: log by distance (time optional) or by time
+	const [mode, setMode] = useState<'distance' | 'time'>('time');
+	const [timeKnown, setTimeKnown] = useState(true);
+	const activityTypes = useActivityTypes();
+	const profile = useUserProfile();
+	const unitSystem = useUnitSystem();
+	const weightLbs = Number(profile.weight) || FALLBACK_WEIGHT_LBS;
 	const { index: placeholderIndex, opacity: placeholderOpacity } = useCyclingPlaceholder(
 		EXERCISE_PLACEHOLDERS.length
 	);
@@ -109,6 +139,7 @@ const NewWorkoutModal = ({
 		setRows([emptyRow()]);
 		setError('');
 		setSaved([]);
+		setSelectedType(null);
 		fetchRecents();
 	}, [isVisible]);
 
@@ -116,6 +147,58 @@ const NewWorkoutModal = ({
 	const visibleRecents = trimmedSearch
 		? recents.filter(entry => entry.name.toLowerCase().includes(trimmedSearch))
 		: recents;
+	const visibleTypes = trimmedSearch
+		? activityTypes.filter(type => type.name.toLowerCase().includes(trimmedSearch))
+		: activityTypes;
+
+	const openType = (type: ActivityType) => {
+		setSelectedType(type);
+		setMinutes(DEFAULT_MINUTES);
+		setIntensity('moderate');
+		setDistance('');
+		setMode(type.supports_distance ? 'distance' : 'time');
+		setTimeKnown(true);
+		setError('');
+		setView('details');
+	};
+
+	const distanceUnit = selectedType ? distanceUnitFor(selectedType, unitSystem) : 'mi';
+	const distanceValue = parseFloat(distance);
+	const hasDistance = Number.isFinite(distanceValue) && distanceValue > 0;
+	const byDistance = !!selectedType?.supports_distance && mode === 'distance';
+
+	// By distance: speed (or the chosen pace) drives MET. By time: duration × intensity.
+	const distanceEstimate =
+		selectedType && byDistance && hasDistance
+			? distanceCalories(
+					selectedType,
+					toMiles(distanceValue, distanceUnit),
+					timeKnown ? minutes : null,
+					intensity,
+					weightLbs
+				)
+			: null;
+	const shownIntensity = distanceEstimate?.intensity ?? intensity;
+	const intensityIndex = INTENSITIES.indexOf(shownIntensity);
+	const previewCalories = !selectedType
+		? 0
+		: byDistance
+			? (distanceEstimate?.calories ?? 0)
+			: activityCalories(selectedType, intensity, minutes, weightLbs);
+	const pace =
+		selectedType && distanceEstimate
+			? formatPace(selectedType, distanceEstimate.mph, unitSystem)
+			: '';
+	// Speed comes from what was typed, so flag paces that are probably a typo
+	const speeds = selectedType?.typical_speeds;
+	const paceLooksOff =
+		!!distanceEstimate &&
+		!distanceEstimate.estimatedTime &&
+		!!speeds &&
+		(distanceEstimate.mph > speeds[2] * 1.8 || distanceEstimate.mph < speeds[0] * 0.4);
+	const formatDistance = (value: number) =>
+		`${Number.isInteger(value) ? value : value.toFixed(2).replace(/0+$/, '')} ${distanceUnit}`;
+	const canLog = !byDistance || !!distanceEstimate;
 
 	const postExercise = (entry: ExerciseEntry) =>
 		fetchAPI('/api/workouts', {
@@ -145,6 +228,41 @@ const NewWorkoutModal = ({
 		} catch (err) {
 			console.error('Log recent exercise error:', err);
 			setError('Failed to log exercise. Please try again.');
+		}
+	};
+
+	const logActivity = async () => {
+		if (!user?.id || !selectedType || !canLog) return;
+		// e.g. "2 mi · 40 min · 20:00 /mi", "2 mi · Steady · ~40 min", "30 min · Steady run"
+		const parts = !byDistance
+			? [`${minutes} min`, selectedType.intensity_labels[intensityIndex]]
+			: distanceEstimate?.estimatedTime
+				? [
+						formatDistance(distanceValue),
+						selectedType.intensity_labels[intensityIndex],
+						`~${distanceEstimate.minutes} min`,
+					]
+				: [formatDistance(distanceValue), `${minutes} min`, pace];
+
+		setIsSaving(true);
+		setError('');
+		try {
+			const response = await postExercise({
+				name: selectedType.name,
+				duration: parts.join(' · '),
+				calories_burned: previewCalories,
+			});
+			if (!response.success) {
+				setError(response.error || 'Failed to log activity');
+				return;
+			}
+			onSaved?.();
+			onClose();
+		} catch (err) {
+			console.error('Log activity error:', err);
+			setError('Failed to log activity. Please try again.');
+		} finally {
+			setIsSaving(false);
 		}
 	};
 
@@ -228,58 +346,413 @@ const NewWorkoutModal = ({
 	const renderList = () => (
 		<View>
 			<View className="flex-row justify-between items-center mb-5">
-				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Log exercise</Text>
-				<TouchableOpacity onPress={onClose}>
+				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Log activity</Text>
+				<TouchableOpacity onPress={onClose} hitSlop={10}>
 					<Ionicons name="close" size={24} color="#64748B" />
 				</TouchableOpacity>
 			</View>
 
-			<TextInput
-				value={search}
-				onChangeText={setSearch}
-				placeholder="Search your exercises"
-				placeholderTextColor="#94897E"
-				className={inputClass}
-			/>
-
-			<Text className="text-[10px] font-JakartaSemiBold text-[#94897E] mb-1" style={eyebrowStyle}>
-				{trimmedSearch ? 'Results' : 'Recent'}
-			</Text>
-
-			{visibleRecents.length === 0 ? (
-				<Text className="text-sm text-[#94897E] py-3">
-					{trimmedSearch
-						? 'No matches. Try a new exercise below.'
-						: 'No exercises yet. Log your first one below.'}
-				</Text>
-			) : (
-				visibleRecents.map((entry, index) => (
-					<TouchableOpacity
-						key={`${entry.name}|${entry.duration}`}
-						onPress={() => logRecent(entry)}
-						activeOpacity={0.7}
-						className={`flex-row items-center justify-between py-3 ${
-							index < visibleRecents.length - 1 ? 'border-b-[1px] border-[#F0EBE6]' : ''
-						}`}
-					>
-						<View className="flex-1 pr-3">
-							<Text className="text-sm font-JakartaBold text-[#262135]" numberOfLines={1}>
-								{entry.name}
-							</Text>
-							<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-0.5">
-								{`${entry.duration} · ${renderCalories(entry.calories_burned)}`}
-							</Text>
-						</View>
-						<View className="w-7 h-7 rounded-full bg-[#F9F9F8] border-[1px] border-[#F0EBE6] items-center justify-center">
-							<Ionicons name="add" size={16} color="#262135" />
-						</View>
+			<View className="flex-row items-center bg-[#F1F1F1] rounded-full px-4 py-2.5 mb-6">
+				<Ionicons name="search" size={16} color="#94897E" />
+				<TextInput
+					value={search}
+					onChangeText={setSearch}
+					placeholder="Search activities"
+					placeholderTextColor="#94897E"
+					className="flex-1 ml-2 text-sm font-JakartaMedium text-[#262135] p-0"
+				/>
+				{search ? (
+					<TouchableOpacity onPress={() => setSearch('')} hitSlop={8}>
+						<Ionicons name="close-circle" size={16} color="#C9BEB4" />
 					</TouchableOpacity>
-				))
+				) : null}
+			</View>
+
+			{/* Activity types */}
+			<View className="flex-row flex-wrap -mx-1">
+				{visibleTypes.map(type => (
+					<TouchableOpacity
+						key={type.slug}
+						onPress={() => openType(type)}
+						activeOpacity={0.7}
+						className="items-center mb-4 px-1"
+						style={{ width: '25%' }}
+						accessibilityLabel={`Log ${type.name}`}
+					>
+						<View className="w-14 h-14 rounded-full bg-[#F9F9F8] border-[1px] border-[#F0EBE6] items-center justify-center">
+							<MaterialCommunityIcons name={type.icon} size={26} color={INK} />
+						</View>
+						<Text
+							className="text-[11px] font-JakartaSemiBold text-[#262135] mt-1.5 text-center"
+							numberOfLines={1}
+						>
+							{type.name}
+						</Text>
+					</TouchableOpacity>
+				))}
+				<TouchableOpacity
+					onPress={() => {
+						setError('');
+						setRows([{ exercise: search.trim(), amount: '' }]);
+						setView('new');
+					}}
+					activeOpacity={0.7}
+					className="items-center mb-4 px-1"
+					style={{ width: '25%' }}
+					accessibilityLabel="Log another activity"
+				>
+					<View className="w-14 h-14 rounded-full bg-white border-[1px] border-dashed border-[#C9BEB4] items-center justify-center">
+						<MaterialCommunityIcons name="pencil-outline" size={24} color="#94897E" />
+					</View>
+					<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-1.5">Other</Text>
+				</TouchableOpacity>
+			</View>
+
+			{/* Recent */}
+			{visibleRecents.length > 0 && (
+				<>
+					<Text
+						className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-2 mb-1"
+						style={eyebrowStyle}
+					>
+						Recent
+					</Text>
+					{visibleRecents.map((entry, index) => (
+						<TouchableOpacity
+							key={`${entry.name}|${entry.duration}`}
+							onPress={() => logRecent(entry)}
+							activeOpacity={0.7}
+							className={`flex-row items-center py-3 ${
+								index < visibleRecents.length - 1 ? 'border-b-[1px] border-[#F0EBE6]' : ''
+							}`}
+						>
+							<View
+								className="w-9 h-9 rounded-full items-center justify-center"
+								style={{ backgroundColor: `${ACCENT}26` }}
+							>
+								<MaterialCommunityIcons
+									name={iconForActivityName(entry.name, activityTypes)}
+									size={18}
+									color="#cd9c99"
+								/>
+							</View>
+							<View className="flex-1 mx-3">
+								<Text className="text-sm font-JakartaBold text-[#262135]" numberOfLines={1}>
+									{entry.name}
+								</Text>
+								<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-0.5">
+									{`${entry.duration} · ${renderCalories(entry.calories_burned)}`}
+								</Text>
+							</View>
+							<View className="w-7 h-7 rounded-full bg-[#F9F9F8] border-[1px] border-[#F0EBE6] items-center justify-center">
+								<Ionicons name="add" size={16} color={INK} />
+							</View>
+						</TouchableOpacity>
+					))}
+				</>
+			)}
+
+			{trimmedSearch && visibleTypes.length === 0 && visibleRecents.length === 0 && (
+				<Text className="text-sm text-[#94897E] py-3">
+					No matches. Tap Other to log "{search.trim()}".
+				</Text>
 			)}
 
 			<View className="mt-3">{renderErrorText()}</View>
 		</View>
 	);
+
+	const renderDurationControl = () => (
+		<>
+			<View className="flex-row items-center justify-center">
+				<RoundButton
+					icon="remove"
+					onPress={() => setMinutes(m => Math.max(5, m - 5))}
+					label="5 minutes less"
+				/>
+				<View className="flex-row items-baseline mx-6">
+					<Text className="font-JakartaExtraBold text-[44px] text-[#262135]">{minutes}</Text>
+					<Text className="font-JakartaSemiBold text-base text-[#94897E] ml-1.5">min</Text>
+				</View>
+				<RoundButton
+					icon="add"
+					onPress={() => setMinutes(m => Math.min(300, m + 5))}
+					label="5 minutes more"
+				/>
+			</View>
+			<View className="flex-row justify-center mt-3" style={{ columnGap: 8 }}>
+				{DURATION_PRESETS.map(preset => {
+					const selected = minutes === preset;
+					return (
+						<TouchableOpacity
+							key={preset}
+							onPress={() => setMinutes(preset)}
+							className="px-3 py-1.5 rounded-full"
+							style={{ backgroundColor: selected ? ACCENT : '#F1F1F1' }}
+						>
+							<Text
+								className="text-xs font-JakartaSemiBold"
+								style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+							>
+								{preset}
+							</Text>
+						</TouchableOpacity>
+					);
+				})}
+			</View>
+		</>
+	);
+
+	const renderIntensityCards = (type: ActivityType) => (
+		<View className="flex-row" style={{ columnGap: 8 }}>
+			{INTENSITIES.map((level, i) => {
+				const selected = intensity === level;
+				return (
+					<TouchableOpacity
+						key={level}
+						onPress={() => setIntensity(level)}
+						activeOpacity={0.8}
+						accessibilityRole="radio"
+						accessibilityState={{ selected }}
+						className="flex-1 rounded-2xl px-3 py-3 border-[1px]"
+						style={{
+							borderColor: selected ? ACCENT : '#F0EBE6',
+							backgroundColor: selected ? `${ACCENT}1F` : '#FFFFFF',
+						}}
+					>
+						<View className="flex-row mb-1.5" style={{ columnGap: 3 }}>
+							{[0, 1, 2].map(bar => (
+								<View
+									key={bar}
+									className="h-1 flex-1 rounded-full"
+									style={{ backgroundColor: bar <= i ? ACCENT : '#F0EBE6' }}
+								/>
+							))}
+						</View>
+						<Text className="text-[13px] font-JakartaBold text-[#262135]" numberOfLines={1}>
+							{type.intensity_labels[i]}
+						</Text>
+						<Text
+							className="text-[11px] font-JakartaMedium text-[#94897E] mt-0.5"
+							numberOfLines={1}
+						>
+							{type.intensity_hints[i]}
+						</Text>
+					</TouchableOpacity>
+				);
+			})}
+		</View>
+	);
+
+	const renderDetails = () => {
+		if (!selectedType) return null;
+		return (
+			<View>
+				<View className="flex-row justify-between items-center mb-6">
+					<TouchableOpacity
+						onPress={() => {
+							setError('');
+							setView('list');
+						}}
+						hitSlop={10}
+					>
+						<Ionicons name="chevron-back" size={24} color={INK} />
+					</TouchableOpacity>
+					<TouchableOpacity onPress={onClose} hitSlop={10}>
+						<Ionicons name="close" size={24} color="#64748B" />
+					</TouchableOpacity>
+				</View>
+
+				<View className="items-center">
+					<View
+						className="w-16 h-16 rounded-full items-center justify-center"
+						style={{ backgroundColor: `${ACCENT}33` }}
+					>
+						<MaterialCommunityIcons name={selectedType.icon} size={32} color="#B07F62" />
+					</View>
+					<Text className="text-[22px] font-JakartaExtraBold text-[#262135] mt-3">
+						{selectedType.name}
+					</Text>
+				</View>
+
+				{selectedType.supports_distance && (
+					<View className="flex-row bg-[#F1F1F1] rounded-full p-1 mt-6">
+						{(['distance', 'time'] as const).map(option => {
+							const selected = mode === option;
+							return (
+								<TouchableOpacity
+									key={option}
+									onPress={() => setMode(option)}
+									className="flex-1 py-2 rounded-full items-center"
+									style={{ backgroundColor: selected ? ACCENT : 'transparent' }}
+								>
+									<Text
+										className="text-xs font-JakartaSemiBold"
+										style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+									>
+										{option === 'distance' ? 'Distance' : 'Time'}
+									</Text>
+								</TouchableOpacity>
+							);
+						})}
+					</View>
+				)}
+
+				{byDistance ? (
+					<>
+						{/* Distance */}
+						<Text
+							className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-7 mb-3"
+							style={eyebrowStyle}
+						>
+							Distance
+						</Text>
+						<View className="flex-row items-center justify-center">
+							<RoundButton
+								icon="remove"
+								onPress={() =>
+									setDistance(d =>
+										String(
+											Math.max(
+												0,
+												Math.round(((parseFloat(d) || 0) - distanceStep(distanceUnit)) * 100) / 100
+											)
+										)
+									)
+								}
+								label="Less distance"
+							/>
+							<View className="flex-row items-baseline mx-4">
+								<TextInput
+									value={distance}
+									onChangeText={text => setDistance(text.replace(/[^0-9.]/g, ''))}
+									placeholder="0"
+									placeholderTextColor="#C9BEB4"
+									keyboardType="decimal-pad"
+									className="font-JakartaExtraBold text-[44px] text-[#262135] text-center p-0 min-w-[64px]"
+								/>
+								<Text className="font-JakartaSemiBold text-base text-[#94897E] ml-1.5">
+									{distanceUnit}
+								</Text>
+							</View>
+							<RoundButton
+								icon="add"
+								onPress={() =>
+									setDistance(d =>
+										String(
+											Math.round(((parseFloat(d) || 0) + distanceStep(distanceUnit)) * 100) / 100
+										)
+									)
+								}
+								label="More distance"
+							/>
+						</View>
+
+						{/* Time (optional) */}
+						<View className="flex-row items-center justify-between mt-7 mb-3">
+							<Text
+								className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+								style={eyebrowStyle}
+							>
+								Time
+							</Text>
+							<TouchableOpacity onPress={() => setTimeKnown(known => !known)} hitSlop={8}>
+								<Text className="text-xs font-JakartaSemiBold text-[#cd9c99]">
+									{timeKnown ? "Don't know" : 'Add time'}
+								</Text>
+							</TouchableOpacity>
+						</View>
+						{timeKnown ? (
+							renderDurationControl()
+						) : (
+							<Text className="text-xs font-JakartaMedium text-[#94897E]">
+								We'll estimate it from your pace below.
+							</Text>
+						)}
+
+						{timeKnown && selectedType.met_from_speed ? (
+							distanceEstimate && (
+								<View className="flex-row items-center justify-between bg-[#F9F9F8] border-[1px] border-[#F0EBE6] rounded-2xl px-4 py-3 mt-6">
+									<View>
+										<Text
+											className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+											style={eyebrowStyle}
+										>
+											Pace
+										</Text>
+										<Text className="font-JakartaBold text-[16px] text-[#262135] mt-0.5">
+											{pace}
+										</Text>
+									</View>
+									<Text className="text-xs font-JakartaSemiBold text-[#94897E]">
+										{selectedType.intensity_labels[intensityIndex]}
+									</Text>
+								</View>
+							)
+						) : (
+							<>
+								<Text
+									className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-7 mb-3"
+									style={eyebrowStyle}
+								>
+									{selectedType.met_from_speed ? 'Pace' : 'Intensity'}
+								</Text>
+								{renderIntensityCards(selectedType)}
+							</>
+						)}
+						{paceLooksOff && (
+							<Text className="text-xs font-JakartaMedium text-[#E08585] mt-2">
+								That pace looks unusual — check the distance and time.
+							</Text>
+						)}
+					</>
+				) : (
+					<>
+						<Text
+							className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-7 mb-3"
+							style={eyebrowStyle}
+						>
+							Duration
+						</Text>
+						{renderDurationControl()}
+						<Text
+							className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-7 mb-3"
+							style={eyebrowStyle}
+						>
+							Intensity
+						</Text>
+						{renderIntensityCards(selectedType)}
+					</>
+				)}
+
+				{/* Calories preview */}
+				<View className="bg-[#F9F9F8] border-[1px] border-[#F0EBE6] rounded-2xl px-4 py-3 mt-7 flex-row items-center">
+					<MaterialCommunityIcons name="fire" size={22} color="#E08585" />
+					<View className="flex-1 ml-3">
+						<View className="flex-row items-baseline">
+							<Text className="font-JakartaExtraBold text-[24px] text-[#262135]">
+								{previewCalories}
+							</Text>
+							<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">cal burned</Text>
+						</View>
+						<Text className="text-[11px] font-JakartaMedium text-[#94897E]">
+							{!byDistance
+								? `Estimated for ${formatWeight(weightLbs, unitSystem, 0)} at this intensity`
+								: !distanceEstimate
+									? 'Enter a distance to estimate calories'
+									: distanceEstimate.estimatedTime
+										? `About ${distanceEstimate.minutes} min at a ${selectedType.intensity_labels[
+												intensityIndex
+											].toLowerCase()} pace`
+										: `${pace} · for ${formatWeight(weightLbs, unitSystem, 0)}`}
+						</Text>
+					</View>
+				</View>
+
+				<View className="mt-3">{renderErrorText()}</View>
+			</View>
+		);
+	};
 
 	const renderNew = () => (
 		<View>
@@ -292,7 +765,7 @@ const NewWorkoutModal = ({
 				>
 					<Ionicons name="chevron-back" size={24} color="#262135" />
 				</TouchableOpacity>
-				<Text className="text-xl font-JakartaExtraBold text-[#262135]">New exercise</Text>
+				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Other activity</Text>
 				<TouchableOpacity onPress={onClose}>
 					<Ionicons name="close" size={24} color="#64748B" />
 				</TouchableOpacity>
@@ -421,24 +894,35 @@ const NewWorkoutModal = ({
 					style={{ flex: 1 }}
 				>
 					{view === 'list' && renderList()}
+					{view === 'details' && renderDetails()}
 					{view === 'new' && renderNew()}
 					{view === 'result' && renderResult()}
 				</ScrollView>
 
-				{view !== 'new' && (
+				{(view === 'details' || view === 'result') && (
 					<View
 						className="px-6 pt-3 border-t-[1px] border-[#F0EBE6]"
 						style={{ paddingBottom: 24 + insets.bottom }}
 					>
-						{view === 'list' ? (
+						{view === 'details' ? (
 							<TouchableOpacity
-								onPress={() => {
-									setError('');
-									setView('new');
-								}}
-								className="bg-[#E3BBA1] rounded-xl py-3"
+								onPress={logActivity}
+								disabled={isSaving || !canLog}
+								className={`rounded-xl py-3.5 ${
+									isSaving || !canLog ? 'bg-[#F1F1F1]' : 'bg-[#E3BBA1]'
+								}`}
 							>
-								<Text className="text-white text-center font-JakartaSemiBold">New exercise</Text>
+								<Text
+									className={`text-center font-JakartaSemiBold ${
+										isSaving || !canLog ? 'text-[#64748B]' : 'text-white'
+									}`}
+								>
+									{isSaving
+										? 'Saving…'
+										: canLog
+											? `Log ${previewCalories} cal`
+											: 'Enter a distance'}
+								</Text>
 							</TouchableOpacity>
 						) : (
 							<TouchableOpacity onPress={onClose} className="bg-[#E3BBA1] rounded-xl py-3">
@@ -451,5 +935,23 @@ const NewWorkoutModal = ({
 		</ReactNativeModal>
 	);
 };
+
+const RoundButton = ({
+	icon,
+	onPress,
+	label,
+}: {
+	icon: keyof typeof Ionicons.glyphMap;
+	onPress: () => void;
+	label: string;
+}) => (
+	<TouchableOpacity
+		onPress={onPress}
+		accessibilityLabel={label}
+		className="w-11 h-11 rounded-full bg-[#F1F1F1] items-center justify-center"
+	>
+		<Ionicons name={icon} size={20} color={INK} />
+	</TouchableOpacity>
+);
 
 export default NewWorkoutModal;

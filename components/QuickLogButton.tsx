@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuickLogStore, type QuickLogType } from '@/store';
 import NewWorkoutModal from '@/components/NewWorkoutModal';
+import FoodLookupModal from '@/components/FoodLookupModal';
 
 const FAB_SIZE = 64;
 const BADGE_SIZE = 54;
@@ -13,6 +14,9 @@ const BADGE_SIZE = 54;
 // the FAB centre, so nudging these moves the whole cluster together.
 const FAB_RIGHT = 10;
 const FAB_BOTTOM = -20;
+// Small food-lookup button stacked just above the FAB
+const SEARCH_SIZE = 40;
+const SEARCH_GAP = 12;
 const RADIUS = 124;
 // Degrees measured from straight up, sweeping down toward horizontal-left.
 const ANGLES = [8, 44, 80];
@@ -30,6 +34,7 @@ const OPTIONS: {
 const QuickLogButton = () => {
 	const [open, setOpen] = useState(false);
 	const [activityModal, setActivityModal] = useState(false);
+	const [lookupModal, setLookupModal] = useState(false);
 	const insets = useSafeAreaInsets();
 	const router = useRouter();
 	const requestLog = useQuickLogStore(s => s.requestLog);
@@ -89,12 +94,31 @@ const QuickLogButton = () => {
 						);
 					})}
 
+				{!open && (
+					<Animated.View
+						entering={FadeIn.duration(200)}
+						exiting={FadeOut.duration(120)}
+						style={styles.searchSlot}
+					>
+						<TouchableOpacity
+							activeOpacity={0.85}
+							onPress={() => setLookupModal(true)}
+							style={styles.search}
+							accessibilityRole="button"
+							accessibilityLabel="Look up food"
+						>
+							<Ionicons name="search" size={18} color="#262135" />
+						</TouchableOpacity>
+					</Animated.View>
+				)}
+
 				<TouchableOpacity activeOpacity={0.85} onPress={() => setOpen(v => !v)} style={styles.fab}>
 					<Ionicons name={open ? 'close' : 'add'} size={32} color="#FFFFFF" />
 				</TouchableOpacity>
 			</View>
 
 			<NewWorkoutModal isVisible={activityModal} onClose={() => setActivityModal(false)} />
+			<FoodLookupModal isVisible={lookupModal} onClose={() => setLookupModal(false)} />
 		</>
 	);
 };
@@ -125,6 +149,26 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.35,
 		shadowRadius: 10,
 		elevation: 8,
+	},
+	searchSlot: {
+		position: 'absolute',
+		right: FAB_RIGHT + (FAB_SIZE - SEARCH_SIZE) / 2,
+		bottom: FAB_BOTTOM + FAB_SIZE + SEARCH_GAP,
+	},
+	search: {
+		width: SEARCH_SIZE,
+		height: SEARCH_SIZE,
+		borderRadius: SEARCH_SIZE / 2,
+		backgroundColor: '#FFFFFF',
+		borderWidth: 1,
+		borderColor: '#F0EBE6',
+		alignItems: 'center',
+		justifyContent: 'center',
+		shadowColor: '#3A2E28',
+		shadowOffset: { width: 0, height: 3 },
+		shadowOpacity: 0.15,
+		shadowRadius: 6,
+		elevation: 3,
 	},
 	badgeSlot: {
 		position: 'absolute',

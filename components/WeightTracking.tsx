@@ -13,7 +13,7 @@ import {
 import { useIsFocused } from '@react-navigation/native';
 import ReactNativeModal from 'react-native-modal';
 import { fetchAPI, useFetch } from '@/lib/fetch';
-import InputField from '@/components/InputField';
+import WeightRuler from '@/components/WeightRuler';
 import CustomButton from '@/components/CustomButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LineChart } from 'react-native-gifted-charts';
@@ -25,6 +25,7 @@ import { useGoalsStore, useQuickLogStore } from '@/store';
 import { useUserProfile } from '@/lib/userUtils';
 import { calculateBMI, getBMICategory } from '@/lib/bodyFatUtils';
 import { SCREEN_BG } from '@/lib/theme';
+import SectionTitle from '@/components/progress/SectionTitle';
 
 interface WeightEntry {
 	date: string;
@@ -49,10 +50,8 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 	const [rawWeights, setRawWeights] = useState<WeightEntry[]>([]);
 	const [userWeights, setUserWeights] = useState<ChartDataPoint[]>([]);
 	const [addWeightModal, setAddWeightModal] = useState(false);
-	const [weightForm, setWeightForm] = useState({
-		weight: '',
-		date: new Date(), // This is just for the form state, actual date uses getTodayDate()
-	});
+	// Weight picked on the ruler, in the user's unit
+	const [pendingWeight, setPendingWeight] = useState<number | null>(null);
 	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [focusedPoint, setFocusedPoint] = useState(null);
 	const [targetWeight, setTargetWeight] = useState<number | null>(null);
@@ -198,7 +197,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 		// Handle weight form submission
 
 		// Validate weight input
-		if (!weightForm.weight || isNaN(Number(weightForm.weight))) {
+		if (pendingWeight === null || isNaN(pendingWeight)) {
 			console.error('Invalid weight input');
 			return;
 		}
@@ -210,7 +209,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 				method: 'POST',
 				body: JSON.stringify({
 					// Entered in the user's unit; stored in lbs
-					weight: Math.round(toStoredWeight(Number(weightForm.weight), unitSystem) * 10) / 10,
+					weight: Math.round(toStoredWeight(pendingWeight, unitSystem) * 10) / 10,
 					date: dateString,
 					clerkId: user?.id,
 				}),
@@ -244,11 +243,6 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 
 			fetchData();
 			setAddWeightModal(false);
-			// Reset form
-			setWeightForm({
-				weight: '',
-				date: new Date(), // This is just for the form state, actual date uses getTodayDate()
-			});
 
 			// Trigger quest refresh callback
 			onWeightLogged?.();
@@ -259,6 +253,16 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 	const weightValue = lastWeightEntry ? lastWeightEntry.value : null;
 	const displayWeight = weightValue !== null ? toDisplayWeight(weightValue, unitSystem) : null;
 	const profileWeight = weightValue ?? userProfile.weight ?? null;
+
+	// Start the ruler on the current weight (latest log, else profile, else a typical value)
+	useEffect(() => {
+		if (!addWeightModal) {
+			setPendingWeight(null);
+			return;
+		}
+		const currentLb = Number(profileWeight) || 150;
+		setPendingWeight(Math.round(toDisplayWeight(currentLb, unitSystem) * 10) / 10);
+	}, [addWeightModal]);
 	const heightInches = userProfile.height ? userProfile.height / 2.54 : 0;
 	const dietLabel = formatDietLabel(
 		resolveDietType(userProfile.dietType),
@@ -286,7 +290,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 	return (
 		<View className="w-full">
 			<View className="px-6 mt-12 mb-2">
-				<Text className="font-JakartaBold text-[18px] text-[#262135] mb-5">Body</Text>
+				<SectionTitle title="Body" tab="weight" />
 				<View className="flex-row items-stretch">
 					<View className="flex-1">
 						<Text
@@ -451,14 +455,15 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 						</View>
 
 						<View className="flex mx-auto  my-8 w-full justify-center">
-							<InputField
-								label=""
-								placeholder={weightUnit(unitSystem)}
-								keyboardType="numeric"
-								value={weightForm.weight}
-								className="text-center flex p-4 "
-								onChangeText={value => setWeightForm({ ...weightForm, weight: value })}
-							/>
+							{pendingWeight !== null && (
+								<WeightRuler
+									value={pendingWeight}
+									min={unitSystem === 'metric' ? 25 : 50}
+									max={unitSystem === 'metric' ? 230 : 500}
+									unit={weightUnit(unitSystem)}
+									onChange={setPendingWeight}
+								/>
+							)}
 						</View>
 
 						<CustomButton onPress={handleWeightSubmission} title="Save" />

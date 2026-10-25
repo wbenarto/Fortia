@@ -22,6 +22,9 @@ import {
 import CustomButton from './CustomButton';
 import InputField from './InputField';
 import ActivityRow from './ActivityRow';
+import ActivitiesSection from './ActivitiesSection';
+import { iconForActivityName, useActivityTypes } from '@/lib/activityTypes';
+import { router } from 'expo-router';
 import { SCREEN_BG } from '@/lib/theme';
 
 const eyebrowStyle = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
@@ -72,6 +75,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 		}
 	};
 	const [workoutModal, setWorkoutModal] = useState(false);
+	const activityTypes = useActivityTypes();
 	const [exerciseName, setExerciseName] = useState('');
 	const [exerciseDuration, setExerciseDuration] = useState('');
 	const [estimatedCalories, setEstimatedCalories] = useState<number | null>(null);
@@ -898,6 +902,8 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 				))}
 			</View>
 
+			<ActivitiesSection variant="activity" />
+
 			<View className="flex-row items-center justify-between mt-10 mb-1">
 				<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
 					Exercises{exerciseCount > 0 ? `  ·  ${exerciseCount}` : ''}
@@ -941,6 +947,11 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 								.join('  ·  ')}
 							calories={exercise.calories_burned}
 							icon={exercise.workout_type === 'barbell' ? 'barbell-outline' : 'heart-outline'}
+							activityIcon={
+								exercise.workout_type === 'barbell'
+									? undefined
+									: iconForActivityName(exercise.name || '', activityTypes)
+							}
 							isLast={i === exerciseCount - 1}
 							isCompleted={completedExercises.has(exercise.id)}
 							onToggleCompletion={() =>
@@ -950,18 +961,31 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 							deleteLabel={exercise.name}
 						/>
 					))}
-					{loggedActivities.map((activity, i) => (
-						<ActivityRow
-							key={activity.id}
-							title={activity.activity_description}
-							subtitle="Logged activity"
-							calories={activity.estimated_calories}
-							icon="walk-outline"
-							isLast={scheduledExercises.length + i === exerciseCount - 1}
-							onDelete={() => deleteActivity(activity.id)}
-							deleteLabel={activity.activity_description}
-						/>
-					))}
+					{loggedActivities.map((activity, i) => {
+						// Finished built workouts: open the workout instead of a plain log row
+						const workoutId = activity.workout_id;
+						return (
+							<ActivityRow
+								key={activity.id}
+								title={
+									workoutId
+										? activity.activity_description.replace(/ workout$/, '')
+										: activity.activity_description
+								}
+								subtitle={
+									workoutId
+										? `Workout${activity.workout_minutes ? `  ·  ${activity.workout_minutes} min` : ''}`
+										: 'Logged activity'
+								}
+								calories={activity.estimated_calories}
+								icon={workoutId ? 'barbell-outline' : 'walk-outline'}
+								isLast={scheduledExercises.length + i === exerciseCount - 1}
+								onPress={workoutId ? () => router.push(`/training/${workoutId}`) : undefined}
+								onDelete={() => deleteActivity(activity.id)}
+								deleteLabel={activity.activity_description}
+							/>
+						);
+					})}
 				</View>
 			)}
 

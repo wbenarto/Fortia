@@ -11,7 +11,7 @@ type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 type MacroField = 'calories' | 'protein' | 'carbs' | 'fats';
 type ModalView = 'list' | 'new' | 'result';
 
-const INGREDIENT_PLACEHOLDERS = [
+export const INGREDIENT_PLACEHOLDERS = [
 	{ ingredient: 'In-N-Out Double-Double', amount: '1 burger' },
 	{ ingredient: 'cooked white rice', amount: '1 cup' },
 	{ ingredient: 'Chipotle chicken burrito', amount: '1 burrito' },
@@ -77,7 +77,7 @@ interface Ingredient {
 	amount: string;
 }
 
-const defaultMealType = (): MealType => {
+export const defaultMealType = (): MealType => {
 	const hour = new Date().getHours();
 	if (hour < 11) return 'breakfast';
 	if (hour < 16) return 'lunch';
@@ -379,6 +379,35 @@ const LogMealModal = ({
 	const renderErrorText = () =>
 		error ? <Text className="text-xs text-[#E08585] mb-3">{error}</Text> : null;
 
+	// Meal name with each ingredient's amount in muted text, so the same meal logged
+	// at different portions can be told apart: "Rice 120g, Chicken breast 250g"
+	const renderMealWithAmounts = (meal: RecentMeal) => {
+		const items = Array.isArray(meal.ingredients)
+			? meal.ingredients.filter(item => Array.isArray(item) && item[0])
+			: [];
+		if (items.length === 0) {
+			const portion =
+				meal.portion_size && meal.portion_size !== '1 serving' ? meal.portion_size : '';
+			return (
+				<Text className="text-sm font-JakartaBold text-[#262135]" numberOfLines={2}>
+					{meal.food_name}
+					{portion ? <Text className="font-JakartaMedium text-[#94897E]"> {portion}</Text> : null}
+				</Text>
+			);
+		}
+		return (
+			<Text className="text-sm font-JakartaBold text-[#262135]" numberOfLines={2}>
+				{items.map(([name, amount], index) => (
+					<Text key={index}>
+						{index > 0 ? ', ' : ''}
+						{name}
+						{amount ? <Text className="font-JakartaMedium text-[#94897E]"> {amount}</Text> : null}
+					</Text>
+				))}
+			</Text>
+		);
+	};
+
 	const renderList = () => (
 		<View>
 			<View className="flex-row justify-between items-center mb-5">
@@ -424,9 +453,7 @@ const LogMealModal = ({
 						}`}
 					>
 						<View className="flex-1 pr-3">
-							<Text className="text-sm font-JakartaBold text-[#262135]" numberOfLines={1}>
-								{meal.food_name}
-							</Text>
+							{renderMealWithAmounts(meal)}
 							<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-0.5">
 								{`${roundValue(meal.calories)} cal · P ${roundValue(meal.protein)} · C ${roundValue(meal.carbs)} · F ${roundValue(meal.fats)}`}
 							</Text>
