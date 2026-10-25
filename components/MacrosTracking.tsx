@@ -10,6 +10,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { getTodayDate } from '@/lib/dateUtils';
 import { useCaloriesBurnedToday } from '@/lib/useCaloriesBurnedToday';
 import { useQuickLogStore } from '@/store';
+import SectionTitle from '@/components/progress/SectionTitle';
 
 interface DailySummary {
 	total_calories: number;
@@ -339,7 +340,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 		return (
 			<View className="w-full">
 				<View className="px-6 mt-4">
-					<Text className="font-JakartaBold text-[18px] text-[#262135] mb-5">Nutrition</Text>
+					<SectionTitle title="Nutrition" tab="nutrition" />
 					<View className="mb-8">
 						<CalorieHero
 							eaten={currentData.calories}

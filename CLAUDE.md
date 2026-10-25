@@ -63,3 +63,16 @@ Reuse these rather than inventing new values. Sourced from `tailwind.config.js`,
 ### Tab bar
 
 Floating pill (`_layout.tsx`), blurred translucent background, no labels, Ionicons only, active icon gets a white circle + accent border.
+
+### Activities / workout builder
+
+- Home → **Activities** (`components/ActivitiesSection.tsx`) → `app/workout-builder.tsx` → plan `app/training/[id]/index.tsx` → player `app/training/[id]/play.tsx`. Option keys/labels and the calorie estimate live in `lib/workoutBuilder.ts` and must match fortia-api `src/lib/exerciseLibrary.ts` / `src/lib/workoutBuilder.ts`.
+- Cost rules: exercises and instructions come from the seeded `exercise_library` (free-exercise-db, public domain) — Gemini only picks/orders from a short candidate list, and results are cached in `workout_templates` by input key (max 3 variants, 10 Gemini builds/user/day, rules fallback). Swaps are DB-only; demo videos are fetched only on tap.
+- A finished workout is saved as **one `activities` row** (that's what feeds calories out) — never also post it to `/api/workouts`, or calories are double counted. Calories use (MET − 1) because BMR is already in calories out.
+- **Today's workout** (`components/workout/TodayWorkoutCard.tsx`, top of both Activities sections) comes from `GET /api/workout-suggestion` (fortia-api `src/lib/workoutSuggestion.ts`): pure DB analytics over the last 14 days — per-area recency/volume (48h recovery), weekly cardio minutes vs 150, training streak, and preferences from recent builder inputs; goal-based starter rotation under 3 training days. It returns builder inputs only; the workout is built (cache-first) when the user taps Start.
+
+### Progress (history & consistency)
+
+- `app/progress.tsx` (tabs Overview / Nutrition / Weight / Activity, range Week / Month / 3 months; `?tab=` deep link) and the Home `components/progress/WeekConsistencyCard.tsx` (last 7 days as meal / weight / workout dots, streak, top insight; last week's recap until dismissed). Home section titles use `components/progress/SectionTitle.tsx` to open the matching tab.
+- Data: `GET /api/progress?clerkId&from&to` (fortia-api `src/lib/progress.ts`, max 120 days) — per-day aggregates, summaries, streaks and rule-based insight sentences (no AI). Days are judged against the user's **current** targets; today only counts once it's on/over target. Insight text may contain `{w}`/`{w2}` weight tokens (lb) — format them with `formatInsight` in `lib/progress.ts` so units follow the user's setting.
+- Charts here are plain views / SVG (`components/progress/Charts.tsx`), not gifted-charts.

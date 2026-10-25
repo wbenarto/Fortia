@@ -20,6 +20,8 @@ import { getTodayDate } from '@/lib/dateUtils';
 import ActivityTracking from '@/components/ActivityTracking';
 import HomeSliderComponent from '@/components/HomeSliderComponent';
 import FortiaPT from '@/components/FortiaPT';
+import ActivitiesSection from '@/components/ActivitiesSection';
+import WeekConsistencyCard from '@/components/progress/WeekConsistencyCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { images } from '@/constants/index';
@@ -262,6 +264,7 @@ export default function Page() {
 						contentContainerStyle={{ paddingBottom: 120, backgroundColor: SCREEN_BG }}
 					>
 						<HomeHeader />
+						<WeekConsistencyCard />
 						<View className="w-full mt-5">
 							{/* Hidden for now — keep for later */}
 							{/* <WeeklyCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} /> */}
@@ -303,6 +306,7 @@ export default function Page() {
 								onDietChanged={onWeightLogged}
 								selectedDate={selectedDate}
 							/>
+							<ActivitiesSection />
 
 							{/* <ActivityTracking
 								refreshTrigger={dashboardRefreshTrigger}

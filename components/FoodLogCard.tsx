@@ -133,9 +133,28 @@ const MealRow = ({
 						<Text className="font-JakartaSemiBold text-[13px] text-[#262135]" numberOfLines={1}>
 							{meal.food_name}
 						</Text>
-						<Text className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5" numberOfLines={1}>
-							{[meal.portion_size, time].filter(Boolean).join('  ·  ')}
-						</Text>
+						{/* Ingredient toggle sits where the portion used to be ("1 serving" said nothing) */}
+						<View className="flex-row items-center mt-0.5">
+							{ingredients.length > 0 && (
+								<>
+									<Text className="font-JakartaMedium text-[11px] text-[#cd9c99]">
+										{ingredients.length} ingredient{ingredients.length === 1 ? '' : 's'}
+									</Text>
+									<Ionicons
+										name={expanded ? 'chevron-up' : 'chevron-down'}
+										size={12}
+										color="#cd9c99"
+										style={{ marginLeft: 2 }}
+									/>
+								</>
+							)}
+							{time ? (
+								<Text className="font-JakartaMedium text-[11px] text-[#94897E]" numberOfLines={1}>
+									{ingredients.length > 0 ? '  ·  ' : ''}
+									{time}
+								</Text>
+							) : null}
+						</View>
 					</View>
 					<View className="items-end">
 						<Text className="font-JakartaBold text-[13px] text-[#262135]">
@@ -147,20 +166,6 @@ const MealRow = ({
 						</Text>
 					</View>
 				</View>
-
-				{ingredients.length > 0 && (
-					<View className="flex-row items-center mt-1.5">
-						<Text className="font-JakartaMedium text-[11px] text-[#cd9c99]">
-							{ingredients.length} ingredient{ingredients.length === 1 ? '' : 's'}
-						</Text>
-						<Ionicons
-							name={expanded ? 'chevron-up' : 'chevron-down'}
-							size={12}
-							color="#cd9c99"
-							style={{ marginLeft: 2 }}
-						/>
-					</View>
-				)}
 
 				{expanded && (
 					<View className="mt-2 rounded-xl bg-[#F9F9F8] px-3 py-2">
