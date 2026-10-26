@@ -21,8 +21,7 @@ const HomeHeader = () => {
 					className="text-[11px] font-JakartaSemiBold text-[#94897E]"
 					style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 				>
-					{greetingForHour(now.getHours())} ·{' '}
-					{now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+					{greetingForHour(now.getHours())}
 				</Text>
 				<Text className="font-JakartaBold text-[28px] text-[#262135] mt-1" numberOfLines={1}>
 					Hi, {capitalize(getUserDisplayName(userProfile))}

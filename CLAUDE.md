@@ -73,6 +73,11 @@ Floating pill (`_layout.tsx`), blurred translucent background, no labels, Ionico
 
 ### Progress (history & consistency)
 
-- `app/progress.tsx` (tabs Overview / Nutrition / Weight / Activity, range Week / Month / 3 months; `?tab=` deep link) and the Home `components/progress/WeekConsistencyCard.tsx` (last 7 days as meal / weight / workout dots, streak, top insight; last week's recap until dismissed). Home section titles use `components/progress/SectionTitle.tsx` to open the matching tab.
+- `app/progress.tsx` (tabs Overview / Nutrition / Weight / Activity, range Week / Month / 3 months; `?tab=` deep link) On Home, `components/progress/HomeCalendar.tsx` wraps the swipeable `WeeklyCalendar` with each day's meal / weight / workout dots (loaded 16 weeks at a time from `/api/progress`), the streak and a `>` button to Progress; `components/progress/WeeklyRecapCard.tsx` shows last week's recap until dismissed. Home section titles use `components/progress/SectionTitle.tsx` to open the matching tab.
 - Data: `GET /api/progress?clerkId&from&to` (fortia-api `src/lib/progress.ts`, max 120 days) — per-day aggregates, summaries, streaks and rule-based insight sentences (no AI). Days are judged against the user's **current** targets; today only counts once it's on/over target. Insight text may contain `{w}`/`{w2}` weight tokens (lb) — format them with `formatInsight` in `lib/progress.ts` so units follow the user's setting.
 - Charts here are plain views / SVG (`components/progress/Charts.tsx`), not gifted-charts.
+
+### Muscle heat map
+
+- `components/workout/MuscleHeatmap.tsx` (top of the Activity tab, under the title): front/back body drawn from our own SVG paths in `components/workout/bodyShapes.ts` (no third-party artwork), drag sideways or use the Front / Back switch to turn it (reanimated rotateY; tab swiping is paused while a finger is on the body). Week / Month / All time.
+- Data: `GET /api/muscle-heatmap?clerkId&range=week|month|all&date` (fortia-api `src/lib/muscleHeatmap.ts`), built on `loadSessions` `muscleSets`: primary muscles count full sets, secondary half, cardio activities light set-equivalents by type. Week/month heat = average sets per week (10+ = full); all time is relative to the most-trained muscle. Muscle keys are free-exercise-db `primary_muscles`.

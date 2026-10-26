@@ -1,10 +1,23 @@
 import { useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, LayoutChangeEvent, Dimensions } from 'react-native';
+import {
+	View,
+	Text,
+	TouchableOpacity,
+	ScrollView,
+	LayoutChangeEvent,
+	Dimensions,
+} from 'react-native';
 import { getLocalDate, getTodayDate } from '@/lib/dateUtils';
+import type { ProgressDay } from '@/lib/progress';
+import { Dots } from '@/components/progress/ConsistencyCalendar';
 
 interface WeeklyCalendarProps {
 	selectedDate?: string;
 	onSelectDate?: (date: string) => void;
+	// What was logged per day (meal / weight / workout) — shown as 3 dots under each date
+	logged?: Record<string, ProgressDay['logged']>;
+	// Called with the visible week (Sunday → Saturday) after a swipe
+	onWeekChange?: (from: string, to: string) => void;
 }
 
 const PAST_WEEKS = 52;
@@ -17,7 +30,14 @@ const startOfWeek = (source: Date) => {
 	return date;
 };
 
-const WeeklyCalendar = ({ selectedDate, onSelectDate }: WeeklyCalendarProps) => {
+const NOTHING_LOGGED = { meal: false, weight: false, exercise: false };
+
+const WeeklyCalendar = ({
+	selectedDate,
+	onSelectDate,
+	logged,
+	onWeekChange,
+}: WeeklyCalendarProps) => {
 	const today = getTodayDate();
 	const activeDate = selectedDate ?? today;
 	const scrollRef = useRef<ScrollView>(null);
@@ -63,6 +83,11 @@ const WeeklyCalendar = ({ selectedDate, onSelectDate }: WeeklyCalendarProps) => 
 			decelerationRate="fast"
 			showsHorizontalScrollIndicator={false}
 			onLayout={handleLayout}
+			onMomentumScrollEnd={e => {
+				const index = Math.round(e.nativeEvent.contentOffset.x / pageWidth);
+				const week = weeks[Math.max(0, Math.min(weeks.length - 1, index))];
+				onWeekChange?.(week[0].iso, week[6].iso);
+			}}
 			className="py-1"
 		>
 			{weeks.map((week, weekIndex) => (
@@ -72,12 +97,16 @@ const WeeklyCalendar = ({ selectedDate, onSelectDate }: WeeklyCalendarProps) => 
 					className="flex-row justify-between items-center px-4"
 				>
 					{week.map((item, index) => {
+						const showToday = item.isToday && !item.isSelected;
 						const cell = (
 							<View
 								className="w-11 items-center rounded-2xl py-2"
 								style={{
 									backgroundColor: item.isSelected ? '#E3BBA1' : 'transparent',
 									opacity: item.isFuture ? 0.35 : 1,
+									// With dots below, today is outlined instead of marked
+									borderWidth: logged && showToday ? 1 : 0,
+									borderColor: '#E3BBA1',
 								}}
 							>
 								<Text
@@ -96,13 +125,17 @@ const WeeklyCalendar = ({ selectedDate, onSelectDate }: WeeklyCalendarProps) => 
 								>
 									{item.date}
 								</Text>
-								{/* Today marker, hidden when today is the selected (filled) chip */}
-								<View
-									className="w-1 h-1 rounded-full mt-1"
-									style={{
-										backgroundColor: item.isToday && !item.isSelected ? '#E3BBA1' : 'transparent',
-									}}
-								/>
+								{logged ? (
+									<View className="mt-1.5" style={{ opacity: item.isFuture ? 0 : 1 }}>
+										<Dots logged={logged[item.iso] || NOTHING_LOGGED} onAccent={item.isSelected} />
+									</View>
+								) : (
+									// Today marker, hidden when today is the selected (filled) chip
+									<View
+										className="w-1 h-1 rounded-full mt-1"
+										style={{ backgroundColor: showToday ? '#E3BBA1' : 'transparent' }}
+									/>
+								)}
 							</View>
 						);
 

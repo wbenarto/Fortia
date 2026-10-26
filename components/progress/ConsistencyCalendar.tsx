@@ -15,7 +15,15 @@ import {
 
 const EYEBROW_STYLE = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
 
-export const Dots = ({ logged, size = 5 }: { logged: ProgressDay['logged']; size?: number }) => (
+export const Dots = ({
+	logged,
+	size = 5,
+	onAccent = false,
+}: {
+	logged: ProgressDay['logged'];
+	size?: number;
+	onAccent?: boolean; // on an accent-filled chip: white dots, faded when not logged
+}) => (
 	<View className="flex-row" style={{ columnGap: 2 }}>
 		{(['meal', 'weight', 'exercise'] as const).map(key => (
 			<View
@@ -24,7 +32,13 @@ export const Dots = ({ logged, size = 5 }: { logged: ProgressDay['logged']; size
 					width: size,
 					height: size,
 					borderRadius: size / 2,
-					backgroundColor: logged[key] ? DOT_COLORS[key] : '#E8E2DB',
+					backgroundColor: onAccent
+						? logged[key]
+							? '#FFFFFF'
+							: '#FFFFFF66'
+						: logged[key]
+							? DOT_COLORS[key]
+							: '#E8E2DB',
 				}}
 			/>
 		))}
