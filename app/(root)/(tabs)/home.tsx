@@ -15,13 +15,13 @@ import {
 } from 'react-native';
 import HomeHeader from '@/components/HomeHeader';
 import WeightTracking from '@/components/WeightTracking';
-import WeeklyCalendar from '@/components/WeeklyCalendar';
 import { getTodayDate } from '@/lib/dateUtils';
 import ActivityTracking from '@/components/ActivityTracking';
 import HomeSliderComponent from '@/components/HomeSliderComponent';
 import FortiaPT from '@/components/FortiaPT';
 import ActivitiesSection from '@/components/ActivitiesSection';
-import WeekConsistencyCard from '@/components/progress/WeekConsistencyCard';
+import HomeCalendar from '@/components/progress/HomeCalendar';
+import WeeklyRecapCard from '@/components/progress/WeeklyRecapCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { images } from '@/constants/index';
@@ -254,7 +254,10 @@ export default function Page() {
 	// Note: We removed the early return to allow modals to render even when onboarding is not completed
 
 	return (
-		<View className="flex-1" style={{ flex: 1, backgroundColor: SCREEN_BG, paddingTop: insets.top }}>
+		<View
+			className="flex-1"
+			style={{ flex: 1, backgroundColor: SCREEN_BG, paddingTop: insets.top }}
+		>
 			<SignedIn>
 				{/* Show main content only if onboarding is completed */}
 				{hasCompletedOnboarding && (
@@ -264,11 +267,9 @@ export default function Page() {
 						contentContainerStyle={{ paddingBottom: 120, backgroundColor: SCREEN_BG }}
 					>
 						<HomeHeader />
-						<WeekConsistencyCard />
-						<View className="w-full mt-5">
-							{/* Hidden for now — keep for later */}
-							{/* <WeeklyCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} /> */}
-
+						<HomeCalendar />
+						<WeeklyRecapCard />
+						<View className="w-full mt-1">
 							{/* Slider Component */}
 							{/* <HomeSliderComponent
 								totalMealsLog={0}

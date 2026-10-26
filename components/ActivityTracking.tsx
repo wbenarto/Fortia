@@ -23,6 +23,7 @@ import CustomButton from './CustomButton';
 import InputField from './InputField';
 import ActivityRow from './ActivityRow';
 import ActivitiesSection from './ActivitiesSection';
+import MuscleHeatmap from './workout/MuscleHeatmap';
 import { iconForActivityName, useActivityTypes } from '@/lib/activityTypes';
 import { router } from 'expo-router';
 import { SCREEN_BG } from '@/lib/theme';
@@ -791,6 +792,8 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 				{`Today · ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`}
 			</Text>
 			<Text className="font-JakartaBold text-[28px] text-[#262135] mt-1">Activity</Text>
+
+			<MuscleHeatmap />
 
 			<View className="flex-row items-end justify-between mt-6">
 				<View>
