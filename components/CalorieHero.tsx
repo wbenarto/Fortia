@@ -47,6 +47,8 @@ const CalorieHero = ({
 	const isDeficit = net > 0;
 	const netColor = isBalanced ? '#64748B' : isDeficit ? '#7DB88A' : '#E3BBA1';
 	const netLabel = isBalanced ? 'Balanced' : isDeficit ? 'Deficit' : 'Surplus';
+	// Darker shade of the badge colour for the text, so it reads on the tinted pill
+	const netTextColor = isBalanced ? '#475569' : isDeficit ? '#4F8A5E' : '#B26F55';
 
 	const percentOfGoal = goal ? (eaten / goal) * 100 : 0;
 	const ringColor =
@@ -101,15 +103,18 @@ const CalorieHero = ({
 				<StatRow label="Goal" value={goal} isLoading={isLoading} />
 
 				<View
-					className="self-start flex-row items-center rounded-full px-2.5 py-1 mt-4"
-					style={{ backgroundColor: `${netColor}26` }}
+					className="self-stretch flex-row items-center justify-center rounded-full px-3 py-1.5 mt-4"
+					style={{ backgroundColor: `${netColor}33` }}
 				>
-					<Text className="text-[10px] font-JakartaBold" style={{ color: netColor }}>
+					<Text
+						className="text-[12px] font-JakartaBold text-center"
+						style={{ color: netTextColor }}
+					>
 						{isLoading
 							? '...'
 							: isBalanced
 								? netLabel
-								: `${netLabel} ${Math.abs(net).toLocaleString()}`}
+								: `${netLabel} ${Math.abs(net).toLocaleString()} cal`}
 					</Text>
 				</View>
 			</View>

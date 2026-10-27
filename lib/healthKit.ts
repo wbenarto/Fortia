@@ -318,8 +318,7 @@ export async function getTodayStepData(
 }
 
 /**
- * Check current HealthKit authorization status
- * In Expo managed workflow, we check if Pedometer is available without accessing data
+ * Check current Motion & Fitness authorization status without prompting
  */
 export async function getHealthKitStatus(): Promise<HealthKitStatus> {
 	try {
@@ -333,13 +332,13 @@ export async function getHealthKitStatus(): Promise<HealthKitStatus> {
 			};
 		}
 
-		// In Expo managed workflow with Pedometer, we can't check permissions without accessing data
-		// So we return a conservative status that requires explicit permission request
-		// The actual permission check will happen when user explicitly requests access
+		// Reads the Motion & Fitness authorization iOS already has on file (no prompt), so a
+		// permission granted once is remembered on every launch
+		const permission = await Pedometer.getPermissionsAsync();
 		return {
 			isAvailable: true,
-			isAuthorized: false, // Conservative approach - assume not authorized until explicitly granted
-			permissions: [],
+			isAuthorized: permission.granted,
+			permissions: permission.granted ? ['motion', 'fitness', 'steps'] : [],
 		};
 	} catch (error) {
 		console.error('Error getting HealthKit status:', error);

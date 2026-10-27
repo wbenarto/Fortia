@@ -22,7 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import EditDietModal from '@/components/EditDietModal';
 import { formatDietLabel, resolveDietType, resolveFastingSchedule } from '@/lib/diet';
 import { useGoalsStore, useQuickLogStore } from '@/store';
-import { useUserProfile } from '@/lib/userUtils';
+import { triggerUserProfileRefresh, useUserProfile } from '@/lib/userUtils';
 import { calculateBMI, getBMICategory } from '@/lib/bodyFatUtils';
 import { SCREEN_BG } from '@/lib/theme';
 import SectionTitle from '@/components/progress/SectionTitle';
@@ -58,6 +58,10 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 	const [startingWeight, setStartingWeight] = useState<number | null>(null);
 	const unitSystem = useUnitSystem();
 	const [dietModal, setDietModal] = useState(false);
+	// Target weight modal (tap the Target number); value in the user's unit
+	const [targetModal, setTargetModal] = useState(false);
+	const [pendingTarget, setPendingTarget] = useState<number | null>(null);
+	const [savingTarget, setSavingTarget] = useState(false);
 
 	const { user } = useUser();
 	const userProfile = useUserProfile();
@@ -263,6 +267,44 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 		const currentLb = Number(profileWeight) || 150;
 		setPendingWeight(Math.round(toDisplayWeight(currentLb, unitSystem) * 10) / 10);
 	}, [addWeightModal]);
+	// Start the target ruler on the current target, else the current weight
+	useEffect(() => {
+		if (!targetModal) {
+			setPendingTarget(null);
+			return;
+		}
+		const startLb = Number(targetWeight) || Number(profileWeight) || 150;
+		setPendingTarget(Math.round(toDisplayWeight(startLb, unitSystem)));
+	}, [targetModal]);
+
+	const handleTargetSubmission = async () => {
+		if (pendingTarget === null || !user?.id) return;
+		const targetLbs = Math.round(toStoredWeight(pendingTarget, unitSystem) * 10) / 10;
+		setSavingTarget(true);
+		try {
+			// Only the target changes; calorie targets follow the fitness goal, not this
+			const response = await fetchAPI('/api/user', {
+				method: 'PUT',
+				body: JSON.stringify({ clerkId: user.id, targetWeight: targetLbs }),
+			});
+			if (response.success) {
+				setTargetWeight(targetLbs);
+				triggerUserProfileRefresh();
+				setTargetModal(false);
+			}
+		} catch (error) {
+			console.error('Set target weight error:', error);
+		} finally {
+			setSavingTarget(false);
+		}
+	};
+
+	// Difference between the picked target and the current weight, for the modal hint
+	const targetDiffLbs =
+		pendingTarget !== null && profileWeight
+			? toStoredWeight(pendingTarget, unitSystem) - Number(profileWeight)
+			: null;
+
 	const heightInches = userProfile.height ? userProfile.height / 2.54 : 0;
 	const dietLabel = formatDietLabel(
 		resolveDietType(userProfile.dietType),
@@ -319,12 +361,20 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 						activeOpacity={0.85}
 						onPress={() => router.push(bmi !== null ? '/bmi-calculator' : '/edit-profile')}
 					>
-						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#94897E]"
-							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
-						>
-							BMI
-						</Text>
+						<View className="flex-row items-center">
+							<Text
+								className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+								style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
+							>
+								BMI
+							</Text>
+							<Ionicons
+								name="chevron-forward"
+								size={12}
+								color="#C9BEB4"
+								style={{ marginLeft: 2 }}
+							/>
+						</View>
 						<Text className="font-JakartaExtraBold text-[30px] text-[#262135] mt-1">
 							{bmi !== null ? bmi.toFixed(1) : '--'}
 						</Text>
@@ -409,17 +459,30 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 				</View>
 
 				<View className="flex-row justify-between items-end mt-1">
-					<View>
+					<TouchableOpacity
+						activeOpacity={0.7}
+						onPress={() => setTargetModal(true)}
+						accessibilityRole="button"
+						accessibilityLabel="Set target weight"
+					>
 						<Text
 							className="text-[10px] font-JakartaSemiBold text-[#94897E]"
 							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 						>
 							Target
 						</Text>
-						<Text className="text-sm font-JakartaBold text-[#262135] mt-1">
-							{targetWeight ? formatWeight(Number(targetWeight), unitSystem) : '--'}
-						</Text>
-					</View>
+						<View className="flex-row items-center mt-1">
+							<Text className="text-sm font-JakartaBold text-[#262135]">
+								{targetWeight ? formatWeight(Number(targetWeight), unitSystem) : 'Set target'}
+							</Text>
+							<Ionicons
+								name="chevron-forward"
+								size={14}
+								color="#C9BEB4"
+								style={{ marginLeft: 2 }}
+							/>
+						</View>
+					</TouchableOpacity>
 					<TouchableOpacity
 						className="items-end"
 						activeOpacity={0.7}
@@ -467,6 +530,39 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 						</View>
 
 						<CustomButton onPress={handleWeightSubmission} title="Save" />
+					</View>
+				</ReactNativeModal>
+
+				<ReactNativeModal isVisible={targetModal} onBackdropPress={() => setTargetModal(false)}>
+					<View className="bg-white py-14 px-4 mx-0 rounded-md">
+						<View className="pb-4">
+							<Text className="text-xl text-center font-JakartaSemiBold">Set target weight</Text>
+							<Text className="text-[13px] text-center font-JakartaMedium text-[#94897E] mt-2">
+								{targetDiffLbs === null || Math.abs(targetDiffLbs) < 0.1
+									? 'Slide to pick your goal weight'
+									: `${formatWeight(Math.abs(targetDiffLbs), unitSystem)} to ${
+											targetDiffLbs < 0 ? 'lose' : 'gain'
+										} from ${formatWeight(Number(profileWeight), unitSystem)}`}
+							</Text>
+						</View>
+
+						<View className="flex mx-auto my-8 w-full justify-center">
+							{pendingTarget !== null && (
+								<WeightRuler
+									value={pendingTarget}
+									min={unitSystem === 'metric' ? 25 : 50}
+									max={unitSystem === 'metric' ? 230 : 500}
+									unit={weightUnit(unitSystem)}
+									onChange={setPendingTarget}
+								/>
+							)}
+						</View>
+
+						<CustomButton
+							onPress={handleTargetSubmission}
+							title={savingTarget ? 'Saving…' : 'Save target'}
+							disabled={savingTarget}
+						/>
 					</View>
 				</ReactNativeModal>
 

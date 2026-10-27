@@ -37,8 +37,15 @@ interface ActivityTrackingProps {
 
 const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrackingProps) => {
 	const [nutritionGoals, setNutritionGoals] = useState<any>(null);
-	const [lastStepsFetchTime, setLastStepsFetchTime] = useState<number>(0);
 	const [stepData, setStepData] = useState<any>(null);
+	// Step sync bookkeeping in a ref: the focus refetch callback is memoized, so state
+	// read there is stale — that made every run re-upload, and the upload's activity
+	// write triggered another refetch (endless "calories burned" reloads).
+	const stepsSync = React.useRef({
+		lastRun: 0,
+		inFlight: false,
+		syncedSteps: null as number | null, // last step count known to be on the backend
+	});
 	const [healthKitStatus, setHealthKitStatus] = useState<any>(null);
 	const [activities, setActivities] = useState<any[]>([]);
 	const [scheduledExercises, setScheduledExercises] = useState<any[]>([]);
@@ -113,6 +120,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 			});
 			if (response.success && response.data && response.data.length > 0) {
 				setStepData(response.data[0]);
+				stepsSync.current.syncedSteps = Number(response.data[0].steps) || 0;
 			} else {
 				setStepData(null);
 			}
@@ -125,12 +133,14 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 	const fetchAndUploadDeviceSteps = async () => {
 		if (!user?.id) return;
 
-		// Debounce: prevent multiple calls within 5 seconds
+		// Debounce (5 s) and never run two syncs at once
+		const sync = stepsSync.current;
 		const now = Date.now();
-		if (now - lastStepsFetchTime < 5000) {
+		if (sync.inFlight || now - sync.lastRun < 5000) {
 			return;
 		}
-		setLastStepsFetchTime(now);
+		sync.lastRun = now;
+		sync.inFlight = true;
 		try {
 			// Only proceed if HealthKit is already authorized
 			if (healthKitStatus?.isAvailable && healthKitStatus?.isAuthorized) {
@@ -145,9 +155,10 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 				}
 				const todayStepData = await getTodayStepData(10000, calorieParams);
 
-				// Check if we need to update (only if step count changed)
-				const currentBackendSteps = stepData?.steps || 0;
+				// Only upload when the step count actually changed
+				const currentBackendSteps = sync.syncedSteps ?? 0;
 				if (todayStepData.steps !== currentBackendSteps) {
+					sync.syncedSteps = todayStepData.steps;
 					// Upload to backend
 					const today = getTodayDate();
 					await fetchAPI('/api/steps', {
@@ -189,6 +200,8 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 			}
 		} catch (error) {
 			console.error('Failed to fetch/upload device step data:', error);
+		} finally {
+			sync.inFlight = false;
 		}
 		// Always fetch from backend after potential upload
 		await fetchStepDataFromBackend();
