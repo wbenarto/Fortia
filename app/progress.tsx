@@ -1,16 +1,19 @@
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '@clerk/clerk-expo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import PagerView from 'react-native-pager-view';
 import { fetchAPI } from '@/lib/fetch';
 import { SCREEN_BG } from '@/lib/theme';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { formatWeight, toDisplayWeight, useUnitSystem, weightUnit } from '@/lib/units';
 import {
 	CALORIE_STATUS_COLOR,
+	DOT_COLORS,
 	RANGE_OPTIONS,
+	addDays,
 	dayLetter,
 	progressUrl,
 	rangeFor,
@@ -20,11 +23,7 @@ import {
 	type RangeKey,
 } from '@/lib/progress';
 import { Bars, ProgressBar, TrendLine, type BarPoint } from '@/components/progress/Charts';
-import {
-	ConsistencyCalendar,
-	DotLegend,
-	InsightList,
-} from '@/components/progress/ConsistencyCalendar';
+import { ConsistencyCalendar, InsightList } from '@/components/progress/ConsistencyCalendar';
 
 const INK = '#262135';
 const ACCENT = '#E3BBA1';
@@ -82,6 +81,14 @@ const Progress = () => {
 	);
 	const [data, setData] = useState<ProgressData | null>(null);
 	const [error, setError] = useState('');
+	const pagerRef = useRef<PagerView>(null);
+	const tabIndex = TABS.findIndex(t => t.key === tab);
+
+	// Tap a tab → slide the pager; swipe the pager → select the tab
+	const selectTab = (key: TabKey) => {
+		setTab(key);
+		pagerRef.current?.setPage(TABS.findIndex(t => t.key === key));
+	};
 
 	const fetchProgress = useCallback(() => {
 		if (!user?.id) return;
@@ -97,7 +104,8 @@ const Progress = () => {
 
 	useRefetchOnFocus(fetchProgress, `${user?.id}|${range}`);
 
-	const loading = !data || data.days.length !== RANGE_OPTIONS.find(r => r.key === range)!.days;
+	const expected = rangeFor(range);
+	const loading = !data || data.from !== expected.from || data.to !== expected.to;
 
 	return (
 		<>
@@ -111,20 +119,16 @@ const Progress = () => {
 					<View style={{ width: 26 }} />
 				</View>
 
-				{/* Tabs */}
-				<ScrollView
-					horizontal
-					showsHorizontalScrollIndicator={false}
-					style={{ flexGrow: 0 }}
-					contentContainerStyle={{ paddingHorizontal: 20, columnGap: 8 }}
-				>
+				{/* Tabs — a plain row (all four fit); a horizontal ScrollView here could be
+				    squeezed to zero height by the content below, which then covered the tabs */}
+				<View className="flex-row px-5" style={{ columnGap: 6, flexShrink: 0 }}>
 					{TABS.map(option => {
 						const selected = tab === option.key;
 						return (
 							<TouchableOpacity
 								key={option.key}
-								onPress={() => setTab(option.key)}
-								className="px-4 py-2 rounded-full border-[1px]"
+								onPress={() => selectTab(option.key)}
+								className="flex-1 items-center py-2 rounded-full border-[1px]"
 								style={{
 									backgroundColor: selected ? INK : '#FFFFFF',
 									borderColor: selected ? INK : '#F0EBE6',
@@ -133,16 +137,21 @@ const Progress = () => {
 								<Text
 									className="text-xs font-JakartaSemiBold"
 									style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+									numberOfLines={1}
+									adjustsFontSizeToFit
 								>
 									{option.label}
 								</Text>
 							</TouchableOpacity>
 						);
 					})}
-				</ScrollView>
+				</View>
 
 				{/* Range */}
-				<View className="flex-row bg-[#F1F1F1] rounded-full p-1 mx-5 mt-3">
+				<View
+					className="flex-row bg-[#F1F1F1] rounded-full p-1 mx-5 mt-3"
+					style={{ flexShrink: 0 }}
+				>
 					{RANGE_OPTIONS.map(option => {
 						const selected = range === option.key;
 						return (
@@ -155,6 +164,8 @@ const Progress = () => {
 								<Text
 									className="text-xs font-JakartaSemiBold"
 									style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+									numberOfLines={1}
+									adjustsFontSizeToFit
 								>
 									{option.label}
 								</Text>
@@ -163,29 +174,41 @@ const Progress = () => {
 					})}
 				</View>
 
-				{loading ? (
-					<View className="flex-1 items-center justify-center">
-						{error ? (
-							<Text className="font-JakartaMedium text-[#94897E]">{error}</Text>
-						) : (
-							<ActivityIndicator color={ACCENT} />
-						)}
-					</View>
-				) : (
-					<ScrollView
-						contentContainerStyle={{
-							paddingHorizontal: 20,
-							paddingTop: 16,
-							paddingBottom: 40 + insets.bottom,
-						}}
-						showsVerticalScrollIndicator={false}
-					>
-						{tab === 'overview' && <Overview data={data} />}
-						{tab === 'nutrition' && <Nutrition data={data} />}
-						{tab === 'weight' && <Weight data={data} unitSystem={unitSystem} />}
-						{tab === 'activity' && <Activity data={data} />}
-					</ScrollView>
-				)}
+				<PagerView
+					ref={pagerRef}
+					style={{ flex: 1 }}
+					initialPage={tabIndex}
+					onPageSelected={e => setTab(TABS[e.nativeEvent.position].key)}
+				>
+					{TABS.map(page => (
+						<View key={page.key} style={{ flex: 1 }}>
+							{loading ? (
+								<View className="flex-1 items-center justify-center">
+									{error ? (
+										<Text className="font-JakartaMedium text-[#94897E]">{error}</Text>
+									) : (
+										<ActivityIndicator color={ACCENT} />
+									)}
+								</View>
+							) : (
+								<ScrollView
+									style={{ flex: 1 }}
+									contentContainerStyle={{
+										paddingHorizontal: 20,
+										paddingTop: 16,
+										paddingBottom: 40 + insets.bottom,
+									}}
+									showsVerticalScrollIndicator={false}
+								>
+									{page.key === 'overview' && <Overview data={data} range={range} />}
+									{page.key === 'nutrition' && <Nutrition data={data} />}
+									{page.key === 'weight' && <Weight data={data} unitSystem={unitSystem} />}
+									{page.key === 'activity' && <Activity data={data} />}
+								</ScrollView>
+							)}
+						</View>
+					))}
+				</PagerView>
 			</View>
 		</>
 	);
@@ -193,8 +216,21 @@ const Progress = () => {
 
 // --- Overview ------------------------------------------------------------------------
 
-const Overview = ({ data }: { data: ProgressData }) => {
+const COUNT_PERIOD: Record<RangeKey, string> = {
+	week: 'This week',
+	month: 'Last 30 days',
+	quarter: 'Last 3 months',
+};
+
+const Overview = ({ data, range }: { data: ProgressData; range: RangeKey }) => {
 	const c = data.summary.consistency;
+	const isWeek = range === 'week';
+	const weekEnd = addDays(data.from, 6); // Saturday of the current week
+	// How many times each thing was logged in the range
+	const mealCount = data.days.reduce((sum, d) => sum + d.mealCount, 0);
+	const mealDays = data.days.filter(d => d.logged.meal).length;
+	const weighIns = data.days.filter(d => d.logged.weight).length;
+	const workoutDays = data.days.filter(d => d.logged.exercise).length;
 	return (
 		<>
 			<View className={CARD}>
@@ -226,13 +262,62 @@ const Overview = ({ data }: { data: ProgressData }) => {
 				<InsightList insights={data.insights} />
 			</View>
 
-			<SectionLabel right={<DotLegend />}>Consistency</SectionLabel>
+			{/* The count tiles double as the dot legend */}
+			<SectionLabel>
+				{isWeek ? `This week · ${shortDate(data.from)} – ${shortDate(weekEnd)}` : 'Consistency'}
+			</SectionLabel>
 			<View className={CARD}>
-				<ConsistencyCalendar days={data.days} />
+				<View className="flex-row mb-4" style={{ columnGap: 8 }}>
+					<CountTile
+						color={DOT_COLORS.meal}
+						label="Meals"
+						value={mealCount}
+						sub={`on ${mealDays} day${mealDays === 1 ? '' : 's'}`}
+					/>
+					<CountTile
+						color={DOT_COLORS.weight}
+						label="Weigh-ins"
+						value={weighIns}
+						sub={weighIns === 1 ? 'day' : 'days'}
+					/>
+					<CountTile
+						color={DOT_COLORS.exercise}
+						label="Workouts"
+						value={workoutDays}
+						sub={workoutDays === 1 ? 'day' : 'days'}
+					/>
+				</View>
+				<ConsistencyCalendar days={data.days} through={isWeek ? weekEnd : undefined} />
+				<Text className="text-[10px] font-JakartaMedium text-[#94897E] mt-3 text-center">
+					{COUNT_PERIOD[range]} · tap a day for details
+				</Text>
 			</View>
 		</>
 	);
 };
+
+const CountTile = ({
+	color,
+	label,
+	value,
+	sub,
+}: {
+	color: string;
+	label: string;
+	value: number;
+	sub: string;
+}) => (
+	<View className="flex-1 rounded-2xl bg-[#F9F9F8] border-[1px] border-[#F0EBE6] px-3 py-2.5">
+		<View className="flex-row items-center">
+			<View className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: color }} />
+			<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+				{label}
+			</Text>
+		</View>
+		<Text className="font-JakartaExtraBold text-[22px] text-[#262135] mt-1">{value}</Text>
+		<Text className="font-JakartaMedium text-[11px] text-[#94897E]">{sub}</Text>
+	</View>
+);
 
 // --- Nutrition -----------------------------------------------------------------------
 

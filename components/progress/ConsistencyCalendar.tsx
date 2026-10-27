@@ -5,6 +5,7 @@ import { getTodayDate } from '@/lib/dateUtils';
 import { formatWeight, useUnitSystem } from '@/lib/units';
 import {
 	DOT_COLORS,
+	addDays,
 	shortDate,
 	weekday,
 	type ProgressDay,
@@ -63,13 +64,26 @@ export const DotLegend = () => (
 );
 
 // Grid of days (Sunday-first), 3 dots per day: meal / weight / workout logged.
-// Tap a day to see its numbers.
-export const ConsistencyCalendar = ({ days }: { days: ProgressDay[] }) => {
+// Tap a day to see its numbers. `through` pads the grid with the days still to come
+// (e.g. the rest of this week), shown faded.
+export const ConsistencyCalendar = ({
+	days,
+	through,
+}: {
+	days: ProgressDay[];
+	through?: string;
+}) => {
 	const unitSystem = useUnitSystem();
 	const today = getTodayDate();
 	const [selected, setSelected] = useState<string | null>(null);
 	const lead = days.length ? weekday(days[0].date) : 0;
-	const cells: (ProgressDay | null)[] = [...Array(lead).fill(null), ...days];
+	const upcoming: string[] = [];
+	if (through && days.length) {
+		for (let d = addDays(days[days.length - 1].date, 1); d <= through; d = addDays(d, 1)) {
+			upcoming.push(d);
+		}
+	}
+	const cells: (ProgressDay | string | null)[] = [...Array(lead).fill(null), ...days, ...upcoming];
 	while (cells.length % 7) cells.push(null);
 	const rows = Array.from({ length: cells.length / 7 }, (_, r) => cells.slice(r * 7, r * 7 + 7));
 	const picked = days.find(d => d.date === selected);
@@ -91,7 +105,14 @@ export const ConsistencyCalendar = ({ days }: { days: ProgressDay[] }) => {
 				<View key={r} className="flex-row">
 					{row.map((day, c) => (
 						<View key={c} style={{ flex: 1 }} className="items-center py-1">
-							{day ? (
+							{typeof day === 'string' ? (
+								<View className="items-center py-1 w-10" style={{ opacity: 0.4 }}>
+									<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mb-1">
+										{Number(day.slice(8, 10))}
+									</Text>
+									<Dots logged={{ meal: false, weight: false, exercise: false }} />
+								</View>
+							) : day ? (
 								<TouchableOpacity
 									onPress={() => setSelected(day.date === selected ? null : day.date)}
 									className="items-center rounded-xl py-1 w-10"

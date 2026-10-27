@@ -109,20 +109,25 @@ export const addDays = (d: string, n: number) =>
 	new Date(toUTC(d) + n * 86_400_000).toISOString().slice(0, 10);
 export const weekday = (d: string) => new Date(toUTC(d)).getUTCDay(); // 0 = Sunday
 
+// Week = the current calendar week so far (Sunday → today); month / 3 months roll back
+// from today.
+export const weekStart = (date: string) => addDays(date, -weekday(date));
+
 export const rangeFor = (key: RangeKey, to = getTodayDate()) => {
+	if (key === 'week') return { from: weekStart(to), to };
 	const days = RANGE_OPTIONS.find(r => r.key === key)!.days;
 	return { from: addDays(to, -(days - 1)), to };
 };
 
-// Last full Monday–Sunday week before the current one
+// Last full Sunday–Saturday week before the current one
 export const lastWeekRange = (today = getTodayDate()) => {
-	const sinceMonday = (weekday(today) + 6) % 7;
-	const thisMonday = addDays(today, -sinceMonday);
-	return { from: addDays(thisMonday, -7), to: addDays(thisMonday, -1) };
+	const thisSunday = weekStart(today);
+	return { from: addDays(thisSunday, -7), to: addDays(thisSunday, -1) };
 };
 
+// `today` lets the API tell finished days from the one still in progress
 export const progressUrl = (clerkId: string, from: string, to: string) =>
-	`/api/progress?clerkId=${clerkId}&from=${from}&to=${to}`;
+	`/api/progress?clerkId=${clerkId}&from=${from}&to=${to}&today=${getTodayDate()}`;
 
 // --- Formatting -------------------------------------------------------------------------
 
