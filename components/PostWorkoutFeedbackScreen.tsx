@@ -104,7 +104,7 @@ export default function PostWorkoutFeedbackScreen() {
 					<Text className="text-xl font-JakartaBold text-gray-800 mb-4">
 						How was the difficulty?
 					</Text>
-					<Text className="text-gray-600 mb-6">
+					<Text className="text-gray-700 mb-6">
 						This helps us adjust future workouts to match your fitness level
 					</Text>
 
@@ -139,7 +139,7 @@ export default function PostWorkoutFeedbackScreen() {
 										>
 											{option.label}
 										</Text>
-										<Text className="text-sm text-gray-600 mt-1">{option.description}</Text>
+										<Text className="text-sm text-gray-700 mt-1">{option.description}</Text>
 									</View>
 								</View>
 							</TouchableOpacity>
@@ -152,7 +152,7 @@ export default function PostWorkoutFeedbackScreen() {
 					<Text className="text-lg font-JakartaBold text-gray-800 mb-3">
 						Additional Notes (Optional)
 					</Text>
-					<Text className="text-gray-600 mb-4">
+					<Text className="text-gray-700 mb-4">
 						Share any thoughts about the workout, exercises you liked/disliked, or suggestions
 					</Text>
 
@@ -190,7 +190,7 @@ export default function PostWorkoutFeedbackScreen() {
 				>
 					<Text
 						className={`font-JakartaBold text-center text-lg ${
-							difficulty && !loading ? 'text-white' : 'text-gray-500'
+							difficulty && !loading ? 'text-white' : 'text-gray-700'
 						}`}
 					>
 						{loading ? 'Submitting...' : 'Submit Feedback'}

@@ -75,7 +75,7 @@ const FloatingTabBar = ({ state, descriptors, navigation }: MaterialTopTabBarPro
 		style={{
 			position: 'absolute',
 			left: 20,
-			right: 120,
+			right: 120, // clears the + button (QuickLogButton)
 			bottom: 20,
 			height: 60,
 			borderRadius: 50,

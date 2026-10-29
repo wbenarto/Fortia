@@ -121,7 +121,7 @@ const SignIn = () => {
 					<View className="px-5">
 						<View className="mx-auto my-4">
 							<Text className="text-3xl mb-2 text-center font-JakartaExtraBold">Welcome</Text>
-							<Text className="text-center text-gray-500 font-JakartaSemiBold">
+							<Text className="text-center text-gray-700 font-JakartaSemiBold">
 								Sign in to continue
 							</Text>
 						</View>

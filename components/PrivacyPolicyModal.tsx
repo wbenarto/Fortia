@@ -37,7 +37,7 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isVisible, onCl
 				<View className="flex-row items-center justify-between p-6 border-b border-gray-200">
 					<Text className="text-xl font-JakartaSemiBold text-gray-800">Privacy Policy</Text>
 					<TouchableOpacity onPress={onClose} className="p-2">
-						<Ionicons name="close" size={24} color="#64748B" />
+						<Ionicons name="close" size={24} color="#334155" />
 					</TouchableOpacity>
 				</View>
 
@@ -50,7 +50,7 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isVisible, onCl
 							Your Privacy Matters
 						</Text>
 
-						<Text className="text-gray-600 text-center leading-6 mb-6">
+						<Text className="text-gray-700 text-center leading-6 mb-6">
 							Fortia collects and processes your data to provide personalized fitness and nutrition
 							tracking services. We are committed to protecting your privacy and being transparent
 							about our data practices.
@@ -61,20 +61,20 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isVisible, onCl
 								<Text className="font-JakartaSemiBold">What we collect:</Text>
 							</Text>
 							<View className="space-y-2">
-								<Text className="text-gray-600 text-sm">
+								<Text className="text-gray-700 text-sm">
 									• Personal information (name, email, DOB)
 								</Text>
-								<Text className="text-gray-600 text-sm">
+								<Text className="text-gray-700 text-sm">
 									• Health data (weight, height, fitness goals)
 								</Text>
-								<Text className="text-gray-600 text-sm">
+								<Text className="text-gray-700 text-sm">
 									• Activity data (steps, workouts, nutrition)
 								</Text>
-								<Text className="text-gray-600 text-sm">• HealthKit data (with your consent)</Text>
+								<Text className="text-gray-700 text-sm">• HealthKit data (with your consent)</Text>
 							</View>
 						</View>
 
-						<Text className="text-gray-600 text-center leading-6 mb-6">
+						<Text className="text-gray-700 text-center leading-6 mb-6">
 							For the complete privacy policy with detailed information about data processing,
 							retention, and your rights, please visit our website.
 						</Text>
@@ -88,7 +88,7 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isVisible, onCl
 							</Text>
 						</TouchableOpacity>
 
-						<Text className="text-gray-500 text-xs text-center mt-4">
+						<Text className="text-gray-700 text-xs text-center mt-4">
 							Last updated: {new Date().toLocaleDateString()}
 						</Text>
 					</View>

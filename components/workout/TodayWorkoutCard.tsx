@@ -137,12 +137,12 @@ const TodayWorkoutCard = () => {
 	return (
 		<View className="bg-white rounded-3xl border-[1px] border-[#F0EBE6] p-4 mb-3">
 			<View className="flex-row items-center justify-between">
-				<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+				<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 					Today's workout
 				</Text>
 				<View className="flex-row items-center">
-					<Ionicons name="time-outline" size={12} color="#94897E" />
-					<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] ml-1">
+					<Ionicons name="time-outline" size={12} color="#574F47" />
+					<Text className="text-[11px] font-JakartaSemiBold text-[#574F47] ml-1">
 						{suggestion.inputs.duration} min · {LOCATION_LABEL[suggestion.inputs.location]}
 					</Text>
 				</View>
@@ -159,7 +159,7 @@ const TodayWorkoutCard = () => {
 					<Text className="font-JakartaBold text-[16px] text-[#262135]" numberOfLines={2}>
 						{suggestion.title}
 					</Text>
-					<Text className="font-JakartaMedium text-xs text-[#94897E] mt-0.5">
+					<Text className="font-JakartaMedium text-xs text-[#574F47] mt-0.5">
 						{suggestion.reason}
 					</Text>
 				</View>
@@ -223,14 +223,14 @@ const StatusCard = ({
 			<Ionicons name={icon} size={20} color={tint} />
 		</View>
 		<View className="flex-1 mx-3">
-			<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+			<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 				{eyebrow}
 			</Text>
 			<Text className="font-JakartaBold text-[15px] text-[#262135] mt-0.5" numberOfLines={1}>
 				{title}
 			</Text>
 			{subtitle ? (
-				<Text className="font-JakartaMedium text-xs text-[#94897E] mt-0.5">{subtitle}</Text>
+				<Text className="font-JakartaMedium text-xs text-[#574F47] mt-0.5">{subtitle}</Text>
 			) : null}
 		</View>
 		<Text className="font-JakartaSemiBold text-[13px]" style={{ color: '#B07F62' }}>

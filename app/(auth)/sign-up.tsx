@@ -164,7 +164,7 @@ const SignUp = () => {
 					<View className="px-5">
 						<View className="mx-auto my-4">
 							<Text className="text-3xl mb-2 text-center font-JakartaExtraBold">Welcome</Text>
-							<Text className="text-center text-gray-500 font-JakartaSemiBold">
+							<Text className="text-center text-gray-700 font-JakartaSemiBold">
 								Sign up to continue
 							</Text>
 						</View>
@@ -255,7 +255,7 @@ const SignUp = () => {
 						<View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
 							<Image source={images.Check} className="w-[110px] h-[110px] mx-auto my-5" />
 							<Text className="text-3xl font-JakartaBold text-center">Verified</Text>
-							<Text className="text-base text-gray-400 font-Jakarta text-center mt-2">
+							<Text className="text-base text-gray-700 font-Jakarta text-center mt-2">
 								You have successfully verified your account.
 							</Text>
 							<CustomButton

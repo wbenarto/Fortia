@@ -156,7 +156,7 @@ const UsernameCollectionModal: React.FC<UsernameCollectionModalProps> = ({
 								<Text className="text-black text-2xl font-JakartaSemiBold mb-2">
 									Choose Your Username
 								</Text>
-								<Text className="text-gray-600 text-center text-base">
+								<Text className="text-gray-700 text-center text-base">
 									Set up your unique username to continue using Fortia
 								</Text>
 							</View>
@@ -184,7 +184,7 @@ const UsernameCollectionModal: React.FC<UsernameCollectionModalProps> = ({
 									/>
 									{isCheckingUsername && (
 										<View className="absolute right-3 top-5">
-											<Text className="text-gray-400 text-sm">Checking...</Text>
+											<Text className="text-gray-700 text-sm">Checking...</Text>
 										</View>
 									)}
 									{!isCheckingUsername && usernameAvailable && (
@@ -217,7 +217,7 @@ const UsernameCollectionModal: React.FC<UsernameCollectionModalProps> = ({
 										</Text>
 									</View>
 								)}
-								<Text className="text-gray-500 text-xs mt-2">
+								<Text className="text-gray-700 text-xs mt-2">
 									Username can contain letters, numbers, and underscores. Must be at least 4
 									characters.
 								</Text>

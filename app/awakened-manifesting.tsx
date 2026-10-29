@@ -99,7 +99,7 @@ const AwakenedManifesting = () => {
 					>
 						<View className="flex flex-row items-center justify-between mb-3">
 							<Text className="text-2xl font-bold text-gray-800">1. Awareness & Surrender</Text>
-							<Ionicons name="chevron-forward" size={24} color="#6B7280" />
+							<Ionicons name="chevron-forward" size={24} color="#374151" />
 						</View>
 						<Text className="text-gray-800 text-sm font-JakartaMedium text-center mb-3">
 							Be present and surrender fully to the present moment.Observe your thoughts as they
@@ -126,7 +126,7 @@ const AwakenedManifesting = () => {
 					>
 						<View className="flex flex-row items-center justify-between mb-3">
 							<Text className="text-2xl font-bold text-gray-800">2. Insight</Text>
-							<Ionicons name="chevron-forward" size={24} color="#6B7280" />
+							<Ionicons name="chevron-forward" size={24} color="#374151" />
 						</View>
 						<Text className="text-gray-800 text-sm font-JakartaMedium text-center mb-3">
 							Start by reaffirming yourself with "You always find a way to win". Then continue with
@@ -154,7 +154,7 @@ const AwakenedManifesting = () => {
 					>
 						<View className="flex flex-row items-center justify-between mb-3">
 							<Text className="text-2xl font-bold text-gray-800">3. Manifest</Text>
-							<Ionicons name="chevron-forward" size={24} color="#6B7280" />
+							<Ionicons name="chevron-forward" size={24} color="#374151" />
 						</View>
 						<Text className="text-gray-800 text-sm font-JakartaMedium text-center mb-3">
 							You have aligned with the present moment and become more aware. You have received some

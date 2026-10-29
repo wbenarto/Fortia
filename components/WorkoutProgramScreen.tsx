@@ -116,7 +116,7 @@ export default function WorkoutProgramScreen() {
 	if (loading) {
 		return (
 			<View className="flex-1 bg-white items-center justify-center">
-				<Text className="text-gray-500">Loading programs...</Text>
+				<Text className="text-gray-700">Loading programs...</Text>
 			</View>
 		);
 	}
@@ -139,11 +139,11 @@ export default function WorkoutProgramScreen() {
 
 			{programs.length === 0 ? (
 				<View className="flex-1 items-center justify-center p-6">
-					<Ionicons name="fitness" size={64} color="#9CA3AF" />
-					<Text className="text-xl font-JakartaSemiBold text-gray-600 mt-4 mb-2">
+					<Ionicons name="fitness" size={64} color="#4B5563" />
+					<Text className="text-xl font-JakartaSemiBold text-gray-700 mt-4 mb-2">
 						No Programs Yet
 					</Text>
-					<Text className="text-gray-500 text-center mb-6">
+					<Text className="text-gray-700 text-center mb-6">
 						Create your first AI-powered workout program to get started
 					</Text>
 					<TouchableOpacity
@@ -185,7 +185,7 @@ export default function WorkoutProgramScreen() {
 									<View
 										className={`py-1 px-3 self-start border-[1px] border-gray-400 rounded-full ${getStatusColor(program.status)} `}
 									>
-										<Text className="text-xs text-center text-gray-600">{program.status}</Text>
+										<Text className="text-xs text-center text-gray-700">{program.status}</Text>
 									</View>
 								</View>
 
@@ -224,7 +224,7 @@ export default function WorkoutProgramScreen() {
 									>
 										<View className="flex-1">
 											<Text className="font-JakartaSemiBold text-gray-800">{session.title}</Text>
-											<Text className="text-sm text-gray-600">
+											<Text className="text-sm text-gray-700">
 												{session.phase_name} • Session {session.session_number}
 											</Text>
 											{session.scheduled_date && (
@@ -246,10 +246,10 @@ export default function WorkoutProgramScreen() {
 														? '#10B981'
 														: session.completion_status === 'in_progress'
 															? '#3B82F6'
-															: '#6B7280'
+															: '#374151'
 												}
 											/>
-											<Ionicons name="chevron-forward" size={16} color="#9CA3AF" className="ml-2" />
+											<Ionicons name="chevron-forward" size={16} color="#4B5563" className="ml-2" />
 										</View>
 									</TouchableOpacity>
 								))}

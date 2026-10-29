@@ -8,10 +8,12 @@ Reuse these rather than inventing new values. Sourced from `tailwind.config.js`,
 
 ### Color
 
-- **Brand accent**: `#E3BBA1` (`branding.100` / `base` in `tailwind.config.js`) — buttons, active tab/segment states, active icons. Pressed/darker state: `#cd9c99` (`branding.200`).
+- **Brand accent**: `#E3BBA1` (`branding.100` / `base` in `tailwind.config.js`) — active tab/segment states, active icons, tints. Pressed/darker state: `#cd9c99` (`branding.200`).
+- **Button color**: `#D4A07E` — one shade darker than the accent so white button text reads clearly. Use it for every filled (primary) button.
 - **Ink (primary text)**: `#262135` — used as a literal hex throughout, not a Tailwind token.
-- **Ink soft (secondary text)**: `#64748B`, or `#94897E` in newer cards.
+- **Ink soft (secondary text)**: `#334155`, or warm `#574F47` in newer cards (darkened twice from `#64748B` / `#94897E` for readability — don't reintroduce the lighter greys for text). Faint chevrons / close icons: `#857869`.
 - **Status colors (calorie/macro over-under)**: good `#7DB88A`, near-limit `#F2D58E`, over `#E08585`. Soft pastel set, distinct from BMI colors below — used for daily-tracking state (e.g. "Deficit"/"Surplus" balance, calorie ring).
+- **Macro colors** (`MACRO_COLORS` in `lib/theme.ts`): protein `#FF6B4A`, carbs `#FFB020`, fat `#2FA8E0`. The bar track is the same color at ~18% (`${color}2E`).
 - **BMI / body-fat category colors** (`lib/bodyFatUtils.ts`, more saturated): Underweight/Essential `#3B82F6`, Normal/Athletic/Fitness `#10B981`, Overweight/Average `#F59E0B`, Obese `#EF4444`.
 - **Neutral surfaces**: screen background warm paper `#F1E9DE` (`SCREEN_BG` in `lib/theme.ts` — use the constant, not a literal); card fill `#F9F9F8` / `#F8F8F8`; hairline border `#F0EBE6` / `#EEEEEE`; pill/segment-switcher track `#F1F1F1`.
 - Full palette (blues, grays, success/danger/warning scales) is in `tailwind.config.js` under `theme.extend.colors` — check there before picking a new color.
@@ -30,7 +32,7 @@ Reuse these rather than inventing new values. Sourced from `tailwind.config.js`,
 - Radius: `rounded-2xl`/`rounded-3xl`. Fill white or `#F9F9F8`, `1px` border `#F0EBE6`/`#EEEEEE`. Shadows are used sparingly (e.g. `CalorieWaterCircle`'s orb), not stamped on every card.
 - Status/category tinting: a subtle `expo-linear-gradient` wash from `${color}0F–17` fading to solid white by ~40–50% of the card — the tint should read as a hint, not dominate the card (see `BmiCard.tsx`).
 - **Marker-on-bar pattern**: a thin (5–6px) rounded horizontal bar, optionally segmented by color, with a small circular marker (~8px, dark fill, 2px white border) positioned via `position: absolute; left: {pct}%; marginLeft: -{half-width}`. Used in `CalorieBalanceCard` and `BmiCard` — reuse this instead of a new gauge style for any "value along a range" visualization.
-- Primary button: `bg-[#E3BBA1] rounded-xl py-3`, centered white `JakartaSemiBold` text.
+- Primary button: `bg-[#D4A07E] rounded-xl py-3`, centered white `JakartaBold` 17px text with a slight shadow (`textShadowColor: 'rgba(110,60,30,0.35)'`, offset 0/1, radius 2) so it reads bright. Use the button color above, not the lighter accent.
 
 ### Full-screen pages — two conventions coexist
 
@@ -41,10 +43,10 @@ Reuse these rather than inventing new values. Sourced from `tailwind.config.js`,
 
 ### Settings / list patterns (`account-settings.tsx`)
 
-- **Section label**: 11px `JakartaSemiBold` `#94897E`, uppercase, 0.6 letter-spacing, above each card.
-- **Grouped list card**: white `rounded-3xl`, `1px #F0EBE6` border, rows `px-4 py-3.5` separated by hairlines. Row = 36px circular icon chip (`#F9F9F8` fill, hairline border, ink outline icon) + title (`JakartaSemiBold` 14, ink) + subtitle (12, `#94897E`) + `chevron-forward` `#C9BEB4` when tappable.
-- **Detail rows** (label/value): label `JakartaMedium` `#94897E`, value `JakartaSemiBold` ink, hairline between rows.
-- **Segmented switch**: track `#F1F1F1` `rounded-full p-1`; active segment `#E3BBA1` with white text, inactive `#64748B`.
+- **Section label**: 11px `JakartaSemiBold` `#574F47`, uppercase, 0.6 letter-spacing, above each card.
+- **Grouped list card**: white `rounded-3xl`, `1px #F0EBE6` border, rows `px-4 py-3.5` separated by hairlines. Row = 36px circular icon chip (`#F9F9F8` fill, hairline border, ink outline icon) + title (`JakartaSemiBold` 14, ink) + subtitle (12, `#574F47`) + `chevron-forward` `#857869` when tappable.
+- **Detail rows** (label/value): label `JakartaMedium` `#574F47`, value `JakartaSemiBold` ink, hairline between rows.
+- **Segmented switch**: track `#F1F1F1` `rounded-full p-1`; active segment `#E3BBA1` with white text, inactive `#475569`.
 - **Destructive**: use the soft over color `#E08585` (text, icon, button fill), in its own card below other actions — not saturated red.
 - **Bottom sheet modal**: white `rounded-t-3xl p-6`, bottom inset padding; secondary button `#F1F1F1` with ink text beside the primary/destructive one.
 
@@ -73,7 +75,7 @@ Floating pill (`_layout.tsx`), blurred translucent background, no labels, Ionico
 
 ### Progress (history & consistency)
 
-- `app/progress.tsx` (tabs Overview / Nutrition / Weight / Activity in a swipeable pager, range Week / Month / 3 months; `?tab=` deep link). **Week = the current calendar week so far (Sunday → today)**, with the Overview calendar padded to Saturday and meal / weigh-in / workout counts; month and 3 months roll back from today. The Home recap uses the previous Sunday–Saturday week On Home, `components/progress/HomeCalendar.tsx` wraps the swipeable `WeeklyCalendar` with each day's meal / weight / workout dots (loaded 16 weeks at a time from `/api/progress`), the streak and a `>` button to Progress; `components/progress/WeeklyRecapCard.tsx` shows last week's recap until dismissed. Home section titles use `components/progress/SectionTitle.tsx` to open the matching tab.
+- `app/progress.tsx` (tabs Overview / Nutrition / Weight / Activity in a swipeable pager, range Week / Month / 3 months; `?tab=` deep link). **Week = the current calendar week so far (Sunday → today)**, with the Overview calendar padded to Saturday and meal / weigh-in / workout counts; month and 3 months roll back from today. The Home recap uses the previous Sunday–Saturday week On Home, `components/progress/HomeCalendar.tsx` shows today's date, the streak and a `>` button to Progress (the `WeeklyCalendar` week strip with dots is hidden for now); `components/progress/WeeklyRecapCard.tsx` (last week's recap) is hidden for now — not rendered on Home. Home section titles use `components/progress/SectionTitle.tsx` to open the matching tab.
 - Data: `GET /api/progress?clerkId&from&to&today` (`progressUrl` adds the user's local `today` so past days in the range count as finished; in week view a missed-day reminder names days with nothing logged) (fortia-api `src/lib/progress.ts`, max 120 days) — per-day aggregates, summaries, streaks and rule-based insight sentences (no AI). Days are judged against the user's **current** targets; today only counts once it's on/over target. Insight text may contain `{w}`/`{w2}` weight tokens (lb) — format them with `formatInsight` in `lib/progress.ts` so units follow the user's setting.
 - Charts here are plain views / SVG (`components/progress/Charts.tsx`), not gifted-charts.
 

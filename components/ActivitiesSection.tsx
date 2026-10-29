@@ -44,7 +44,7 @@ const ActivitiesSection = ({ variant = 'home' }: { variant?: 'home' | 'activity'
 		<View className={openOnly ? 'mt-10' : 'px-6 mt-12'}>
 			{openOnly ? (
 				<Text
-					className="text-[10px] font-JakartaSemiBold text-[#94897E] mb-3"
+					className="text-[10px] font-JakartaSemiBold text-[#574F47] mb-3"
 					style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 				>
 					Workouts
@@ -70,11 +70,11 @@ const ActivitiesSection = ({ variant = 'home' }: { variant?: 'home' | 'activity'
 				</View>
 				<View className="flex-1 mx-3">
 					<Text className="font-JakartaBold text-[15px] text-[#262135]">Build a workout</Text>
-					<Text className="font-JakartaMedium text-xs text-[#94897E] mt-0.5">
+					<Text className="font-JakartaMedium text-xs text-[#574F47] mt-0.5">
 						Your trainer plans it around your time and equipment
 					</Text>
 				</View>
-				<Ionicons name="chevron-forward" size={18} color="#C9BEB4" />
+				<Ionicons name="chevron-forward" size={18} color="#857869" />
 			</TouchableOpacity>
 
 			{workouts.length > 0 && (
@@ -94,7 +94,7 @@ const ActivitiesSection = ({ variant = 'home' }: { variant?: 'home' | 'activity'
 									<Text className="font-JakartaSemiBold text-sm text-[#262135]" numberOfLines={1}>
 										{workout.title}
 									</Text>
-									<Text className="font-JakartaMedium text-xs text-[#94897E] mt-0.5">
+									<Text className="font-JakartaMedium text-xs text-[#574F47] mt-0.5">
 										{done && workout.calories != null
 											? `${workout.calories} kcal burned`
 											: `~${workout.est_minutes} min · ${workout.exercise_count} exercises`}

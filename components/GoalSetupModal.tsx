@@ -256,7 +256,7 @@ const GoalSetupModal: React.FC<GoalSetupModalProps> = ({ isVisible, onClose, onG
 										</Text>
 										<Text
 											className={`text-sm ${
-												formData.fitnessGoal === goal.key ? 'text-white' : 'text-gray-600'
+												formData.fitnessGoal === goal.key ? 'text-white' : 'text-gray-700'
 											}`}
 										>
 											{goal.description}

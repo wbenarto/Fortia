@@ -51,7 +51,7 @@ export default function WorkoutProgramDetailScreen({ programId }: { programId?: 
 	if (!programId) {
 		return (
 			<View className="flex-1 bg-white items-center justify-center">
-				<Text className="text-gray-500">Program ID not provided</Text>
+				<Text className="text-gray-700">Program ID not provided</Text>
 			</View>
 		);
 	}
@@ -180,7 +180,7 @@ export default function WorkoutProgramDetailScreen({ programId }: { programId?: 
 	if (loading) {
 		return (
 			<View className="flex-1 bg-white items-center justify-center">
-				<Text className="text-gray-500">Loading programs...</Text>
+				<Text className="text-gray-700">Loading programs...</Text>
 			</View>
 		);
 	}
@@ -188,7 +188,7 @@ export default function WorkoutProgramDetailScreen({ programId }: { programId?: 
 	if (!program) {
 		return (
 			<View className="flex-1 bg-white items-center justify-center">
-				<Text className="text-gray-500">Program not found</Text>
+				<Text className="text-gray-700">Program not found</Text>
 			</View>
 		);
 	}

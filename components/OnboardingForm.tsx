@@ -615,7 +615,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 						<Text className="text-black text-2xl font-JakartaSemiBold mb-2">
 							Complete Your Profile
 						</Text>
-						<Text className="text-gray-600 text-base mb-6">
+						<Text className="text-gray-700 text-base mb-6">
 							Help us create your personalized fitness plan
 						</Text>
 
@@ -643,7 +643,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 								/>
 								{isCheckingUsername && (
 									<View className="absolute right-3 top-5">
-										<Text className="text-gray-400 text-sm">Checking...</Text>
+										<Text className="text-gray-700 text-sm">Checking...</Text>
 									</View>
 								)}
 								{!isCheckingUsername && usernameAvailable && (
@@ -676,7 +676,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 									</Text>
 								</View>
 							)}
-							<Text className="text-gray-500 text-xs mt-2">
+							<Text className="text-gray-700 text-xs mt-2">
 								Username can contain letters, numbers, and underscores. Must be at least 4
 								characters.
 							</Text>
@@ -687,11 +687,11 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 							<Text className="text-black text-lg font-JakartaSemiBold mb-3">Date of Birth</Text>
 							<View className="flex-row space-x-3">
 								<View className="flex-1">
-									<Text className="text-gray-600 text-sm mb-2">Month</Text>
+									<Text className="text-gray-700 text-sm mb-2">Month</Text>
 									<TextInput
 										className="bg-white rounded-lg p-4 border border-gray-200 text-gray-700"
 										placeholder="MM"
-										placeholderTextColor="#9CA3AF"
+										placeholderTextColor="#4B5563"
 										value={formData.dobMonth}
 										onChangeText={(value: string) => updateFormData('dobMonth', value)}
 										keyboardType="numeric"
@@ -699,11 +699,11 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 									/>
 								</View>
 								<View className="flex-1">
-									<Text className="text-gray-600 text-sm mb-2">Day</Text>
+									<Text className="text-gray-700 text-sm mb-2">Day</Text>
 									<TextInput
 										className="bg-white rounded-lg p-4 border border-gray-200 text-gray-700"
 										placeholder="DD"
-										placeholderTextColor="#9CA3AF"
+										placeholderTextColor="#4B5563"
 										value={formData.dobDay}
 										onChangeText={(value: string) => updateFormData('dobDay', value)}
 										keyboardType="numeric"
@@ -711,11 +711,11 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 									/>
 								</View>
 								<View className="flex-1">
-									<Text className="text-gray-600 text-sm mb-2">Year</Text>
+									<Text className="text-gray-700 text-sm mb-2">Year</Text>
 									<TextInput
 										className="bg-white rounded-lg p-4 border border-gray-200 text-gray-700"
 										placeholder="YYYY"
-										placeholderTextColor="#9CA3AF"
+										placeholderTextColor="#4B5563"
 										value={formData.dobYear}
 										onChangeText={(value: string) => updateFormData('dobYear', value)}
 										keyboardType="numeric"
@@ -813,7 +813,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 										</Text>
 										<Text
 											className={`text-sm ${
-												formData.activityLevel === level.key ? 'text-black' : 'text-gray-500'
+												formData.activityLevel === level.key ? 'text-black' : 'text-gray-700'
 											}`}
 										>
 											{level.description}
@@ -849,7 +849,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 												</Text>
 												<Text
 													className={`text-sm ${
-														formData.fitnessGoal === goal.key ? 'text-black' : 'text-gray-500'
+														formData.fitnessGoal === goal.key ? 'text-black' : 'text-gray-700'
 													}`}
 												>
 													{goal.description}

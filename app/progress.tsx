@@ -6,7 +6,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { fetchAPI } from '@/lib/fetch';
-import { SCREEN_BG } from '@/lib/theme';
+import { MACRO_COLORS, SCREEN_BG } from '@/lib/theme';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { formatWeight, toDisplayWeight, useUnitSystem, weightUnit } from '@/lib/units';
 import {
@@ -40,7 +40,7 @@ const TABS: { key: TabKey; label: string }[] = [
 
 const SectionLabel = ({ children, right }: { children: string; right?: ReactNode }) => (
 	<View className="flex-row items-center justify-between mb-2 ml-1">
-		<Text className="text-[11px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+		<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 			{children}
 		</Text>
 		{right}
@@ -49,14 +49,14 @@ const SectionLabel = ({ children, right }: { children: string; right?: ReactNode
 
 const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
 	<View style={{ flex: 1 }}>
-		<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+		<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 			{label}
 		</Text>
 		<Text className="font-JakartaExtraBold text-[20px] text-[#262135] mt-0.5" numberOfLines={1}>
 			{value}
 		</Text>
 		{sub ? (
-			<Text className="font-JakartaMedium text-[11px] text-[#94897E]" numberOfLines={1}>
+			<Text className="font-JakartaMedium text-[11px] text-[#574F47]" numberOfLines={1}>
 				{sub}
 			</Text>
 		) : null}
@@ -136,7 +136,7 @@ const Progress = () => {
 							>
 								<Text
 									className="text-xs font-JakartaSemiBold"
-									style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+									style={{ color: selected ? '#FFFFFF' : '#334155' }}
 									numberOfLines={1}
 									adjustsFontSizeToFit
 								>
@@ -163,7 +163,7 @@ const Progress = () => {
 							>
 								<Text
 									className="text-xs font-JakartaSemiBold"
-									style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+									style={{ color: selected ? '#FFFFFF' : '#334155' }}
 									numberOfLines={1}
 									adjustsFontSizeToFit
 								>
@@ -185,7 +185,7 @@ const Progress = () => {
 							{loading ? (
 								<View className="flex-1 items-center justify-center">
 									{error ? (
-										<Text className="font-JakartaMedium text-[#94897E]">{error}</Text>
+										<Text className="font-JakartaMedium text-[#574F47]">{error}</Text>
 									) : (
 										<ActivityIndicator color={ACCENT} />
 									)}
@@ -239,13 +239,13 @@ const Overview = ({ data, range }: { data: ProgressData; range: RangeKey }) => {
 						className="w-12 h-12 rounded-full items-center justify-center"
 						style={{ backgroundColor: c.currentStreak ? '#E08585' + '1F' : '#F1F1F1' }}
 					>
-						<Ionicons name="flame" size={24} color={c.currentStreak ? '#E08585' : '#C9BEB4'} />
+						<Ionicons name="flame" size={24} color={c.currentStreak ? '#E08585' : '#857869'} />
 					</View>
 					<View className="flex-1 ml-3">
 						<Text className="font-JakartaExtraBold text-[22px] text-[#262135]">
 							{c.currentStreak}-day streak
 						</Text>
-						<Text className="font-JakartaMedium text-xs text-[#94897E]">
+						<Text className="font-JakartaMedium text-xs text-[#574F47]">
 							Best {c.bestStreak} days · any log counts
 						</Text>
 					</View>
@@ -288,7 +288,7 @@ const Overview = ({ data, range }: { data: ProgressData; range: RangeKey }) => {
 					/>
 				</View>
 				<ConsistencyCalendar days={data.days} through={isWeek ? weekEnd : undefined} />
-				<Text className="text-[10px] font-JakartaMedium text-[#94897E] mt-3 text-center">
+				<Text className="text-[10px] font-JakartaMedium text-[#574F47] mt-3 text-center">
 					{COUNT_PERIOD[range]} · tap a day for details
 				</Text>
 			</View>
@@ -310,12 +310,12 @@ const CountTile = ({
 	<View className="flex-1 rounded-2xl bg-[#F9F9F8] border-[1px] border-[#F0EBE6] px-3 py-2.5">
 		<View className="flex-row items-center">
 			<View className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: color }} />
-			<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+			<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 				{label}
 			</Text>
 		</View>
 		<Text className="font-JakartaExtraBold text-[22px] text-[#262135] mt-1">{value}</Text>
-		<Text className="font-JakartaMedium text-[11px] text-[#94897E]">{sub}</Text>
+		<Text className="font-JakartaMedium text-[11px] text-[#574F47]">{sub}</Text>
 	</View>
 );
 
@@ -326,13 +326,13 @@ const Nutrition = ({ data }: { data: ProgressData }) => {
 	const t = data.targets;
 	const bars: BarPoint[] = data.days.map((day, i) => ({
 		value: day.logged.meal ? day.calories : 0,
-		color: day.calorieStatus ? CALORIE_STATUS_COLOR[day.calorieStatus] : '#C9BEB4',
+		color: day.calorieStatus ? CALORIE_STATUS_COLOR[day.calorieStatus] : '#857869',
 		label: barLabel(day, i, data.days.length),
 	}));
 	const macros = [
-		{ label: 'Protein', value: n.avgProtein, target: t.protein, color: '#E3BBA1' },
-		{ label: 'Carbs', value: n.avgCarbs, target: t.carbs, color: '#8FA9BA' },
-		{ label: 'Fat', value: n.avgFats, target: t.fats, color: '#F2D58E' },
+		{ label: 'Protein', value: n.avgProtein, target: t.protein, color: MACRO_COLORS.protein },
+		{ label: 'Carbs', value: n.avgCarbs, target: t.carbs, color: MACRO_COLORS.carbs },
+		{ label: 'Fat', value: n.avgFats, target: t.fats, color: MACRO_COLORS.fats },
 	];
 
 	return (
@@ -369,12 +369,12 @@ const Nutrition = ({ data }: { data: ProgressData }) => {
 								className="w-2 h-2 rounded-full mr-1"
 								style={{ backgroundColor: CALORIE_STATUS_COLOR[key] }}
 							/>
-							<Text className="text-[11px] font-JakartaMedium text-[#94897E]">{label}</Text>
+							<Text className="text-[11px] font-JakartaMedium text-[#574F47]">{label}</Text>
 						</View>
 					))}
 				</View>
 				{n.weekendDelta != null && Math.abs(n.weekendDelta) >= 100 && (
-					<Text className="text-xs font-JakartaMedium text-[#94897E] mt-2">
+					<Text className="text-xs font-JakartaMedium text-[#574F47] mt-2">
 						Weekends average {Math.abs(Math.round(n.weekendDelta)).toLocaleString()} cal{' '}
 						{n.weekendDelta > 0 ? 'more' : 'less'} than weekdays.
 					</Text>
@@ -387,7 +387,7 @@ const Nutrition = ({ data }: { data: ProgressData }) => {
 					<View key={macro.label} className={i < macros.length - 1 ? 'mb-3.5' : ''}>
 						<View className="flex-row justify-between mb-1.5">
 							<Text className="text-[13px] font-JakartaSemiBold text-[#262135]">{macro.label}</Text>
-							<Text className="text-xs font-JakartaMedium text-[#94897E]">
+							<Text className="text-xs font-JakartaMedium text-[#574F47]">
 								{macro.value != null ? Math.round(macro.value) : '—'} / {Math.round(macro.target)} g
 							</Text>
 						</View>
@@ -395,7 +395,7 @@ const Nutrition = ({ data }: { data: ProgressData }) => {
 					</View>
 				))}
 			</View>
-			<Text className="text-[11px] font-JakartaMedium text-[#94897E] ml-1">
+			<Text className="text-[11px] font-JakartaMedium text-[#574F47] ml-1">
 				Days are compared with your current targets. Today counts once it's on target.
 			</Text>
 		</>
@@ -438,7 +438,7 @@ const Weight = ({
 			<View className={CARD}>
 				<View className="flex-row items-end justify-between">
 					<View>
-						<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+						<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 							Latest
 						</Text>
 						<Text className="font-JakartaExtraBold text-[30px] text-[#262135]">
@@ -460,12 +460,12 @@ const Weight = ({
 							target={data.targets.weight != null ? display(data.targets.weight) : null}
 						/>
 					) : (
-						<Text className="text-sm font-JakartaMedium text-[#94897E] py-8 text-center">
+						<Text className="text-sm font-JakartaMedium text-[#574F47] py-8 text-center">
 							No weigh-ins in this range.
 						</Text>
 					)}
 				</View>
-				<Text className="text-[11px] font-JakartaMedium text-[#94897E] mt-2">
+				<Text className="text-[11px] font-JakartaMedium text-[#574F47] mt-2">
 					Dots are weigh-ins, the line is your 7-day average
 					{data.targets.weight ? ', dashed is your goal' : ''}.
 				</Text>
@@ -496,7 +496,7 @@ const Weight = ({
 					/>
 				</View>
 				{(w.weighInsPerWeek ?? 0) < 3 && (
-					<Text className="text-xs font-JakartaMedium text-[#94897E] mt-3">
+					<Text className="text-xs font-JakartaMedium text-[#574F47] mt-3">
 						Weigh in 3+ times a week for a reliable trend — daily weight swings a lot.
 					</Text>
 				)}
@@ -572,7 +572,7 @@ const Activity = ({ data }: { data: ProgressData }) => {
 			<View className={CARD}>
 				<Bars data={workoutBars} target={isWeek ? null : a.weeklyGoal} height={100} />
 				{!isWeek && (
-					<Text className="text-[11px] font-JakartaMedium text-[#94897E] mt-2">
+					<Text className="text-[11px] font-JakartaMedium text-[#574F47] mt-2">
 						Dashed line is your goal of {a.weeklyGoal} days a week.
 					</Text>
 				)}
@@ -584,7 +584,7 @@ const Activity = ({ data }: { data: ProgressData }) => {
 					<Text className="text-[13px] font-JakartaSemiBold text-[#262135]">
 						{a.cardioMinutesPerWeek} min a week
 					</Text>
-					<Text className="text-xs font-JakartaMedium text-[#94897E]">
+					<Text className="text-xs font-JakartaMedium text-[#574F47]">
 						goal {a.cardioWeeklyTarget}
 					</Text>
 				</View>
@@ -609,7 +609,7 @@ const Activity = ({ data }: { data: ProgressData }) => {
 						<View className="flex-1 mx-2">
 							<ProgressBar value={m.sets} target={maxSets} color={m.sets ? ACCENT : '#F0EBE6'} />
 						</View>
-						<Text className="w-24 text-right text-[11px] font-JakartaMedium text-[#94897E]">
+						<Text className="w-24 text-right text-[11px] font-JakartaMedium text-[#574F47]">
 							{m.sets ? `${m.sets} sets · ${shortDate(m.lastTrained!)}` : 'Not trained'}
 						</Text>
 					</View>

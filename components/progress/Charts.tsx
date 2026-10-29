@@ -68,7 +68,7 @@ export const Bars = ({
 							key={i}
 							style={{ flex: 1 }}
 							numberOfLines={1}
-							className="text-[9px] font-JakartaMedium text-[#94897E] text-center"
+							className="text-[9px] font-JakartaMedium text-[#574F47] text-center"
 						>
 							{d.label || ''}
 						</Text>
@@ -141,7 +141,7 @@ export const TrendLine = ({
 							cx={px(p.x)}
 							cy={py(p.y)}
 							r={i === points.length - 1 ? 4.5 : 3}
-							fill={i === points.length - 1 ? '#262135' : '#C9BEB4'}
+							fill={i === points.length - 1 ? '#262135' : '#857869'}
 							stroke="#FFFFFF"
 							strokeWidth={i === points.length - 1 ? 2 : 0}
 						/>

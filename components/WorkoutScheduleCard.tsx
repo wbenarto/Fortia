@@ -23,15 +23,15 @@ const WorkoutScheduleCard = (props: any) => {
 
 					<View className="flex flex-row items-center gap-2">
 						<View className="flex flex-row items-center">
-							<SimpleLineIcons name="fire" size={12} color="#64748B" />
-							<Text className="font-JakartaSemiBold ml-1 text-xs text-[#64748B]">
+							<SimpleLineIcons name="fire" size={12} color="#334155" />
+							<Text className="font-JakartaSemiBold ml-1 text-xs text-[#334155]">
 								{props.workout.totalCaloriesBurned} cal
 							</Text>
 						</View>
 
 						<View className="flex flex-row items-center">
-							<Ionicons name="timer-outline" size={12} color="#64748B" />
-							<Text className="font-JakartaSemiBold ml-1 text-xs text-[#64748B]">
+							<Ionicons name="timer-outline" size={12} color="#334155" />
+							<Text className="font-JakartaSemiBold ml-1 text-xs text-[#334155]">
 								{props.workout.duration}
 							</Text>
 						</View>
@@ -44,8 +44,8 @@ const WorkoutScheduleCard = (props: any) => {
 			{props.workout.exercises.map((exercise: any, index: number) => (
 				<View className="flex flex-row justify-between items-center " key={index}>
 					<View className="flex flex-row items-center">
-						<Text className="text-xs font-JakartaRegular text-[#64748B]">{exercise.name} • </Text>
-						<Text className="text-xs font-JakartaRegular text-[#64748B]">
+						<Text className="text-xs font-JakartaRegular text-[#334155]">{exercise.name} • </Text>
+						<Text className="text-xs font-JakartaRegular text-[#334155]">
 							{exercise.sets} x {exercise.reps}
 						</Text>
 					</View>

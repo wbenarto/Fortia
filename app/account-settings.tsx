@@ -35,7 +35,7 @@ const CARD_CLASS = 'bg-white rounded-3xl border-[1px] border-[#F0EBE6] p-5 mb-8'
 const LIST_CARD_CLASS = 'bg-white rounded-3xl border-[1px] border-[#F0EBE6] overflow-hidden mb-4';
 
 const SectionLabel = ({ children }: { children: string }) => (
-	<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mb-2 ml-1" style={EYEBROW_STYLE}>
+	<Text className="text-[11px] font-JakartaSemiBold text-[#574F47] mb-2 ml-1" style={EYEBROW_STYLE}>
 		{children}
 	</Text>
 );
@@ -56,11 +56,11 @@ const DetailRow = ({
 	}`;
 	const content = (
 		<>
-			<Text className="text-sm font-JakartaMedium text-[#94897E]">{label}</Text>
+			<Text className="text-sm font-JakartaMedium text-[#574F47]">{label}</Text>
 			<View className="flex-row items-center">
 				<Text className="text-sm font-JakartaSemiBold text-[#262135]">{value}</Text>
 				{onPress && (
-					<Ionicons name="chevron-forward" size={14} color="#C9BEB4" style={{ marginLeft: 4 }} />
+					<Ionicons name="chevron-forward" size={14} color="#857869" style={{ marginLeft: 4 }} />
 				)}
 			</View>
 		</>
@@ -76,12 +76,12 @@ const DetailRow = ({
 
 const MacroStat = ({ label, grams }: { label: string; grams: number }) => (
 	<View>
-		<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+		<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 			{label}
 		</Text>
 		<View className="flex-row items-baseline mt-0.5">
 			<Text className="font-JakartaExtraBold text-[18px] text-[#262135]">{Math.round(grams)}</Text>
-			<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">g</Text>
+			<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">g</Text>
 		</View>
 	</View>
 );
@@ -120,9 +120,9 @@ const ListRow = ({
 				<Text className="font-JakartaSemiBold text-sm" style={{ color: danger ? DANGER : INK }}>
 					{title}
 				</Text>
-				<Text className="text-xs font-JakartaMedium text-[#94897E] mt-0.5">{subtitle}</Text>
+				<Text className="text-xs font-JakartaMedium text-[#574F47] mt-0.5">{subtitle}</Text>
 			</View>
-			{onPress && <Ionicons name="chevron-forward" size={18} color="#C9BEB4" />}
+			{onPress && <Ionicons name="chevron-forward" size={18} color="#857869" />}
 		</>
 	);
 	const className = `flex-row items-center px-4 py-3.5 ${last ? '' : 'border-b-[1px] border-[#F0EBE6]'}`;
@@ -451,7 +451,7 @@ const AccountSettings = () => {
 					style={{ backgroundColor: SCREEN_BG, paddingTop: insets.top }}
 				>
 					<ActivityIndicator size="large" color="#E3BBA1" />
-					<Text className="text-sm font-JakartaMedium text-[#94897E] mt-4">Loading profile…</Text>
+					<Text className="text-sm font-JakartaMedium text-[#574F47] mt-4">Loading profile…</Text>
 				</View>
 			</>
 		);
@@ -483,7 +483,7 @@ const AccountSettings = () => {
 							<Text className="font-JakartaBold text-[22px] text-[#262135]" numberOfLines={1}>
 								{getUserDisplayName(userProfile)}
 							</Text>
-							<Text className="text-sm font-JakartaMedium text-[#94897E] mt-0.5" numberOfLines={1}>
+							<Text className="text-sm font-JakartaMedium text-[#574F47] mt-0.5" numberOfLines={1}>
 								{user?.emailAddresses[0]?.emailAddress}
 							</Text>
 						</View>
@@ -493,7 +493,7 @@ const AccountSettings = () => {
 					<SectionLabel>Nutrition Goals</SectionLabel>
 					{!nutritionGoals ? (
 						<View className={CARD_CLASS}>
-							<Text className="text-sm font-JakartaMedium text-[#94897E] text-center mb-4">
+							<Text className="text-sm font-JakartaMedium text-[#574F47] text-center mb-4">
 								No nutrition goals set. Set up your goals to get personalized recommendations.
 							</Text>
 							<TouchableOpacity
@@ -552,7 +552,7 @@ const AccountSettings = () => {
 							<View className="h-[1px] bg-[#F0EBE6] my-4" />
 
 							<Text
-								className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+								className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 								style={EYEBROW_STYLE}
 							>
 								Daily Targets
@@ -561,7 +561,7 @@ const AccountSettings = () => {
 								<Text className="font-JakartaExtraBold text-[28px] text-[#262135]">
 									{nutritionGoals.daily_calories}
 								</Text>
-								<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">kcal</Text>
+								<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">kcal</Text>
 							</View>
 							<View className="flex-row justify-between mt-4">
 								<MacroStat label="Protein" grams={nutritionGoals.daily_protein} />
@@ -578,7 +578,7 @@ const AccountSettings = () => {
 							<RowIcon name="speedometer-outline" />
 							<View className="ml-3 flex-1">
 								<Text className="font-JakartaSemiBold text-sm text-[#262135]">Units</Text>
-								<Text className="text-xs font-JakartaMedium text-[#94897E] mt-0.5">
+								<Text className="text-xs font-JakartaMedium text-[#574F47] mt-0.5">
 									{unitSystem === 'metric' ? 'kg · cm' : 'lbs · ft/in'}
 								</Text>
 							</View>
@@ -595,7 +595,7 @@ const AccountSettings = () => {
 										>
 											<Text
 												className={`text-xs font-JakartaSemiBold ${
-													selected ? 'text-white' : 'text-[#64748B]'
+													selected ? 'text-white' : 'text-[#334155]'
 												}`}
 											>
 												{option.label}
@@ -717,7 +717,7 @@ const AccountSettings = () => {
 							<Text className="text-xl font-JakartaExtraBold text-[#262135] text-center mb-2">
 								Delete Account
 							</Text>
-							<Text className="text-sm font-JakartaMedium text-[#94897E] text-center leading-5">
+							<Text className="text-sm font-JakartaMedium text-[#574F47] text-center leading-5">
 								This action cannot be undone. All your data will be permanently deleted.
 							</Text>
 						</View>
@@ -744,7 +744,7 @@ const AccountSettings = () => {
 								<Text className="text-sm font-JakartaSemiBold text-[#262135] mb-1">
 									Confirm Account Deletion
 								</Text>
-								<Text className="text-xs font-JakartaMedium text-[#94897E] leading-5">
+								<Text className="text-xs font-JakartaMedium text-[#574F47] leading-5">
 									This will permanently delete your account and all associated data. This action
 									cannot be undone.
 								</Text>

@@ -801,7 +801,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 
 	return (
 		<View className="w-full px-6 pt-2">
-			<Text className="text-[11px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+			<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 				{`Today · ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`}
 			</Text>
 			<Text className="font-JakartaBold text-[28px] text-[#262135] mt-1">Activity</Text>
@@ -810,14 +810,14 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 
 			<View className="flex-row items-end justify-between mt-6">
 				<View>
-					<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 						Burned
 					</Text>
 					<View className="flex-row items-baseline mt-1">
 						<Text className="font-JakartaExtraBold text-[36px] text-[#262135]">
 							{isLoading ? '...' : Math.round(totalCaloriesBurned).toLocaleString()}
 						</Text>
-						<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">
+						<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">
 							{storedTDEE > 0 ? `/ ${Math.round(storedTDEE).toLocaleString()} cal` : 'cal'}
 						</Text>
 					</View>
@@ -864,7 +864,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 								style={{ backgroundColor: source.color }}
 							/>
 							<Text
-								className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+								className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 								style={eyebrowStyle}
 							>
 								{source.label}
@@ -874,10 +874,10 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 							{isLoading || (source.key === 'steps' && !stepsEnabled)
 								? '--'
 								: Math.round(source.value).toLocaleString()}
-							<Text className="font-JakartaMedium text-[11px] text-[#94897E]"> cal</Text>
+							<Text className="font-JakartaMedium text-[11px] text-[#574F47]"> cal</Text>
 						</Text>
 						{source.key === 'resting' && (
-							<Text className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5">
+							<Text className="font-JakartaMedium text-[11px] text-[#574F47] mt-0.5">
 								BMR, at rest
 							</Text>
 						)}
@@ -885,7 +885,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 							(stepsEnabled && stepData ? (
 								<TouchableOpacity onPress={() => setShowHealthKitInfo(true)} hitSlop={6}>
 									<Text
-										className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5"
+										className="font-JakartaMedium text-[11px] text-[#574F47] mt-0.5"
 										numberOfLines={1}
 									>
 										{stepData.steps.toLocaleString()} / {stepData.goal.toLocaleString()} steps
@@ -899,14 +899,14 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 								</TouchableOpacity>
 							) : (
 								<TouchableOpacity onPress={() => setShowHealthKitInfo(true)} hitSlop={6}>
-									<Text className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5">
+									<Text className="font-JakartaMedium text-[11px] text-[#574F47] mt-0.5">
 										Not available
 									</Text>
 								</TouchableOpacity>
 							))}
 						{source.key === 'exercise' && (
 							<Text
-								className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5"
+								className="font-JakartaMedium text-[11px] text-[#574F47] mt-0.5"
 								numberOfLines={1}
 							>
 								{scheduledExercises.length > 0
@@ -921,7 +921,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 			<ActivitiesSection variant="activity" />
 
 			<View className="flex-row items-center justify-between mt-10 mb-1">
-				<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+				<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 					Exercises{exerciseCount > 0 ? `  ·  ${exerciseCount}` : ''}
 				</Text>
 				<TouchableOpacity
@@ -945,7 +945,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 					<Text className="font-JakartaSemiBold text-[14px] text-[#262135] mt-3">
 						No exercises yet today
 					</Text>
-					<Text className="font-JakartaMedium text-[12px] text-[#94897E] mt-1">
+					<Text className="font-JakartaMedium text-[12px] text-[#574F47] mt-1">
 						Log a workout to count it toward your burn.
 					</Text>
 				</View>
@@ -1016,7 +1016,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 					<View className="flex-row justify-between items-center mb-6">
 						<Text className="text-xl font-JakartaBold">HealthKit Integration</Text>
 						<TouchableOpacity onPress={() => setShowHealthKitInfo(false)}>
-							<Ionicons name="close" size={24} color="#64748B" />
+							<Ionicons name="close" size={24} color="#334155" />
 						</TouchableOpacity>
 					</View>
 

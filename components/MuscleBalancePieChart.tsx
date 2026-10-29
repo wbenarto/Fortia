@@ -44,8 +44,8 @@ export default function MuscleBalanceBarChart({ muscleBalance }: MuscleBalanceBa
 					hideRules
 					xAxisThickness={0}
 					yAxisThickness={0}
-					yAxisTextStyle={{ color: '#6B7280', fontSize: 10 }}
-					xAxisLabelTextStyle={{ color: '#6B7280', fontSize: 10, fontWeight: 'bold' }}
+					yAxisTextStyle={{ color: '#374151', fontSize: 10 }}
+					xAxisLabelTextStyle={{ color: '#374151', fontSize: 10, fontWeight: 'bold' }}
 					noOfSections={2}
 					maxValue={50}
 					showValuesAsTopLabel

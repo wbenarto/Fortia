@@ -21,7 +21,7 @@ const SectionTitle = ({
 		accessibilityLabel={`${title} history`}
 	>
 		<Text className="font-JakartaBold text-[18px] text-[#262135]">{title}</Text>
-		<Ionicons name="chevron-forward" size={16} color="#C9BEB4" style={{ marginLeft: 4 }} />
+		<Ionicons name="chevron-forward" size={16} color="#857869" style={{ marginLeft: 4 }} />
 	</TouchableOpacity>
 );
 

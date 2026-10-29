@@ -234,7 +234,7 @@ export default function ExerciseExecutionScreen() {
 	if (loading) {
 		return (
 			<View className="flex-1 bg-white items-center justify-center">
-				<Text className="text-gray-500">Loading workout...</Text>
+				<Text className="text-gray-700">Loading workout...</Text>
 			</View>
 		);
 	}
@@ -242,7 +242,7 @@ export default function ExerciseExecutionScreen() {
 	if (!currentExercise) {
 		return (
 			<View className="flex-1 bg-white items-center justify-center">
-				<Text className="text-gray-500">No exercises found</Text>
+				<Text className="text-gray-700">No exercises found</Text>
 			</View>
 		);
 	}
@@ -268,7 +268,7 @@ export default function ExerciseExecutionScreen() {
 					<Text className="text-2xl font-JakartaBold text-gray-800 mb-2">
 						{currentExercise.exercise_name}
 					</Text>
-					<Text className="text-lg text-gray-600 mb-4">
+					<Text className="text-lg text-gray-700 mb-4">
 						{currentExercise.sets} sets × {currentExercise.reps} reps
 					</Text>
 
@@ -325,19 +325,19 @@ export default function ExerciseExecutionScreen() {
 					<Text className="text-lg font-JakartaBold text-gray-800 mb-3">Instructions</Text>
 					<View className="space-y-2">
 						<View className="flex-row items-center">
-							<Ionicons name="fitness" size={16} color="#6B7280" />
+							<Ionicons name="fitness" size={16} color="#374151" />
 							<Text className="text-gray-700 ml-2">
 								Perform {currentExercise.sets} sets of {currentExercise.reps} reps
 							</Text>
 						</View>
 						<View className="flex-row items-center">
-							<Ionicons name="time" size={16} color="#6B7280" />
+							<Ionicons name="time" size={16} color="#374151" />
 							<Text className="text-gray-700 ml-2">
 								Rest {currentExercise.rest_seconds} seconds between sets
 							</Text>
 						</View>
 						<View className="flex-row items-center">
-							<Ionicons name="checkmark-circle" size={16} color="#6B7280" />
+							<Ionicons name="checkmark-circle" size={16} color="#374151" />
 							<Text className="text-gray-700 ml-2">
 								Focus on proper form and controlled movement
 							</Text>

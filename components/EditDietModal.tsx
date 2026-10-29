@@ -108,13 +108,13 @@ const EditDietModal = ({
 					<View className="flex-row justify-between items-center mb-5">
 						<Text className="text-xl font-JakartaExtraBold text-[#262135]">Diet program</Text>
 						<TouchableOpacity onPress={onClose} hitSlop={10}>
-							<Ionicons name="close" size={24} color="#64748B" />
+							<Ionicons name="close" size={24} color="#334155" />
 						</TouchableOpacity>
 					</View>
 
 					{/* Diet type */}
 					<Text
-						className="text-[11px] font-JakartaSemiBold text-[#94897E] mb-2"
+						className="text-[11px] font-JakartaSemiBold text-[#574F47] mb-2"
 						style={EYEBROW_STYLE}
 					>
 						Diet type
@@ -139,23 +139,23 @@ const EditDietModal = ({
 										<Text className="text-sm font-JakartaBold text-[#262135]">
 											{DIET_INFO[type].label}
 										</Text>
-										<Text className="text-xs font-JakartaMedium text-[#94897E] mt-0.5">
+										<Text className="text-xs font-JakartaMedium text-[#574F47] mt-0.5">
 											{DIET_INFO[type].description}
 										</Text>
 									</View>
-									<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mr-3">
+									<Text className="text-[11px] font-JakartaSemiBold text-[#574F47] mr-3">
 										{formatDietSplit(type)}
 									</Text>
 									<Ionicons
 										name={selected ? 'checkmark-circle' : 'ellipse-outline'}
 										size={20}
-										color={selected ? ACCENT : '#C9BEB4'}
+										color={selected ? ACCENT : '#857869'}
 									/>
 								</TouchableOpacity>
 							);
 						})}
 					</View>
-					<Text className="text-[11px] font-JakartaMedium text-[#94897E] mt-2">
+					<Text className="text-[11px] font-JakartaMedium text-[#574F47] mt-2">
 						Protein / carbs / fat, as % of calories.
 					</Text>
 
@@ -170,7 +170,7 @@ const EditDietModal = ({
 
 					{/* Fasting */}
 					<Text
-						className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-7 mb-2"
+						className="text-[11px] font-JakartaSemiBold text-[#574F47] mt-7 mb-2"
 						style={EYEBROW_STYLE}
 					>
 						Intermittent fasting
@@ -188,7 +188,7 @@ const EditDietModal = ({
 								>
 									<Text
 										className={`text-xs font-JakartaSemiBold ${
-											selected ? 'text-white' : 'text-[#64748B]'
+											selected ? 'text-white' : 'text-[#334155]'
 										}`}
 									>
 										{FASTING_INFO[option].label}
@@ -197,7 +197,7 @@ const EditDietModal = ({
 							);
 						})}
 					</View>
-					<Text className="text-xs font-JakartaMedium text-[#94897E] mt-2">
+					<Text className="text-xs font-JakartaMedium text-[#574F47] mt-2">
 						{FASTING_INFO[schedule].description}
 						{schedule !== 'off' ? '. Your calorie and macro targets stay the same.' : ''}
 					</Text>
@@ -206,7 +206,7 @@ const EditDietModal = ({
 						<>
 							<View className="flex-row justify-between items-baseline mt-5 mb-2">
 								<Text
-									className="text-[11px] font-JakartaSemiBold text-[#94897E]"
+									className="text-[11px] font-JakartaSemiBold text-[#574F47]"
 									style={EYEBROW_STYLE}
 								>
 									Eating window starts
@@ -230,7 +230,7 @@ const EditDietModal = ({
 										>
 											<Text
 												className={`text-xs font-JakartaSemiBold ${
-													selected ? 'text-white' : 'text-[#64748B]'
+													selected ? 'text-white' : 'text-[#334155]'
 												}`}
 											>
 												{formatHour(hour)}
@@ -265,12 +265,12 @@ const EditDietModal = ({
 
 const PreviewStat = ({ label, value, unit }: { label: string; value: number; unit: string }) => (
 	<View>
-		<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+		<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 			{label}
 		</Text>
 		<View className="flex-row items-baseline mt-0.5">
 			<Text className="font-JakartaExtraBold text-[16px] text-[#262135]">{Math.round(value)}</Text>
-			<Text className="font-JakartaMedium text-[10px] text-[#94897E] ml-0.5">{unit}</Text>
+			<Text className="font-JakartaMedium text-[10px] text-[#574F47] ml-0.5">{unit}</Text>
 		</View>
 	</View>
 );

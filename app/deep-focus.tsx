@@ -362,7 +362,7 @@ const DeepFocus = () => {
 						<View className="flex-row justify-between space-x-3">
 							{/* Today Card */}
 							<View className="flex-1 items-center bg-yellow-100 rounded-lg p-4 shadow-sm ">
-								<Text className="text-xs text-gray-500 font-JakartaSemiBold mb-1">Today</Text>
+								<Text className="text-xs text-gray-700 font-JakartaSemiBold mb-1">Today</Text>
 								<Text className="text-xl font-bold text-black font-JakartaSemiBold">
 									{statsData.today < 1
 										? `${Math.round(statsData.today * 60)}m`
@@ -372,7 +372,7 @@ const DeepFocus = () => {
 
 							{/* Week Card */}
 							<View className="flex-1 items-center bg-yellow-100 rounded-lg p-4 shadow-sm ">
-								<Text className="text-xs text-gray-500 font-JakartaSemiBold mb-1">This Week</Text>
+								<Text className="text-xs text-gray-700 font-JakartaSemiBold mb-1">This Week</Text>
 								<Text className="text-xl font-bold text-black font-JakartaSemiBold">
 									{statsData.week.toFixed(1)}h
 								</Text>
@@ -380,7 +380,7 @@ const DeepFocus = () => {
 
 							{/* Year Card */}
 							<View className="flex-1 items-center bg-yellow-100 rounded-lg p-4 shadow-sm ">
-								<Text className="text-xs text-gray-500 font-JakartaSemiBold mb-1">This Year</Text>
+								<Text className="text-xs text-gray-700 font-JakartaSemiBold mb-1">This Year</Text>
 								<Text className="text-xl font-bold text-black font-JakartaSemiBold">
 									{statsData.year.toFixed(1)}h
 								</Text>

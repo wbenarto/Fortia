@@ -336,7 +336,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 				<View className="flex-row items-stretch">
 					<View className="flex-1">
 						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+							className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 						>
 							Weight
@@ -345,12 +345,12 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 							<Text className="font-JakartaExtraBold text-[30px] text-[#262135]">
 								{displayWeight !== null ? displayWeight.toFixed(1) : '--'}
 							</Text>
-							<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">
+							<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">
 								{weightUnit(unitSystem)}
 							</Text>
 						</View>
 						{toGoLabel && (
-							<Text className="text-xs font-JakartaSemiBold text-[#94897E] mt-1">{toGoLabel}</Text>
+							<Text className="text-xs font-JakartaSemiBold text-[#574F47] mt-1">{toGoLabel}</Text>
 						)}
 					</View>
 
@@ -363,7 +363,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 					>
 						<View className="flex-row items-center">
 							<Text
-								className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+								className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 								style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 							>
 								BMI
@@ -371,7 +371,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 							<Ionicons
 								name="chevron-forward"
 								size={12}
-								color="#C9BEB4"
+								color="#857869"
 								style={{ marginLeft: 2 }}
 							/>
 						</View>
@@ -441,7 +441,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 							</View>
 							<View className="ml-2 items-start">
 								<Text
-									className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+									className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 									style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 								>
 									Now
@@ -453,7 +453,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 						</>
 					) : (
 						<View className="h-[100px] flex justify-center items-center">
-							<Text className="text-gray-400 text-sm">No weight data available</Text>
+							<Text className="text-gray-700 text-sm">No weight data available</Text>
 						</View>
 					)}
 				</View>
@@ -466,7 +466,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 						accessibilityLabel="Set target weight"
 					>
 						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+							className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 						>
 							Target
@@ -478,7 +478,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 							<Ionicons
 								name="chevron-forward"
 								size={14}
-								color="#C9BEB4"
+								color="#857869"
 								style={{ marginLeft: 2 }}
 							/>
 						</View>
@@ -491,7 +491,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 						accessibilityLabel="Edit diet program"
 					>
 						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+							className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 						>
 							Diet
@@ -501,7 +501,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 							<Ionicons
 								name="chevron-forward"
 								size={14}
-								color="#C9BEB4"
+								color="#857869"
 								style={{ marginLeft: 2 }}
 							/>
 						</View>
@@ -537,7 +537,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 					<View className="bg-white py-14 px-4 mx-0 rounded-md">
 						<View className="pb-4">
 							<Text className="text-xl text-center font-JakartaSemiBold">Set target weight</Text>
-							<Text className="text-[13px] text-center font-JakartaMedium text-[#94897E] mt-2">
+							<Text className="text-[13px] text-center font-JakartaMedium text-[#574F47] mt-2">
 								{targetDiffLbs === null || Math.abs(targetDiffLbs) < 0.1
 									? 'Slide to pick your goal weight'
 									: `${formatWeight(Math.abs(targetDiffLbs), unitSystem)} to ${

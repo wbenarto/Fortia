@@ -148,10 +148,10 @@ const DataConsentModal: React.FC<DataConsentModalProps> = ({
 								Data Collection & Privacy Policy Consent
 							</Text>
 							<TouchableOpacity onPress={handleClose}>
-								<Ionicons name="close" size={24} color="#6B7280" />
+								<Ionicons name="close" size={24} color="#374151" />
 							</TouchableOpacity>
 						</View>
-						<Text className="text-gray-600 leading-6">
+						<Text className="text-gray-700 leading-6">
 							Fortia requires access to your data to provide personalized fitness and nutrition
 							services. Please review and accept the data collection categories and privacy policy
 							below.
@@ -163,7 +163,7 @@ const DataConsentModal: React.FC<DataConsentModalProps> = ({
 						<Text className="text-lg font-JakartaSemiBold text-gray-900 mb-4">
 							Data Collection Categories
 						</Text>
-						<Text className="text-gray-600 text-sm mb-4">
+						<Text className="text-gray-700 text-sm mb-4">
 							The following data is required to provide you with personalized fitness and nutrition
 							services:
 						</Text>
@@ -175,7 +175,7 @@ const DataConsentModal: React.FC<DataConsentModalProps> = ({
 										<Text className="text-base font-JakartaSemiBold text-gray-900 mb-1">
 											{item.title}
 										</Text>
-										<Text className="text-gray-600 leading-5">{item.description}</Text>
+										<Text className="text-gray-700 leading-5">{item.description}</Text>
 									</View>
 								</View>
 							</View>

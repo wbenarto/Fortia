@@ -105,7 +105,7 @@ export default function WorkoutSessionDetailScreen() {
 					<Text className="text-black text-lg font-JakartaSemiBold">Session</Text>
 					<View style={{ width: 24 }} />
 				</View>
-				<Text className="text-gray-500">Loading session...</Text>
+				<Text className="text-gray-700">Loading session...</Text>
 			</View>
 		);
 	}
@@ -113,7 +113,7 @@ export default function WorkoutSessionDetailScreen() {
 	if (!session) {
 		return (
 			<View className="flex-1 bg-white items-center justify-center">
-				<Text className="text-gray-500">Session not found</Text>
+				<Text className="text-gray-700">Session not found</Text>
 			</View>
 		);
 	}
@@ -133,13 +133,13 @@ export default function WorkoutSessionDetailScreen() {
 				{/* Session Info */}
 				<View className="px-6 pb-6 border-b border-gray-200">
 					<Text className="text-2xl font-JakartaBold text-gray-800 mb-2">{session.title}</Text>
-					<Text className="text-gray-600 mb-4">
+					<Text className="text-gray-700 mb-4">
 						{session.program_name} • Week {session.week_number} • Session {session.session_number}
 					</Text>
 
 					<View className="flex-row items-center">
 						<View className="flex-row gap-1 mr-2">
-							<Ionicons name="time" size={16} color="#6B7280" />
+							<Ionicons name="time" size={16} color="#374151" />
 							<Text>{session.session_duration} mins</Text>
 						</View>
 						<View
@@ -178,9 +178,9 @@ export default function WorkoutSessionDetailScreen() {
 							<Ionicons name="play-circle" size={24} color="#F97316" />
 							<View className="ml-3 flex-1">
 								<Text className="font-JakartaSemiBold text-gray-800">Dynamic Stretching</Text>
-								<Text className="text-sm text-gray-600">Watch tutorial and perform warm-up</Text>
+								<Text className="text-sm text-gray-700">Watch tutorial and perform warm-up</Text>
 							</View>
-							<Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+							<Ionicons name="chevron-forward" size={16} color="#4B5563" />
 						</TouchableOpacity>
 					</View>
 				)}
@@ -213,12 +213,12 @@ export default function WorkoutSessionDetailScreen() {
 								</View>
 
 								<View className="flex-1 flex flex-row">
-									<Text className="text-sm text-gray-600 mr-4">
+									<Text className="text-sm text-gray-700 mr-4">
 										{exercise.sets} sets × {exercise.reps} reps
 									</Text>
 									<View className="flex-row items-center">
-										<Ionicons name="time" size={12} color="#6B7280" />
-										<Text className="text-sm text-gray-600 ml-1">
+										<Ionicons name="time" size={12} color="#374151" />
+										<Text className="text-sm text-gray-700 ml-1">
 											{exercise.rest_seconds}s rest
 										</Text>
 									</View>

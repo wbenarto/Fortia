@@ -6,12 +6,12 @@ const Food = ({ food }: { food: any }) => {
 			<View className="flex flex-row justify-between items-center">
 				<Text className="font-JakartaSemiBold">{food.name}</Text>
 			</View>
-			<Text className="text-xs my-1 text-[#64748B]">{food.weight}</Text>
+			<Text className="text-xs my-1 text-[#334155]">{food.weight}</Text>
 			<View className="flex flex-row justify-between items-center">
-				<Text className="text-[#64748B]">{food.calories} cal</Text>
-				<Text className="text-[#64748B]">{Math.round(food.protein)}g protein</Text>
-				<Text className="text-[#64748B]">{Math.round(food.carbs)}g carbs</Text>
-				<Text className="text-[#64748B]">{Math.round(food.fats)}g fats</Text>
+				<Text className="text-[#334155]">{food.calories} cal</Text>
+				<Text className="text-[#334155]">{Math.round(food.protein)}g protein</Text>
+				<Text className="text-[#334155]">{Math.round(food.carbs)}g carbs</Text>
+				<Text className="text-[#334155]">{Math.round(food.fats)}g fats</Text>
 			</View>
 		</View>
 	);

@@ -97,7 +97,7 @@ const RecipeBreakdownModal: React.FC<RecipeBreakdownModalProps> = ({ visible, on
 			{/* Recipe Title */}
 			<View className="mb-6">
 				<Text className="text-gray-900 text-xl font-JakartaSemiBold mb-2">{data.video_title}</Text>
-				<Text className="text-gray-500 text-sm font-JakartaMedium">Recipe Analysis</Text>
+				<Text className="text-gray-700 text-sm font-JakartaMedium">Recipe Analysis</Text>
 			</View>
 
 			{/* Total Macros Card */}
@@ -108,21 +108,21 @@ const RecipeBreakdownModal: React.FC<RecipeBreakdownModalProps> = ({ visible, on
 						<Text className="text-2xl font-JakartaBold text-[#E3BBA1]">
 							{data.total_macronutrients.calories}
 						</Text>
-						<Text className="text-gray-600 text-sm font-JakartaMedium">Calories</Text>
+						<Text className="text-gray-700 text-sm font-JakartaMedium">Calories</Text>
 					</View>
 					<View className="items-center">
 						<Text className="text-2xl font-JakartaBold ">
 							{data.total_macronutrients.protein_g}g
 						</Text>
-						<Text className="text-gray-600 text-sm font-JakartaMedium">Protein</Text>
+						<Text className="text-gray-700 text-sm font-JakartaMedium">Protein</Text>
 					</View>
 					<View className="items-center">
 						<Text className="text-2xl font-JakartaBold">{data.total_macronutrients.carbs_g}g</Text>
-						<Text className="text-gray-600 text-sm font-JakartaMedium">Carbs</Text>
+						<Text className="text-gray-700 text-sm font-JakartaMedium">Carbs</Text>
 					</View>
 					<View className="items-center">
 						<Text className="text-2xl font-JakartaBold ">{data.total_macronutrients.fat_g}g</Text>
-						<Text className="text-gray-600 text-sm font-JakartaMedium">Fat</Text>
+						<Text className="text-gray-700 text-sm font-JakartaMedium">Fat</Text>
 					</View>
 				</View>
 			</View>
@@ -135,18 +135,18 @@ const RecipeBreakdownModal: React.FC<RecipeBreakdownModalProps> = ({ visible, on
 						<View className="flex-row justify-between items-start mb-2">
 							<Text className="text-gray-900 font-JakartaMedium flex-1">{ingredient.name}</Text>
 							{ingredient.quantity && (
-								<Text className="text-gray-500 font-JakartaMedium ml-2">{ingredient.quantity}</Text>
+								<Text className="text-gray-700 font-JakartaMedium ml-2">{ingredient.quantity}</Text>
 							)}
 						</View>
 						<View className="flex-row justify-between">
-							<Text className="text-gray-600 text-sm">
+							<Text className="text-gray-700 text-sm">
 								{ingredient.macronutrients.calories} cal
 							</Text>
-							<Text className="text-gray-600 text-sm">
+							<Text className="text-gray-700 text-sm">
 								P: {ingredient.macronutrients.protein_g}g
 							</Text>
-							<Text className="text-gray-600 text-sm">C: {ingredient.macronutrients.carbs_g}g</Text>
-							<Text className="text-gray-600 text-sm">F: {ingredient.macronutrients.fat_g}g</Text>
+							<Text className="text-gray-700 text-sm">C: {ingredient.macronutrients.carbs_g}g</Text>
+							<Text className="text-gray-700 text-sm">F: {ingredient.macronutrients.fat_g}g</Text>
 						</View>
 					</View>
 				))}
@@ -187,7 +187,7 @@ const RecipeBreakdownModal: React.FC<RecipeBreakdownModalProps> = ({ visible, on
 			<Text className="text-gray-900 text-xl font-JakartaSemiBold mb-2 text-center">
 				Analysis Failed
 			</Text>
-			<Text className="text-gray-500 text-center mb-6">{message}</Text>
+			<Text className="text-gray-700 text-center mb-6">{message}</Text>
 			<TouchableOpacity
 				className="bg-[#E3BBA1] rounded-xl py-3 px-6"
 				onPress={resetSearch}
@@ -204,7 +204,7 @@ const RecipeBreakdownModal: React.FC<RecipeBreakdownModalProps> = ({ visible, on
 			<Text className="text-gray-900 text-2xl font-JakartaSemiBold mb-2 text-center">
 				Recipe Breakdown
 			</Text>
-			<Text className="text-gray-500 text-center mb-6">
+			<Text className="text-gray-700 text-center mb-6">
 				Here you'll see a detailed nutritional breakdown of your recipe, including calories, macros,
 				and more.
 			</Text>
@@ -269,7 +269,7 @@ const RecipeBreakdownModal: React.FC<RecipeBreakdownModalProps> = ({ visible, on
 				{loading ? (
 					<View className="flex-1 items-center justify-center">
 						<ActivityIndicator size="large" color={PRIMARY} />
-						<Text className="text-gray-600 font-JakartaMedium mt-4">Analyzing recipe...</Text>
+						<Text className="text-gray-700 font-JakartaMedium mt-4">Analyzing recipe...</Text>
 					</View>
 				) : error ? (
 					<ErrorMessage message={error} />

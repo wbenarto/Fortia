@@ -17,7 +17,7 @@ export default function WorkoutProgramDetailPage() {
 			<>
 				<Stack.Screen options={{ headerShown: false }} />
 				<View className="flex-1 items-center justify-center" style={{ backgroundColor: SCREEN_BG }}>
-					<Text className="text-gray-500">Program not found</Text>
+					<Text className="text-gray-700">Program not found</Text>
 				</View>
 			</>
 		);

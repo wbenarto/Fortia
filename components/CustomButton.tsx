@@ -23,7 +23,7 @@ const getBgVariantStyle = (variant: ButtonProps['bgVariant'], disabled?: boolean
 
 const getTextVariantStyle = (variant: ButtonProps['textVariant'], disabled?: boolean) => {
 	if (disabled) {
-		return 'text-gray-500';
+		return 'text-gray-700';
 	}
 
 	switch (variant) {

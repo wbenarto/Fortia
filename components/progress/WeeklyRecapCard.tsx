@@ -55,11 +55,11 @@ const WeeklyRecapCard = () => {
 		return (
 			<View className="mx-6 mt-2 bg-white rounded-3xl border-[1px] border-[#F0EBE6] p-4">
 				<View className="flex-row items-center justify-between">
-					<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 						Last week
 					</Text>
 					<TouchableOpacity onPress={dismissRecap} hitSlop={10} accessibilityLabel="Dismiss recap">
-						<Ionicons name="close" size={18} color="#C9BEB4" />
+						<Ionicons name="close" size={18} color="#857869" />
 					</TouchableOpacity>
 				</View>
 				<View className="flex-row mt-2">
@@ -108,13 +108,13 @@ const WeeklyRecapCard = () => {
 
 const RecapStat = ({ label, value, sub }: { label: string; value: string; sub: string }) => (
 	<View style={{ flex: 1 }}>
-		<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+		<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 			{label}
 		</Text>
 		<Text className="font-JakartaExtraBold text-[18px] text-[#262135] mt-0.5" numberOfLines={1}>
 			{value}
 		</Text>
-		<Text className="font-JakartaMedium text-[11px] text-[#94897E]">{sub}</Text>
+		<Text className="font-JakartaMedium text-[11px] text-[#574F47]">{sub}</Text>
 	</View>
 );
 

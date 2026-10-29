@@ -1,34 +1,43 @@
 import { useState } from 'react';
-import { View, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuickLogStore, type QuickLogType } from '@/store';
 import NewWorkoutModal from '@/components/NewWorkoutModal';
 import FoodLookupModal from '@/components/FoodLookupModal';
 
-const FAB_SIZE = 64;
+// Round gradient + button
+const FAB_WIDTH = 60;
+const FAB_HEIGHT = 60;
 const BADGE_SIZE = 54;
+const BADGE_LABEL_WIDTH = 72;
 // FAB offset from the wrap's bottom-right corner — the badge fan is anchored to
 // the FAB centre, so nudging these moves the whole cluster together.
 const FAB_RIGHT = 10;
-const FAB_BOTTOM = -20;
+// Inside the wrap (not negative): touches outside the wrap's bounds don't register on iOS
+const FAB_BOTTOM = 0;
 // Small food-lookup button stacked just above the FAB
 const SEARCH_SIZE = 40;
 const SEARCH_GAP = 12;
-const RADIUS = 124;
+const RADIUS = 150;
 // Degrees measured from straight up, sweeping down toward horizontal-left.
 const ANGLES = [8, 44, 80];
+
+// The + button and the three log options share this warm terracotta gradient
+const BUTTON_GRADIENT = ['#E9A27E', '#C9754F'] as const;
 
 const OPTIONS: {
 	key: QuickLogType;
 	icon: keyof typeof Ionicons.glyphMap;
-	color: string;
+	label: string;
+	nudgeX?: number; // fine-tune: px to the right of its arc position
 }[] = [
-	{ key: 'meal', icon: 'restaurant', color: '#7DB88A' },
-	{ key: 'weight', icon: 'scale-outline', color: '#8FA9BA' },
-	{ key: 'activity', icon: 'barbell', color: '#E3BBA1' },
+	{ key: 'meal', icon: 'restaurant', label: 'Meal' },
+	{ key: 'weight', icon: 'scale-outline', label: 'Weight', nudgeX: 8 },
+	{ key: 'activity', icon: 'barbell', label: 'Exercise' },
 ];
 
 const QuickLogButton = () => {
@@ -70,12 +79,17 @@ const QuickLogButton = () => {
 				</Animated.View>
 			)}
 
-			<View pointerEvents="box-none" style={[styles.wrap, { bottom: insets.bottom + 40 }]}>
+			<View pointerEvents="box-none" style={[styles.wrap, { bottom: insets.bottom + 22 }]}>
 				{open &&
 					OPTIONS.map((opt, i) => {
 						const rad = (ANGLES[i] * Math.PI) / 180;
-						const right = FAB_RIGHT + FAB_SIZE / 2 + RADIUS * Math.sin(rad) - BADGE_SIZE / 2;
-						const bottom = FAB_BOTTOM + FAB_SIZE / 2 + RADIUS * Math.cos(rad) - BADGE_SIZE / 2;
+						const right =
+							FAB_RIGHT +
+							FAB_WIDTH / 2 +
+							RADIUS * Math.sin(rad) -
+							BADGE_SIZE / 2 -
+							(opt.nudgeX ?? 0);
+						const bottom = FAB_BOTTOM + FAB_HEIGHT / 2 + RADIUS * Math.cos(rad) - BADGE_SIZE / 2;
 						return (
 							<Animated.View
 								key={opt.key}
@@ -86,10 +100,23 @@ const QuickLogButton = () => {
 								<TouchableOpacity
 									activeOpacity={0.85}
 									onPress={() => handleOption(opt.key)}
-									style={[styles.badge, { backgroundColor: opt.color }]}
+									style={styles.badge}
+									accessibilityRole="button"
+									accessibilityLabel={`Log ${opt.label.toLowerCase()}`}
 								>
-									<Ionicons name={opt.icon} size={24} color="#FFFFFF" />
+									<LinearGradient
+										colors={BUTTON_GRADIENT}
+										start={{ x: 0, y: 0 }}
+										end={{ x: 1, y: 1 }}
+										style={styles.badgeFill}
+									>
+										<Ionicons name={opt.icon} size={24} color="#FFFFFF" />
+									</LinearGradient>
 								</TouchableOpacity>
+								{/* Positioned under the badge so it doesn't shift the fan layout */}
+								<Text pointerEvents="none" style={styles.badgeLabel} numberOfLines={1}>
+									{opt.label}
+								</Text>
 							</Animated.View>
 						);
 					})}
@@ -112,8 +139,21 @@ const QuickLogButton = () => {
 					</Animated.View>
 				)}
 
-				<TouchableOpacity activeOpacity={0.85} onPress={() => setOpen(v => !v)} style={styles.fab}>
-					<Ionicons name={open ? 'close' : 'add'} size={32} color="#FFFFFF" />
+				<TouchableOpacity
+					activeOpacity={0.85}
+					onPress={() => setOpen(v => !v)}
+					style={styles.fab}
+					accessibilityRole="button"
+					accessibilityLabel={open ? 'Close log menu' : 'Log'}
+				>
+					<LinearGradient
+						colors={BUTTON_GRADIENT}
+						start={{ x: 0, y: 0 }}
+						end={{ x: 1, y: 1 }}
+						style={styles.fabFill}
+					>
+						<Ionicons name={open ? 'close' : 'add'} size={32} color="#FFFFFF" />
+					</LinearGradient>
 				</TouchableOpacity>
 			</View>
 
@@ -126,34 +166,38 @@ const QuickLogButton = () => {
 const styles = StyleSheet.create({
 	backdrop: {
 		flex: 1,
-		backgroundColor: 'rgba(15,12,20,0.48)',
+		backgroundColor: 'rgba(15,12,20,0.75)',
 	},
 	wrap: {
 		position: 'absolute',
 		right: 20,
-		width: 200,
-		height: 190,
+		// Must contain every badge: touches outside the wrap's bounds don't register on iOS
+		width: 250,
+		height: 230,
 	},
 	fab: {
 		position: 'absolute',
 		right: FAB_RIGHT,
 		bottom: FAB_BOTTOM,
-		width: FAB_SIZE,
-		height: FAB_SIZE,
-		borderRadius: FAB_SIZE / 2,
-		backgroundColor: '#E3BBA1',
+		width: FAB_WIDTH,
+		height: FAB_HEIGHT,
+		borderRadius: FAB_HEIGHT / 2,
+		shadowColor: '#96502D',
+		shadowOffset: { width: 0, height: 8 },
+		shadowOpacity: 0.4,
+		shadowRadius: 12,
+		elevation: 8,
+	},
+	fabFill: {
+		flex: 1,
+		borderRadius: FAB_HEIGHT / 2,
 		alignItems: 'center',
 		justifyContent: 'center',
-		shadowColor: '#6B5344',
-		shadowOffset: { width: 0, height: 6 },
-		shadowOpacity: 0.35,
-		shadowRadius: 10,
-		elevation: 8,
 	},
 	searchSlot: {
 		position: 'absolute',
-		right: FAB_RIGHT + (FAB_SIZE - SEARCH_SIZE) / 2,
-		bottom: FAB_BOTTOM + FAB_SIZE + SEARCH_GAP,
+		right: FAB_RIGHT + (FAB_WIDTH - SEARCH_SIZE) / 2,
+		bottom: FAB_BOTTOM + FAB_HEIGHT + SEARCH_GAP,
 	},
 	search: {
 		width: SEARCH_SIZE,
@@ -173,12 +217,29 @@ const styles = StyleSheet.create({
 	badgeSlot: {
 		position: 'absolute',
 	},
+	badgeLabel: {
+		position: 'absolute',
+		top: BADGE_SIZE + 5,
+		left: (BADGE_SIZE - BADGE_LABEL_WIDTH) / 2,
+		width: BADGE_LABEL_WIDTH,
+		textAlign: 'center',
+		color: '#FFFFFF',
+		fontFamily: 'Jakarta-SemiBold',
+		fontSize: 12,
+		textShadowColor: 'rgba(0,0,0,0.35)',
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 3,
+	},
+	badgeFill: {
+		flex: 1,
+		borderRadius: BADGE_SIZE / 2,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
 	badge: {
 		width: BADGE_SIZE,
 		height: BADGE_SIZE,
 		borderRadius: BADGE_SIZE / 2,
-		alignItems: 'center',
-		justifyContent: 'center',
 		shadowColor: '#3A2E28',
 		shadowOffset: { width: 0, height: 3 },
 		shadowOpacity: 0.22,

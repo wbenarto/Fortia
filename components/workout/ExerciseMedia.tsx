@@ -32,7 +32,7 @@ export const ExerciseFrames = ({
 				className="bg-[#F9F9F8] items-center justify-center rounded-2xl border-[1px] border-[#F0EBE6]"
 				style={style}
 			>
-				<Ionicons name="barbell-outline" size={size ? size * 0.45 : 40} color="#C9BEB4" />
+				<Ionicons name="barbell-outline" size={size ? size * 0.45 : 40} color="#857869" />
 			</View>
 		);
 	}
@@ -85,7 +85,7 @@ export const WatchDemoButton = ({ exerciseName }: { exerciseName: string }) => {
 			className="flex-row items-center self-start bg-[#F1F1F1] rounded-full px-3 py-1.5"
 		>
 			{loading ? (
-				<ActivityIndicator size="small" color="#94897E" />
+				<ActivityIndicator size="small" color="#574F47" />
 			) : (
 				<Ionicons name="play-circle-outline" size={16} color="#262135" />
 			)}

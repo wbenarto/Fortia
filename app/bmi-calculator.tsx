@@ -207,7 +207,7 @@ const BmiCalculator = () => {
 					</TouchableOpacity>
 				</View>
 				<View className="flex-1 items-center justify-center px-8">
-					<Ionicons name="speedometer-outline" size={40} color="#C9BEB4" />
+					<Ionicons name="speedometer-outline" size={40} color="#857869" />
 					<Text className="font-JakartaSemiBold text-[#262135] text-base mt-4 text-center">
 						Add your height & weight to see your BMI
 					</Text>
@@ -275,7 +275,7 @@ const BmiCalculator = () => {
 				<View className="bg-[#F9F9F8] border border-[#F0EBE6] rounded-3xl p-4 mt-2">
 					<View className="flex-row items-center justify-between mb-1">
 						<Text
-							className="text-[11px] font-JakartaSemiBold text-[#94897E]"
+							className="text-[11px] font-JakartaSemiBold text-[#574F47]"
 							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 						>
 							{isWhatIf ? 'At this weight' : 'Your weight'}
@@ -303,7 +303,7 @@ const BmiCalculator = () => {
 								className="font-JakartaBold text-[#262135] text-center"
 								style={{ fontSize: 26, minWidth: 56 }}
 							/>
-							<Text className="text-[#94897E] font-JakartaMedium ml-1">{unit}</Text>
+							<Text className="text-[#574F47] font-JakartaMedium ml-1">{unit}</Text>
 						</View>
 						<TouchableOpacity
 							onPress={() => adjustWeight(1)}
@@ -332,7 +332,7 @@ const BmiCalculator = () => {
 					<Text className="text-[#262135] font-JakartaBold text-lg">
 						{inUnit(range.min)}–{inUnit(range.max)} {unit}
 					</Text>
-					<Text className="text-xs mt-1" style={{ color: rangeGood ? '#10B981' : '#94897E' }}>
+					<Text className="text-xs mt-1" style={{ color: rangeGood ? '#10B981' : '#574F47' }}>
 						{rangeLabel || 'Based on your height, for a BMI of 18.5–24.9'}
 					</Text>
 				</View>
@@ -360,7 +360,7 @@ const BmiCalculator = () => {
 							</View>
 						</View>
 						<Text className="text-[#262135] font-JakartaBold text-lg mt-2">{bodyFat}%</Text>
-						<Text className="text-[#94897E] text-xs mt-1">
+						<Text className="text-[#574F47] text-xs mt-1">
 							BMI can't tell muscle from fat — this estimate can, using your weight, height, age,
 							and sex.
 						</Text>
@@ -389,12 +389,12 @@ const BmiCalculator = () => {
 								/>
 							</Svg>
 							<View className="flex-row justify-between mt-1">
-								<Text className="text-[10px] text-[#94897E]">{trend.first.date}</Text>
-								<Text className="text-[10px] text-[#94897E]">{trend.last.date}</Text>
+								<Text className="text-[10px] text-[#574F47]">{trend.first.date}</Text>
+								<Text className="text-[10px] text-[#574F47]">{trend.last.date}</Text>
 							</View>
 						</View>
 					) : (
-						<Text className="text-[#94897E] text-xs">
+						<Text className="text-[#574F47] text-xs">
 							Log your weight a few times to see how your BMI changes over time.
 						</Text>
 					)}
@@ -410,7 +410,7 @@ const BmiCalculator = () => {
 						<Text className="font-JakartaSemiBold text-[#262135] text-sm">
 							What BMI doesn't tell you
 						</Text>
-						<Ionicons name={showAbout ? 'chevron-up' : 'chevron-down'} size={18} color="#94897E" />
+						<Ionicons name={showAbout ? 'chevron-up' : 'chevron-down'} size={18} color="#574F47" />
 					</View>
 					{showAbout && (
 						<Text className="text-[#6B6478] text-xs leading-5 mt-3">

@@ -145,7 +145,7 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 						</Text>{' '}
 						Personal Trainer
 					</Text>
-					<Text className="text-gray-600 text-lg">
+					<Text className="text-gray-700 text-lg">
 						Hey <Text className="font-JakartaBold">{userProfile.username || 'there'}</Text>! Let's
 						curate your personalized diet plans and workout programs.
 					</Text>
@@ -250,7 +250,7 @@ const FortiaPT: React.FC<FortiaPTProps> = ({ isVisible, onClose }) => {
 							Create a Workout Program
 						</Text>
 					</TouchableOpacity>
-					<Text className="text-gray-600 text-sm mt-2 text-center">
+					<Text className="text-gray-700 text-sm mt-2 text-center">
 						Get personalized AI-generated workout plans tailored to your goals
 					</Text>
 				</View>

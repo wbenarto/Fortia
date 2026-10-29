@@ -29,7 +29,7 @@ const UnitSegment = memo(({ unit }: { unit: number }) => (
 							width: i === 0 ? 2 : 1,
 							height: i === 0 ? 32 : i === 5 ? 22 : 14,
 							borderRadius: 1,
-							backgroundColor: i === 0 ? '#94897E' : '#D8CFC6',
+							backgroundColor: i === 0 ? '#574F47' : '#D8CFC6',
 						}}
 					/>
 				</View>
@@ -37,7 +37,7 @@ const UnitSegment = memo(({ unit }: { unit: number }) => (
 		</View>
 		{unit % 5 === 0 && (
 			<Text
-				className="font-JakartaSemiBold text-[11px] text-[#94897E]"
+				className="font-JakartaSemiBold text-[11px] text-[#574F47]"
 				style={{ position: 'absolute', top: 40, left: -20, width: 40, textAlign: 'center' }}
 			>
 				{unit}
@@ -94,7 +94,7 @@ const WeightRuler = ({
 				<Text className="font-JakartaExtraBold text-[44px] text-[#262135]">
 					{current.toFixed(1)}
 				</Text>
-				<Text className="font-JakartaSemiBold text-base text-[#94897E] ml-1.5">{unit}</Text>
+				<Text className="font-JakartaSemiBold text-base text-[#574F47] ml-1.5">{unit}</Text>
 			</View>
 
 			<View onLayout={onLayout} style={{ height: 64 }}>

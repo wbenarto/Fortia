@@ -170,14 +170,14 @@ const SwipeableExerciseCard: React.FC<SwipeableExerciseCardProps> = ({
 							/>
 							<View className="flex-1">
 								<Text className="font-JakartaSemiBold text-sm text-gray-900">{exercise.name}</Text>
-								<Text className="text-xs text-[#64748B] mt-1">{getExerciseTypeLabel()}</Text>
-								<Text className="text-xs text-[#64748B] mt-1">{exercise.duration}</Text>
+								<Text className="text-xs text-[#334155] mt-1">{getExerciseTypeLabel()}</Text>
+								<Text className="text-xs text-[#334155] mt-1">{exercise.duration}</Text>
 							</View>
 						</View>
 						<View className="items-end">
 							<View className="flex flex-row gap-2">
 								<SimpleLineIcons name="fire" size={14} color="#5A556B" />
-								<Text className="text-[#64748B]">
+								<Text className="text-[#334155]">
 									{exercise.calories_burned ? `${exercise.calories_burned} cal` : '--'}
 								</Text>
 							</View>
