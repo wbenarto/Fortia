@@ -223,7 +223,7 @@ const MuscleHeatmap = () => {
 	return (
 		<View className="mt-3">
 			<View className="flex-row items-center justify-between mb-3">
-				<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+				<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 					Muscles worked
 				</Text>
 				<View className="flex-row bg-[#F1F1F1] rounded-full p-1">
@@ -236,7 +236,7 @@ const MuscleHeatmap = () => {
 						>
 							<Text
 								className="text-[11px] font-JakartaSemiBold"
-								style={{ color: range === r.key ? '#FFFFFF' : '#64748B' }}
+								style={{ color: range === r.key ? '#FFFFFF' : '#334155' }}
 							>
 								{r.label}
 							</Text>
@@ -301,7 +301,7 @@ const MuscleHeatmap = () => {
 								>
 									<Text
 										className="text-[11px] font-JakartaSemiBold"
-										style={{ color: side === key ? '#FFFFFF' : '#64748B' }}
+										style={{ color: side === key ? '#FFFFFF' : '#334155' }}
 									>
 										{key === 'front' ? 'Front' : 'Back'}
 									</Text>
@@ -312,11 +312,11 @@ const MuscleHeatmap = () => {
 
 					{/* Most worked */}
 					<View className="flex-1 ml-4">
-						<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+						<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 							Most worked
 						</Text>
 						{!heatmap ? null : worked.length === 0 ? (
-							<Text className="text-[12px] font-JakartaMedium text-[#94897E] mt-2 leading-5">
+							<Text className="text-[12px] font-JakartaMedium text-[#574F47] mt-2 leading-5">
 								{range === 'week'
 									? 'No strength work this week yet. Finish a workout to light it up.'
 									: 'Finish a workout to see which muscles it works.'}
@@ -332,7 +332,7 @@ const MuscleHeatmap = () => {
 											>
 												{MUSCLE_LABELS[m.muscle]}
 											</Text>
-											<Text className="text-[11px] font-JakartaMedium text-[#94897E]">
+											<Text className="text-[11px] font-JakartaMedium text-[#574F47]">
 												{formatSets(m.sets)}
 											</Text>
 										</View>
@@ -358,7 +358,7 @@ const MuscleHeatmap = () => {
 									accessibilityState={{ expanded: showMissed }}
 								>
 									<Text
-										className="flex-1 text-[11px] font-JakartaMedium text-[#94897E] leading-4"
+										className="flex-1 text-[11px] font-JakartaMedium text-[#574F47] leading-4"
 										numberOfLines={showMissed ? undefined : 2}
 									>
 										<Text className="font-JakartaSemiBold">Not trained · {missed.length}</Text>
@@ -367,7 +367,7 @@ const MuscleHeatmap = () => {
 									<Ionicons
 										name={showMissed ? 'chevron-up' : 'chevron-down'}
 										size={13}
-										color="#C9BEB4"
+										color="#857869"
 									/>
 								</TouchableOpacity>
 								{showMissed && (
@@ -407,7 +407,7 @@ const MuscleHeatmap = () => {
 							<Text className="text-[13px] font-JakartaBold text-[#262135]">
 								{MUSCLE_LABELS[picked.muscle]}
 							</Text>
-							<Text className="text-[11px] font-JakartaMedium text-[#94897E] mt-0.5">
+							<Text className="text-[11px] font-JakartaMedium text-[#574F47] mt-0.5">
 								{picked.sets > 0
 									? `${formatSets(picked.sets)}${
 											heatmap?.scale === 'weekly' && range !== 'week'
@@ -417,14 +417,14 @@ const MuscleHeatmap = () => {
 									: 'Not trained in this period'}
 							</Text>
 						</View>
-						<Ionicons name="close" size={16} color="#C9BEB4" />
+						<Ionicons name="close" size={16} color="#857869" />
 					</TouchableOpacity>
 				)}
 
 				{/* Legend */}
 				<View className="flex-row items-center justify-between mt-4">
 					<View className="flex-row items-center">
-						<Text className="text-[10px] font-JakartaMedium text-[#94897E] mr-1.5">Less</Text>
+						<Text className="text-[10px] font-JakartaMedium text-[#574F47] mr-1.5">Less</Text>
 						{HEAT_COLORS.map(c => (
 							<View
 								key={c}
@@ -432,9 +432,9 @@ const MuscleHeatmap = () => {
 								style={{ backgroundColor: c }}
 							/>
 						))}
-						<Text className="text-[10px] font-JakartaMedium text-[#94897E] ml-1">More</Text>
+						<Text className="text-[10px] font-JakartaMedium text-[#574F47] ml-1">More</Text>
 					</View>
-					<Text className="text-[10px] font-JakartaMedium text-[#94897E]">
+					<Text className="text-[10px] font-JakartaMedium text-[#574F47]">
 						{heatmap?.scale === 'relative' ? 'vs. your most trained' : '10+ sets a week = full'}
 					</Text>
 				</View>

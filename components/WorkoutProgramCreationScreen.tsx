@@ -104,7 +104,7 @@ export default function WorkoutProgramCreationScreen() {
 	const renderStep1 = () => (
 		<View className="flex-1 p-6">
 			<Text className="text-2xl font-JakartaBold mb-2">What's your main goal?</Text>
-			<Text className="text-gray-600 mb-8">This will shape your entire program</Text>
+			<Text className="text-gray-700 mb-8">This will shape your entire program</Text>
 
 			<View className="space-y-3">
 				{GOALS.map(goal => (
@@ -131,7 +131,7 @@ export default function WorkoutProgramCreationScreen() {
 	const renderStep2 = () => (
 		<View className="flex-1 p-6">
 			<Text className="text-2xl font-JakartaBold mb-2">How often do you want to workout?</Text>
-			<Text className="text-gray-600 mb-8">Choose your weekly frequency</Text>
+			<Text className="text-gray-700 mb-8">Choose your weekly frequency</Text>
 
 			<View className="space-y-3">
 				{[2, 3, 4, 5, 6].map(freq => (
@@ -164,10 +164,10 @@ export default function WorkoutProgramCreationScreen() {
 		return (
 			<View className="flex-1 p-6">
 				<Text className="text-2xl font-JakartaBold mb-2">Which days?</Text>
-				<Text className="text-gray-600 mb-2">
+				<Text className="text-gray-700 mb-2">
 					Select {programData.frequency} workout day{programData.frequency > 1 ? 's' : ''}
 				</Text>
-				<Text className="text-sm text-gray-500 mb-8">
+				<Text className="text-sm text-gray-700 mb-8">
 					{programData.workoutDays.length} of {programData.frequency} selected
 				</Text>
 
@@ -198,7 +198,7 @@ export default function WorkoutProgramCreationScreen() {
 							>
 								<Text
 									className={`font-JakartaSemiBold ${
-										isSelected ? 'text-blue-600' : isDisabled ? 'text-gray-400' : 'text-gray-800'
+										isSelected ? 'text-blue-600' : isDisabled ? 'text-gray-700' : 'text-gray-800'
 									}`}
 								>
 									{day}
@@ -214,7 +214,7 @@ export default function WorkoutProgramCreationScreen() {
 	const renderStep4 = () => (
 		<View className="flex-1 p-6">
 			<Text className="text-2xl font-JakartaBold mb-2">Session duration</Text>
-			<Text className="text-gray-600 mb-8">How long per workout?</Text>
+			<Text className="text-gray-700 mb-8">How long per workout?</Text>
 
 			<View className="space-y-3">
 				{[30, 45, 60, 75, 90].map(duration => (
@@ -243,7 +243,7 @@ export default function WorkoutProgramCreationScreen() {
 	const renderStep5 = () => (
 		<View className="flex-1 p-6">
 			<Text className="text-2xl font-JakartaBold mb-2">Program length</Text>
-			<Text className="text-gray-600 mb-8">How many weeks?</Text>
+			<Text className="text-gray-700 mb-8">How many weeks?</Text>
 
 			<View className="space-y-3">
 				{[4, 6, 8, 12, 16].map(weeks => (
@@ -272,7 +272,7 @@ export default function WorkoutProgramCreationScreen() {
 	const renderStep6 = () => (
 		<View className="flex-1 p-6">
 			<Text className="text-2xl font-JakartaBold mb-2">Available equipment</Text>
-			<Text className="text-gray-600 mb-8">Select what you have access to</Text>
+			<Text className="text-gray-700 mb-8">Select what you have access to</Text>
 
 			<View className="flex-row flex-wrap gap-3">
 				{EQUIPMENT_OPTIONS.map(equipment => (
@@ -364,7 +364,7 @@ export default function WorkoutProgramCreationScreen() {
 							>
 								<Text
 									className={`font-JakartaSemiBold ${
-										step <= currentStep ? 'text-white' : 'text-gray-500'
+										step <= currentStep ? 'text-white' : 'text-gray-700'
 									}`}
 								>
 									{step}
@@ -391,7 +391,7 @@ export default function WorkoutProgramCreationScreen() {
 					>
 						<Text
 							className={`font-JakartaSemiBold ${
-								currentStep === 1 ? 'text-gray-400' : 'text-gray-700'
+								currentStep === 1 ? 'text-gray-700' : 'text-gray-700'
 							}`}
 						>
 							Previous
@@ -405,7 +405,7 @@ export default function WorkoutProgramCreationScreen() {
 							className={`px-6 py-3 rounded-xl ${canProceed() ? 'bg-blue-500' : 'bg-gray-300'}`}
 						>
 							<Text
-								className={`font-JakartaSemiBold ${canProceed() ? 'text-white' : 'text-gray-500'}`}
+								className={`font-JakartaSemiBold ${canProceed() ? 'text-white' : 'text-gray-700'}`}
 							>
 								Next
 							</Text>
@@ -420,7 +420,7 @@ export default function WorkoutProgramCreationScreen() {
 						>
 							<Text
 								className={`font-JakartaSemiBold ${
-									canProceed() && !loading ? 'text-white' : 'text-gray-500'
+									canProceed() && !loading ? 'text-white' : 'text-gray-700'
 								}`}
 							>
 								{loading ? 'Creating...' : 'Create Program'}

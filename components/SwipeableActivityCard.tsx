@@ -101,7 +101,7 @@ const SwipeableActivityCard: React.FC<SwipeableActivityCardProps> = ({ activity,
 				>
 					<View className="flex flex-row gap-2 mb-2 items-center">
 						<Ionicons name="barbell-outline" size={14} color="#5A556B" />
-						<Text className="text-xs text-[#64748B]">Exercise</Text>
+						<Text className="text-xs text-[#334155]">Exercise</Text>
 					</View>
 					<View className="flex flex-row justify-between items-center">
 						<Text className="text-xs font-JakartSemiBold" numberOfLines={1} ellipsizeMode="tail">
@@ -109,7 +109,7 @@ const SwipeableActivityCard: React.FC<SwipeableActivityCardProps> = ({ activity,
 						</Text>
 						<View className="flex flex-row gap-2">
 							<SimpleLineIcons name="fire" size={14} colors="#5A556B" />
-							<Text className="text-[#64748B]">~{activity.estimated_calories} cal</Text>
+							<Text className="text-[#334155]">~{activity.estimated_calories} cal</Text>
 						</View>
 					</View>
 				</Animated.View>

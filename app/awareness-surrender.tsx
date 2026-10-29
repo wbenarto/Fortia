@@ -193,7 +193,7 @@ const AwarenessSurrender = () => {
 							</TouchableOpacity>
 
 							{/* Status Text */}
-							<Text className="text-sm text-gray-600 mt-3 font-JakartaMedium">
+							<Text className="text-sm text-gray-700 mt-3 font-JakartaMedium">
 								{isComplete
 									? 'Practice completed! 🎉'
 									: isPlaying

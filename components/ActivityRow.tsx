@@ -102,7 +102,7 @@ const ActivityRow = ({
 					<Text
 						className="font-JakartaSemiBold text-[14px]"
 						style={{
-							color: isCompleted ? '#94897E' : '#262135',
+							color: isCompleted ? '#574F47' : '#262135',
 							textDecorationLine: isCompleted ? 'line-through' : 'none',
 						}}
 						numberOfLines={1}
@@ -111,7 +111,7 @@ const ActivityRow = ({
 					</Text>
 					{!!subtitle && (
 						<Text
-							className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5"
+							className="font-JakartaMedium text-[11px] text-[#574F47] mt-0.5"
 							numberOfLines={1}
 						>
 							{subtitle}
@@ -121,10 +121,10 @@ const ActivityRow = ({
 
 				<Text className="font-JakartaBold text-[13px] text-[#262135]">
 					{calories ? Math.round(calories).toLocaleString() : '--'}
-					<Text className="font-JakartaMedium text-[11px] text-[#94897E]"> cal</Text>
+					<Text className="font-JakartaMedium text-[11px] text-[#574F47]"> cal</Text>
 				</Text>
 				{onPress && (
-					<Ionicons name="chevron-forward" size={14} color="#C9BEB4" style={{ marginLeft: 6 }} />
+					<Ionicons name="chevron-forward" size={14} color="#857869" style={{ marginLeft: 6 }} />
 				)}
 			</TouchableOpacity>
 		</ReanimatedSwipeable>

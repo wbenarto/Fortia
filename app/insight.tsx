@@ -206,7 +206,7 @@ const Insight = () => {
 							<Ionicons name="bulb-outline" size={32} color="#8B5CF6" />
 						</View>
 						<Text className="text-3xl font-bold text-gray-800 text-center mb-2">Insight</Text>
-						<Text className="text-gray-600 text-center font-JakartaMedium">
+						<Text className="text-gray-700 text-center font-JakartaMedium">
 							Master your energy and gain clarity through contemplation
 						</Text>
 					</View>
@@ -233,7 +233,7 @@ const Insight = () => {
 							</TouchableOpacity>
 
 							{/* Status Text */}
-							<Text className="text-sm text-gray-600 mt-3 font-JakartaMedium">
+							<Text className="text-sm text-gray-700 mt-3 font-JakartaMedium">
 								{isComplete
 									? 'Practice completed! 🎉'
 									: isPlaying

@@ -263,7 +263,7 @@ const TrainingPlayer = () => {
 						<Text className="font-JakartaExtraBold text-[26px] text-[#262135] mt-4">
 							Workout done
 						</Text>
-						<Text className="font-JakartaMedium text-sm text-[#94897E] mt-1 text-center">
+						<Text className="font-JakartaMedium text-sm text-[#574F47] mt-1 text-center">
 							{workout.title}
 						</Text>
 					</View>
@@ -273,7 +273,7 @@ const TrainingPlayer = () => {
 						<Stat label="Sets" value={`${doneSets}/${totalSets}`} />
 						<View>
 							<Text
-								className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+								className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 								style={EYEBROW_STYLE}
 							>
 								Burned
@@ -285,11 +285,11 @@ const TrainingPlayer = () => {
 									keyboardType="number-pad"
 									className="font-JakartaExtraBold text-[22px] text-[#262135] border-b-[1px] border-[#E3BBA1] min-w-[48px] p-0"
 								/>
-								<Text className="font-JakartaMedium text-[11px] text-[#94897E] ml-1">kcal</Text>
+								<Text className="font-JakartaMedium text-[11px] text-[#574F47] ml-1">kcal</Text>
 							</View>
 						</View>
 					</View>
-					<Text className="text-xs font-JakartaMedium text-[#94897E] mt-3 ml-1">
+					<Text className="text-xs font-JakartaMedium text-[#574F47] mt-3 ml-1">
 						Estimated from your weight and active time. Tap to adjust — it's added to your calories
 						out.
 					</Text>
@@ -337,7 +337,7 @@ const TrainingPlayer = () => {
 						<Text className="font-JakartaSemiBold text-[#262135] text-base">
 							{index + 1} / {total}
 						</Text>
-						<Text className="font-JakartaMedium text-[11px] text-[#94897E]">
+						<Text className="font-JakartaMedium text-[11px] text-[#574F47]">
 							{SECTION_LABELS[block.section]} · {formatClock(activeSeconds)}
 							{paused ? ' · paused' : ''}
 						</Text>
@@ -366,7 +366,7 @@ const TrainingPlayer = () => {
 						{exercise?.name || block.slug}
 					</Text>
 					<View className="flex-row items-center justify-between mt-1">
-						<Text className="flex-1 font-JakartaMedium text-xs text-[#94897E] pr-3">
+						<Text className="flex-1 font-JakartaMedium text-xs text-[#574F47] pr-3">
 							{formatPrescription(block)}
 							{exercise?.primary_muscles.length
 								? ` · ${exercise.primary_muscles.map(capitalize).join(', ')}`
@@ -390,7 +390,7 @@ const TrainingPlayer = () => {
 									}`}
 									style={{ opacity: set.done ? 0.6 : 1 }}
 								>
-									<Text className="w-12 font-JakartaSemiBold text-xs text-[#94897E]">
+									<Text className="w-12 font-JakartaSemiBold text-xs text-[#574F47]">
 										Set {setIndex + 1}
 									</Text>
 
@@ -413,7 +413,7 @@ const TrainingPlayer = () => {
 																: ''
 														}
 														placeholder="—"
-														placeholderTextColor="#C9BEB4"
+														placeholderTextColor="#857869"
 														keyboardType="decimal-pad"
 														onEndEditing={e => {
 															const value = parseFloat(e.nativeEvent.text);
@@ -425,7 +425,7 @@ const TrainingPlayer = () => {
 														}}
 														className="w-14 text-center font-JakartaBold text-sm text-[#262135] border-b-[1px] border-[#F0EBE6] p-0 pb-1"
 													/>
-													<Text className="text-[11px] font-JakartaMedium text-[#94897E] ml-1">
+													<Text className="text-[11px] font-JakartaMedium text-[#574F47] ml-1">
 														{weightUnit(unitSystem)}
 													</Text>
 												</View>
@@ -465,7 +465,7 @@ const TrainingPlayer = () => {
 										<Ionicons
 											name={set.done ? 'checkmark-circle' : 'ellipse-outline'}
 											size={28}
-											color={set.done ? '#7DB88A' : '#C9BEB4'}
+											color={set.done ? '#7DB88A' : '#857869'}
 										/>
 									</TouchableOpacity>
 								</View>
@@ -473,7 +473,7 @@ const TrainingPlayer = () => {
 						})}
 					</View>
 					{block.rest > 0 && blockSets.length > 1 && (
-						<Text className="text-xs font-JakartaMedium text-[#94897E] mt-2 ml-1">
+						<Text className="text-xs font-JakartaMedium text-[#574F47] mt-2 ml-1">
 							Rest {formatSeconds(block.rest)} between sets — the timer starts when you check a set.
 						</Text>
 					)}
@@ -486,7 +486,7 @@ const TrainingPlayer = () => {
 								className="flex-row items-center justify-between mb-3"
 							>
 								<Text
-									className="text-[11px] font-JakartaSemiBold text-[#94897E] ml-1"
+									className="text-[11px] font-JakartaSemiBold text-[#574F47] ml-1"
 									style={EYEBROW_STYLE}
 								>
 									How to do it
@@ -494,7 +494,7 @@ const TrainingPlayer = () => {
 								<Ionicons
 									name={showSteps ? 'chevron-up' : 'chevron-down'}
 									size={16}
-									color="#94897E"
+									color="#574F47"
 								/>
 							</TouchableOpacity>
 							{showSteps && <InstructionSteps steps={exercise.instructions} />}
@@ -577,18 +577,18 @@ const Stepper = ({
 		>
 			<Ionicons name="add" size={14} color={INK} />
 		</TouchableOpacity>
-		<Text className="font-JakartaMedium text-[11px] text-[#94897E] ml-1.5">{suffix}</Text>
+		<Text className="font-JakartaMedium text-[11px] text-[#574F47] ml-1.5">{suffix}</Text>
 	</View>
 );
 
 const Stat = ({ label, value, unit }: { label: string; value: string; unit?: string }) => (
 	<View>
-		<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+		<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 			{label}
 		</Text>
 		<View className="flex-row items-baseline mt-0.5">
 			<Text className="font-JakartaExtraBold text-[22px] text-[#262135]">{value}</Text>
-			{unit && <Text className="font-JakartaMedium text-[11px] text-[#94897E] ml-1">{unit}</Text>}
+			{unit && <Text className="font-JakartaMedium text-[11px] text-[#574F47] ml-1">{unit}</Text>}
 		</View>
 	</View>
 );

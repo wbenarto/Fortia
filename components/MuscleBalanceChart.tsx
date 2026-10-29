@@ -110,7 +110,7 @@ export default function MuscleBalanceChart() {
 	if (loading) {
 		return (
 			<View className="flex-1 bg-white items-center justify-center">
-				<Text className="text-gray-500">Loading muscle balance...</Text>
+				<Text className="text-gray-700">Loading muscle balance...</Text>
 			</View>
 		);
 	}
@@ -118,11 +118,11 @@ export default function MuscleBalanceChart() {
 	if (!balanceData) {
 		return (
 			<View className="flex-1 bg-white items-center justify-center">
-				<Ionicons name="fitness" size={64} color="#9CA3AF" />
-				<Text className="text-xl font-JakartaSemiBold text-gray-600 mt-4 mb-2">
+				<Ionicons name="fitness" size={64} color="#4B5563" />
+				<Text className="text-xl font-JakartaSemiBold text-gray-700 mt-4 mb-2">
 					No Workout Data
 				</Text>
-				<Text className="text-gray-500 text-center">
+				<Text className="text-gray-700 text-center">
 					Complete some workouts to see your muscle balance
 				</Text>
 			</View>
@@ -147,7 +147,7 @@ export default function MuscleBalanceChart() {
 						>
 							<Text
 								className={`font-JakartaSemiBold text-center ${
-									selectedPeriod === period ? 'text-blue-600' : 'text-gray-600'
+									selectedPeriod === period ? 'text-blue-600' : 'text-gray-700'
 								}`}
 							>
 								{getPeriodLabel(period)}
@@ -229,7 +229,7 @@ export default function MuscleBalanceChart() {
 										{new Date(workout.workout_date).toLocaleDateString()}
 									</Text>
 									<View className="flex-row justify-between">
-										<Text className="text-sm text-gray-600">
+										<Text className="text-sm text-gray-700">
 											Total Volume: {workout.total_volume}
 										</Text>
 										<View className="flex-row space-x-2">

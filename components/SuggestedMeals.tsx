@@ -21,7 +21,7 @@ const SuggestedMeals = () => {
 					</View>
 				</View>
 				<View className="flex flex-row items-center gap-2 my-2">
-					<Text className="text-sm text-[#64748B]">
+					<Text className="text-sm text-[#334155]">
 						To complete your daily goals, you need: 1027 cal, 131g carbs, 24g protein, 24g fat
 					</Text>
 				</View>
@@ -41,7 +41,7 @@ const SuggestedMeals = () => {
 							<Text className=" my-2 text-base font-JakartaMedium text-center">
 								Unlock Smart Meal Suggestions
 							</Text>
-							<Text className="text-sm text-[#64748B] text-center">
+							<Text className="text-sm text-[#334155] text-center">
 								Get personalized meal suggestions based on your remaining macros and preferences.
 							</Text>
 							<CustomButton

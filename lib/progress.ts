@@ -141,7 +141,7 @@ export const formatInsight = (insight: Insight, system: UnitSystem) => {
 
 export const TONE_STYLE: Record<Insight['tone'], { color: string; bg: string }> = {
 	good: { color: '#5E9A6C', bg: '#7DB88A1F' },
-	neutral: { color: '#94897E', bg: '#F1F1F1' },
+	neutral: { color: '#574F47', bg: '#F1F1F1' },
 	attention: { color: '#C77A5E', bg: '#E3BBA12E' },
 };
 

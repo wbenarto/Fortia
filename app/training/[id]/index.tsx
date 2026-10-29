@@ -162,7 +162,7 @@ const TrainingPlan = () => {
 					<Text className="font-JakartaSemiBold text-[#262135] text-base">Workout</Text>
 					{workout ? (
 						<TouchableOpacity onPress={deleteWorkout} hitSlop={10}>
-							<Ionicons name="trash-outline" size={22} color="#94897E" />
+							<Ionicons name="trash-outline" size={22} color="#574F47" />
 						</TouchableOpacity>
 					) : (
 						<View style={{ width: 26 }} />
@@ -172,7 +172,7 @@ const TrainingPlan = () => {
 				{!workout ? (
 					<View className="flex-1 items-center justify-center">
 						{loadError ? (
-							<Text className="font-JakartaMedium text-[#94897E]">{loadError}</Text>
+							<Text className="font-JakartaMedium text-[#574F47]">{loadError}</Text>
 						) : (
 							<ActivityIndicator color={ACCENT} />
 						)}
@@ -193,7 +193,7 @@ const TrainingPlan = () => {
 								{style && <Pill icon={style.icon} label={style.label} />}
 							</View>
 							{workout.inputs.equipment.length > 0 && (
-								<Text className="text-xs font-JakartaMedium text-[#94897E] mt-3">
+								<Text className="text-xs font-JakartaMedium text-[#574F47] mt-3">
 									{workout.inputs.equipment.map(e => EQUIPMENT_LABELS[e]).join(' · ')}
 								</Text>
 							)}
@@ -215,7 +215,7 @@ const TrainingPlan = () => {
 								return (
 									<View key={section}>
 										<Text
-											className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-7 mb-2 ml-1"
+											className="text-[11px] font-JakartaSemiBold text-[#574F47] mt-7 mb-2 ml-1"
 											style={EYEBROW_STYLE}
 										>
 											{SECTION_LABELS[section]}
@@ -244,7 +244,7 @@ const TrainingPlan = () => {
 															>
 																{exercise?.name || block.slug}
 															</Text>
-															<Text className="font-JakartaMedium text-xs text-[#94897E] mt-0.5">
+															<Text className="font-JakartaMedium text-xs text-[#574F47] mt-0.5">
 																{formatPrescription(block)}
 																{block.section === 'main' && block.rest
 																	? ` · rest ${block.rest}s`
@@ -262,7 +262,7 @@ const TrainingPlan = () => {
 																	className="p-1.5"
 																	accessibilityLabel="Swap exercise"
 																>
-																	<Ionicons name="swap-horizontal" size={18} color="#94897E" />
+																	<Ionicons name="swap-horizontal" size={18} color="#574F47" />
 																</TouchableOpacity>
 																<TouchableOpacity
 																	onPress={() => removeBlock(index)}
@@ -270,7 +270,7 @@ const TrainingPlan = () => {
 																	className="p-1.5"
 																	accessibilityLabel="Remove exercise"
 																>
-																	<Ionicons name="close" size={18} color="#C9BEB4" />
+																	<Ionicons name="close" size={18} color="#857869" />
 																</TouchableOpacity>
 															</>
 														)}
@@ -334,12 +334,12 @@ const TrainingPlan = () => {
 									{detail.name}
 								</Text>
 								<TouchableOpacity onPress={() => setDetailIndex(null)} hitSlop={10}>
-									<Ionicons name="close" size={24} color="#64748B" />
+									<Ionicons name="close" size={24} color="#334155" />
 								</TouchableOpacity>
 							</View>
 							<ExerciseFrames images={detail.images} height={200} />
 							<View className="flex-row items-center justify-between mt-4 mb-4">
-								<Text className="text-xs font-JakartaMedium text-[#94897E] flex-1 pr-3">
+								<Text className="text-xs font-JakartaMedium text-[#574F47] flex-1 pr-3">
 									{formatPrescription(detailBlock)} ·{' '}
 									{[...detail.primary_muscles, ...detail.secondary_muscles]
 										.slice(0, 3)
@@ -365,16 +365,16 @@ const TrainingPlan = () => {
 					<View className="flex-row justify-between items-center mb-1">
 						<Text className="text-xl font-JakartaExtraBold text-[#262135]">Swap exercise</Text>
 						<TouchableOpacity onPress={() => setSwapIndex(null)} hitSlop={10}>
-							<Ionicons name="close" size={24} color="#64748B" />
+							<Ionicons name="close" size={24} color="#334155" />
 						</TouchableOpacity>
 					</View>
-					<Text className="text-xs font-JakartaMedium text-[#94897E] mb-4">
+					<Text className="text-xs font-JakartaMedium text-[#574F47] mb-4">
 						Same muscles, using your equipment.
 					</Text>
 					{alternatives === null ? (
 						<ActivityIndicator color={ACCENT} className="my-6" />
 					) : alternatives.length === 0 ? (
-						<Text className="text-sm font-JakartaMedium text-[#94897E] my-4">
+						<Text className="text-sm font-JakartaMedium text-[#574F47] my-4">
 							No alternatives for this one with your equipment.
 						</Text>
 					) : (
@@ -389,11 +389,11 @@ const TrainingPlan = () => {
 									<ExerciseFrames images={alt.images} size={48} animate={false} />
 									<View className="flex-1 ml-3">
 										<Text className="text-sm font-JakartaSemiBold text-[#262135]">{alt.name}</Text>
-										<Text className="text-xs font-JakartaMedium text-[#94897E] mt-0.5">
+										<Text className="text-xs font-JakartaMedium text-[#574F47] mt-0.5">
 											{alt.primary_muscles.map(capitalize).join(', ')}
 										</Text>
 									</View>
-									<Ionicons name="chevron-forward" size={16} color="#C9BEB4" />
+									<Ionicons name="chevron-forward" size={16} color="#857869" />
 								</TouchableOpacity>
 							))}
 						</View>
@@ -406,7 +406,7 @@ const TrainingPlan = () => {
 
 const Pill = ({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) => (
 	<View className="flex-row items-center bg-white rounded-full border-[1px] border-[#F0EBE6] px-3 py-1.5">
-		<Ionicons name={icon} size={13} color="#94897E" />
+		<Ionicons name={icon} size={13} color="#574F47" />
 		<Text className="text-xs font-JakartaSemiBold text-[#262135] ml-1">{label}</Text>
 	</View>
 );

@@ -18,7 +18,7 @@ const HomeHeader = () => {
 		<View className="flex-row items-center justify-between px-6 pt-6">
 			<View className="flex-1 pr-4">
 				<Text
-					className="text-[11px] font-JakartaSemiBold text-[#94897E]"
+					className="text-[11px] font-JakartaSemiBold text-[#574F47]"
 					style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
 				>
 					{greetingForHour(now.getHours())}

@@ -173,7 +173,7 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 				<View className="flex-row justify-between items-center mb-5">
 					<Text className="text-xl font-JakartaExtraBold text-[#262135]">Look up food</Text>
 					<TouchableOpacity onPress={onClose} hitSlop={10}>
-						<Ionicons name="close" size={24} color="#64748B" />
+						<Ionicons name="close" size={24} color="#334155" />
 					</TouchableOpacity>
 				</View>
 
@@ -181,7 +181,7 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 				<View className="flex-row items-end mb-5" style={{ columnGap: 12 }}>
 					<View className="flex-1">
 						<Text
-							className="text-[11px] font-JakartaSemiBold text-[#94897E] mb-1"
+							className="text-[11px] font-JakartaSemiBold text-[#574F47] mb-1"
 							style={EYEBROW_STYLE}
 						>
 							Food
@@ -199,7 +199,7 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 								<Animated.Text
 									pointerEvents="none"
 									style={{ opacity: placeholderOpacity }}
-									className="absolute left-0 pb-2 text-sm text-[#94897E]"
+									className="absolute left-0 pb-2 text-sm text-[#574F47]"
 									numberOfLines={1}
 								>
 									{INGREDIENT_PLACEHOLDERS[placeholderIndex].ingredient}
@@ -209,7 +209,7 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 					</View>
 					<View className="w-24">
 						<Text
-							className="text-[11px] font-JakartaSemiBold text-[#94897E] mb-1"
+							className="text-[11px] font-JakartaSemiBold text-[#574F47] mb-1"
 							style={EYEBROW_STYLE}
 						>
 							Amount
@@ -226,7 +226,7 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 								<Animated.Text
 									pointerEvents="none"
 									style={{ opacity: placeholderOpacity }}
-									className="absolute left-0 pb-2 text-sm text-[#94897E]"
+									className="absolute left-0 pb-2 text-sm text-[#574F47]"
 									numberOfLines={1}
 								>
 									{INGREDIENT_PLACEHOLDERS[placeholderIndex].amount}
@@ -242,7 +242,7 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 						<Text className="text-base font-JakartaBold text-[#262135]" numberOfLines={2}>
 							{result.food}
 						</Text>
-						<Text className="text-xs font-JakartaMedium text-[#94897E] mt-0.5">
+						<Text className="text-xs font-JakartaMedium text-[#574F47] mt-0.5">
 							{result.amount}
 						</Text>
 
@@ -250,7 +250,7 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 							<Text className="font-JakartaExtraBold text-[36px] text-[#262135]">
 								{roundValue(nutrition.calories)}
 							</Text>
-							<Text className="font-JakartaSemiBold text-sm text-[#94897E] ml-1">kcal</Text>
+							<Text className="font-JakartaSemiBold text-sm text-[#574F47] ml-1">kcal</Text>
 						</View>
 
 						<View className="flex-row justify-between bg-[#F9F9F8] border-[1px] border-[#F0EBE6] rounded-2xl px-4 py-3 mt-3">
@@ -259,12 +259,12 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 							<Stat label="Fat" value={nutrition.fats} unit="g" />
 						</View>
 
-						<Text className="text-[11px] font-JakartaMedium text-[#94897E] mt-3">
+						<Text className="text-[11px] font-JakartaMedium text-[#574F47] mt-3">
 							Fiber {roundValue(nutrition.fiber)} g · Sugar {roundValue(nutrition.sugar)} g · Sodium{' '}
 							{roundValue(nutrition.sodium)} mg
 						</Text>
 						{lowConfidence && (
-							<Text className="text-[11px] font-JakartaMedium text-[#94897E] mt-1">
+							<Text className="text-[11px] font-JakartaMedium text-[#574F47] mt-1">
 								Estimate — try a more specific name or amount.
 							</Text>
 						)}
@@ -308,12 +308,12 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 						{isLooking ? (
 							<View className="flex-row items-center justify-center">
 								<ActivityIndicator size="small" color={ACCENT} />
-								<Text className="text-[#94897E] font-JakartaSemiBold ml-2">Looking up…</Text>
+								<Text className="text-[#574F47] font-JakartaSemiBold ml-2">Looking up…</Text>
 							</View>
 						) : (
 							<Text
 								className={`text-center font-JakartaSemiBold ${
-									food.trim() ? 'text-white' : 'text-[#94897E]'
+									food.trim() ? 'text-white' : 'text-[#574F47]'
 								}`}
 							>
 								Look up
@@ -328,12 +328,12 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 
 const Stat = ({ label, value, unit }: { label: string; value: number; unit: string }) => (
 	<View>
-		<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+		<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 			{label}
 		</Text>
 		<View className="flex-row items-baseline mt-0.5">
 			<Text className="font-JakartaExtraBold text-[16px] text-[#262135]">{roundValue(value)}</Text>
-			<Text className="font-JakartaMedium text-[10px] text-[#94897E] ml-0.5">{unit}</Text>
+			<Text className="font-JakartaMedium text-[10px] text-[#574F47] ml-0.5">{unit}</Text>
 		</View>
 	</View>
 );

@@ -147,7 +147,7 @@ const CalorieChart: React.FC<CalorieChartProps> = ({ refreshTrigger = 0 }) => {
 		return (
 			<View className="flex-1 items-center justify-center">
 				<ActivityIndicator size="large" color="#E3BBA1" />
-				<Text className="text-gray-500 mt-2">Loading calorie data...</Text>
+				<Text className="text-gray-700 mt-2">Loading calorie data...</Text>
 			</View>
 		);
 	}

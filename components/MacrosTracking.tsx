@@ -11,6 +11,8 @@ import { getTodayDate } from '@/lib/dateUtils';
 import { useCaloriesBurnedToday } from '@/lib/useCaloriesBurnedToday';
 import { useQuickLogStore } from '@/store';
 import SectionTitle from '@/components/progress/SectionTitle';
+import { MACRO_COLORS } from '@/lib/theme';
+import MacroBar from '@/components/MacroBar';
 
 interface DailySummary {
 	total_calories: number;
@@ -78,59 +80,6 @@ interface MacrosTrackingProps {
 	onMealLogged?: () => void;
 	selectedDate?: string;
 }
-
-const barFillPct = (eaten: number, goal: number) => {
-	if (!goal) return 0;
-	return Math.min(100, Math.round((eaten / goal) * 100));
-};
-
-const MacroBar = ({
-	label,
-	eaten,
-	goal,
-	isLoading,
-}: {
-	label: string;
-	eaten: number;
-	goal: number;
-	isLoading: boolean;
-}) => {
-	const over = eaten > goal;
-	return (
-		<View className="flex-1 justify-between">
-			<Text
-				className="text-[10px] font-JakartaSemiBold text-[#94897E]"
-				style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
-				numberOfLines={1}
-			>
-				{label}
-			</Text>
-			<Text
-				className="font-JakartaBold text-[15px] text-[#262135] mt-1"
-				numberOfLines={1}
-				adjustsFontSizeToFit
-				minimumFontScale={0.8}
-			>
-				{isLoading ? '...' : Math.round(eaten)}
-				<Text className="font-JakartaMedium text-[11px] text-[#94897E]">
-					{isLoading ? '' : ` / ${goal}g`}
-				</Text>
-			</Text>
-			<View
-				className="w-full h-[3px] rounded-full overflow-hidden mt-1.5"
-				style={{ backgroundColor: '#94897E33' }}
-			>
-				<View
-					className="h-full rounded-full"
-					style={{
-						width: `${barFillPct(eaten, goal)}%`,
-						backgroundColor: over ? '#cd9c99' : '#E3BBA1',
-					}}
-				/>
-			</View>
-		</View>
-	);
-};
 
 const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 	({ onMealLogged, selectedDate }, ref) => {
@@ -354,18 +303,21 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 					<View className="flex-row items-stretch" style={{ columnGap: 20 }}>
 						<MacroBar
 							label="Protein"
+							color={MACRO_COLORS.protein}
 							eaten={currentData.protein}
 							goal={targetGoals.protein}
 							isLoading={isLoadingSummary}
 						/>
 						<MacroBar
 							label="Carbs"
+							color={MACRO_COLORS.carbs}
 							eaten={currentData.carbs}
 							goal={targetGoals.carbs}
 							isLoading={isLoadingSummary}
 						/>
 						<MacroBar
 							label="Fat"
+							color={MACRO_COLORS.fats}
 							eaten={currentData.fats}
 							goal={targetGoals.fats}
 							isLoading={isLoadingSummary}

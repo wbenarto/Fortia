@@ -21,7 +21,6 @@ import HomeSliderComponent from '@/components/HomeSliderComponent';
 import FortiaPT from '@/components/FortiaPT';
 import ActivitiesSection from '@/components/ActivitiesSection';
 import HomeCalendar from '@/components/progress/HomeCalendar';
-import WeeklyRecapCard from '@/components/progress/WeeklyRecapCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { images } from '@/constants/index';
@@ -268,7 +267,7 @@ export default function Page() {
 					>
 						<HomeHeader />
 						<HomeCalendar />
-						<WeeklyRecapCard />
+						{/* Weekly recap card (components/progress/WeeklyRecapCard.tsx) hidden for now */}
 						<View className="w-full mt-1">
 							{/* Slider Component */}
 							{/* <HomeSliderComponent
@@ -293,7 +292,7 @@ export default function Page() {
 								>
 									<Text className="text-white font-JakartaBold text-lg">🏋️ Workout Programs</Text>
 								</TouchableOpacity>
-								<Text className="text-gray-600 text-sm mt-2 text-center">
+								<Text className="text-gray-700 text-sm mt-2 text-center">
 									AI-powered personalized workout plans
 								</Text>
 							</View> */}

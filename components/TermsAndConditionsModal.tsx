@@ -19,13 +19,13 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
 				<View className="flex flex-row items-center justify-between mb-4">
 					<Text className="text-xl font-JakartaSemiBold text-gray-800">Terms and Conditions</Text>
 					<TouchableOpacity onPress={onClose}>
-						<Ionicons name="close" size={24} color="#64748B" />
+						<Ionicons name="close" size={24} color="#334155" />
 					</TouchableOpacity>
 				</View>
 
 				{/* Content */}
 				<ScrollView className="mb-4" showsVerticalScrollIndicator={true} style={{ maxHeight: 400 }}>
-					<Text className="text-gray-600 text-xs mb-4">Last Updated: December 2024</Text>
+					<Text className="text-gray-700 text-xs mb-4">Last Updated: December 2024</Text>
 
 					<Text className="text-gray-700 text-sm leading-6 mb-4">
 						Welcome to Fortia! These Terms and Conditions ("Terms") govern your use of the Fortia
@@ -299,7 +299,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
 						Website: https://fortia.app
 					</Text>
 
-					<Text className="text-gray-600 text-sm italic text-center mb-4">
+					<Text className="text-gray-700 text-sm italic text-center mb-4">
 						Fortia - Wellness Beyond.
 					</Text>
 				</ScrollView>

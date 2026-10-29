@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Line } from 'react-native-svg';
 
 const RING_SIZE = 140;
 const STROKE = 10;
@@ -9,24 +9,39 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const eyebrowStyle = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
 
 const StatRow = ({
-	dot,
 	label,
 	value,
 	isLoading,
 }: {
-	dot?: string;
 	label: string;
 	value: number;
 	isLoading: boolean;
 }) => (
-	<View className="flex-row items-center">
-		<View
-			className="w-2 h-2 rounded-full mr-2"
-			style={dot ? { backgroundColor: dot } : { borderWidth: 1.5, borderColor: '#94897E' }}
-		/>
-		<Text className="flex-1 text-[12px] font-JakartaMedium text-[#94897E]">{label}</Text>
+	<View className="flex-row items-end">
+		<Text
+			className="text-[12px] font-JakartaMedium text-[#574F47]"
+			numberOfLines={1}
+			style={{ flexShrink: 1 }}
+		>
+			{label}
+		</Text>
+		{/* Dashed leader from the label to the number */}
+		<View className="flex-1 mx-1.5 mb-[5px]" style={{ minWidth: 8 }}>
+			<Svg height={2} width="100%">
+				<Line
+					x1="0"
+					y1="1"
+					x2="100%"
+					y2="1"
+					stroke="#A39689"
+					strokeWidth={1}
+					strokeDasharray="3 3"
+				/>
+			</Svg>
+		</View>
 		<Text className="text-[15px] font-JakartaBold text-[#262135]">
 			{isLoading ? '...' : Math.round(value).toLocaleString()}
+			<Text className="text-[11px] font-JakartaMedium text-[#574F47]"> cal</Text>
 		</Text>
 	</View>
 );
@@ -45,10 +60,10 @@ const CalorieHero = ({
 	const net = Math.round(burned - eaten);
 	const isBalanced = net === 0;
 	const isDeficit = net > 0;
-	const netColor = isBalanced ? '#64748B' : isDeficit ? '#7DB88A' : '#E3BBA1';
+	const netColor = isBalanced ? '#334155' : isDeficit ? '#7DB88A' : '#E3BBA1';
 	const netLabel = isBalanced ? 'Balanced' : isDeficit ? 'Deficit' : 'Surplus';
 	// Darker shade of the badge colour for the text, so it reads on the tinted pill
-	const netTextColor = isBalanced ? '#475569' : isDeficit ? '#4F8A5E' : '#B26F55';
+	const netTextColor = isBalanced ? '#334155' : isDeficit ? '#4F8A5E' : '#B26F55';
 
 	const percentOfGoal = goal ? (eaten / goal) * 100 : 0;
 	const ringColor =
@@ -89,18 +104,18 @@ const CalorieHero = ({
 					<Text className="font-JakartaExtraBold text-[28px] text-[#262135]">
 						{isLoading ? '...' : Math.abs(remaining).toLocaleString()}
 					</Text>
-					<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 						{isOver ? 'cal over' : 'cal left'}
 					</Text>
 				</View>
 			</View>
 
 			<View className="flex-1 ml-6">
-				<StatRow dot="#E3BBA1" label="Eaten" value={eaten} isLoading={isLoading} />
+				<StatRow label="Daily calorie target" value={goal} isLoading={isLoading} />
+				<View className="h-[1px] bg-[#F0EBE6] my-3" />
+				<StatRow label="Eaten" value={eaten} isLoading={isLoading} />
 				<View className="h-3" />
-				<StatRow dot="#8FA9BA" label="Burned" value={burned} isLoading={isLoading} />
-				<View className="h-3" />
-				<StatRow label="Goal" value={goal} isLoading={isLoading} />
+				<StatRow label="Burned" value={burned} isLoading={isLoading} />
 
 				<View
 					className="self-stretch flex-row items-center justify-center rounded-full px-3 py-1.5 mt-4"

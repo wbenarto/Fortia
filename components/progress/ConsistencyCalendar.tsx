@@ -57,7 +57,7 @@ export const DotLegend = () => (
 		).map(([key, label]) => (
 			<View key={key} className="flex-row items-center">
 				<View className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: DOT_COLORS[key] }} />
-				<Text className="text-[11px] font-JakartaMedium text-[#94897E]">{label}</Text>
+				<Text className="text-[11px] font-JakartaMedium text-[#574F47]">{label}</Text>
 			</View>
 		))}
 	</View>
@@ -95,7 +95,7 @@ export const ConsistencyCalendar = ({
 					<Text
 						key={i}
 						style={{ flex: 1 }}
-						className="text-center text-[10px] font-JakartaSemiBold text-[#94897E]"
+						className="text-center text-[10px] font-JakartaSemiBold text-[#574F47]"
 					>
 						{letter}
 					</Text>
@@ -107,7 +107,7 @@ export const ConsistencyCalendar = ({
 						<View key={c} style={{ flex: 1 }} className="items-center py-1">
 							{typeof day === 'string' ? (
 								<View className="items-center py-1 w-10" style={{ opacity: 0.4 }}>
-									<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mb-1">
+									<Text className="text-[11px] font-JakartaSemiBold text-[#574F47] mb-1">
 										{Number(day.slice(8, 10))}
 									</Text>
 									<Dots logged={{ meal: false, weight: false, exercise: false }} />
@@ -138,7 +138,7 @@ export const ConsistencyCalendar = ({
 
 			{picked && (
 				<View className="mt-3 rounded-2xl bg-[#F9F9F8] border-[1px] border-[#F0EBE6] px-4 py-3">
-					<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 						{shortDate(picked.date)}
 					</Text>
 					<View className="flex-row justify-between mt-1.5">
@@ -173,7 +173,7 @@ export const ConsistencyCalendar = ({
 
 const DayStat = ({ label, value }: { label: string; value: string }) => (
 	<View>
-		<Text className="text-[10px] font-JakartaMedium text-[#94897E]">{label}</Text>
+		<Text className="text-[10px] font-JakartaMedium text-[#574F47]">{label}</Text>
 		<Text className="text-[13px] font-JakartaBold text-[#262135] mt-0.5">{value}</Text>
 	</View>
 );

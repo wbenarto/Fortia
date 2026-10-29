@@ -112,7 +112,7 @@ const WeeklyCalendar = ({
 								<Text
 									className="text-[10px] font-JakartaSemiBold"
 									style={{
-										color: item.isSelected ? '#FFFFFF' : '#94897E',
+										color: item.isSelected ? '#FFFFFF' : '#574F47',
 										textTransform: 'uppercase',
 										letterSpacing: 0.6,
 									}}

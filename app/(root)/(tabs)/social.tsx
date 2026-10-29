@@ -32,7 +32,7 @@ const Social = () => {
 								/>
 								<Text
 									className={`ml-2 font-JakartaSemiBold ${
-										activeTab === 'challenges' ? 'text-white' : 'text-gray-600'
+										activeTab === 'challenges' ? 'text-white' : 'text-gray-700'
 									}`}
 								>
 									Challenges
@@ -54,7 +54,7 @@ const Social = () => {
 								/>
 								<Text
 									className={`ml-2 font-JakartaSemiBold ${
-										activeTab === 'friends' ? 'text-white' : 'text-gray-600'
+										activeTab === 'friends' ? 'text-white' : 'text-gray-700'
 									}`}
 								>
 									Friends
@@ -70,7 +70,7 @@ const Social = () => {
 						<View>
 							<Text className="text-lg font-JakartaSemiBold mb-4">Challenges</Text>
 							<View className="bg-gray-50 p-4 rounded-xl">
-								<Text className="text-gray-600 text-center">No active challenges yet</Text>
+								<Text className="text-gray-700 text-center">No active challenges yet</Text>
 							</View>
 						</View>
 					)}
@@ -79,7 +79,7 @@ const Social = () => {
 						<View>
 							<Text className="text-lg font-JakartaSemiBold mb-4">Friends</Text>
 							<View className="bg-gray-50 p-4 rounded-xl">
-								<Text className="text-gray-600 text-center">No friends added yet</Text>
+								<Text className="text-gray-700 text-center">No friends added yet</Text>
 							</View>
 						</View>
 					)}

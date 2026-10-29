@@ -348,22 +348,22 @@ const NewWorkoutModal = ({
 			<View className="flex-row justify-between items-center mb-5">
 				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Log activity</Text>
 				<TouchableOpacity onPress={onClose} hitSlop={10}>
-					<Ionicons name="close" size={24} color="#64748B" />
+					<Ionicons name="close" size={24} color="#334155" />
 				</TouchableOpacity>
 			</View>
 
 			<View className="flex-row items-center bg-[#F1F1F1] rounded-full px-4 py-2.5 mb-6">
-				<Ionicons name="search" size={16} color="#94897E" />
+				<Ionicons name="search" size={16} color="#574F47" />
 				<TextInput
 					value={search}
 					onChangeText={setSearch}
 					placeholder="Search activities"
-					placeholderTextColor="#94897E"
+					placeholderTextColor="#574F47"
 					className="flex-1 ml-2 text-sm font-JakartaMedium text-[#262135] p-0"
 				/>
 				{search ? (
 					<TouchableOpacity onPress={() => setSearch('')} hitSlop={8}>
-						<Ionicons name="close-circle" size={16} color="#C9BEB4" />
+						<Ionicons name="close-circle" size={16} color="#857869" />
 					</TouchableOpacity>
 				) : null}
 			</View>
@@ -401,10 +401,10 @@ const NewWorkoutModal = ({
 					style={{ width: '25%' }}
 					accessibilityLabel="Log another activity"
 				>
-					<View className="w-14 h-14 rounded-full bg-white border-[1px] border-dashed border-[#C9BEB4] items-center justify-center">
-						<MaterialCommunityIcons name="pencil-outline" size={24} color="#94897E" />
+					<View className="w-14 h-14 rounded-full bg-white border-[1px] border-dashed border-[#857869] items-center justify-center">
+						<MaterialCommunityIcons name="pencil-outline" size={24} color="#574F47" />
 					</View>
-					<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-1.5">Other</Text>
+					<Text className="text-[11px] font-JakartaSemiBold text-[#574F47] mt-1.5">Other</Text>
 				</TouchableOpacity>
 			</View>
 
@@ -412,7 +412,7 @@ const NewWorkoutModal = ({
 			{visibleRecents.length > 0 && (
 				<>
 					<Text
-						className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-2 mb-1"
+						className="text-[10px] font-JakartaSemiBold text-[#574F47] mt-2 mb-1"
 						style={eyebrowStyle}
 					>
 						Recent
@@ -440,7 +440,7 @@ const NewWorkoutModal = ({
 								<Text className="text-sm font-JakartaBold text-[#262135]" numberOfLines={1}>
 									{entry.name}
 								</Text>
-								<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-0.5">
+								<Text className="text-[11px] font-JakartaSemiBold text-[#574F47] mt-0.5">
 									{`${entry.duration} · ${renderCalories(entry.calories_burned)}`}
 								</Text>
 							</View>
@@ -453,7 +453,7 @@ const NewWorkoutModal = ({
 			)}
 
 			{trimmedSearch && visibleTypes.length === 0 && visibleRecents.length === 0 && (
-				<Text className="text-sm text-[#94897E] py-3">
+				<Text className="text-sm text-[#574F47] py-3">
 					No matches. Tap Other to log "{search.trim()}".
 				</Text>
 			)}
@@ -472,7 +472,7 @@ const NewWorkoutModal = ({
 				/>
 				<View className="flex-row items-baseline mx-6">
 					<Text className="font-JakartaExtraBold text-[44px] text-[#262135]">{minutes}</Text>
-					<Text className="font-JakartaSemiBold text-base text-[#94897E] ml-1.5">min</Text>
+					<Text className="font-JakartaSemiBold text-base text-[#574F47] ml-1.5">min</Text>
 				</View>
 				<RoundButton
 					icon="add"
@@ -492,7 +492,7 @@ const NewWorkoutModal = ({
 						>
 							<Text
 								className="text-xs font-JakartaSemiBold"
-								style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+								style={{ color: selected ? '#FFFFFF' : '#334155' }}
 							>
 								{preset}
 							</Text>
@@ -533,7 +533,7 @@ const NewWorkoutModal = ({
 							{type.intensity_labels[i]}
 						</Text>
 						<Text
-							className="text-[11px] font-JakartaMedium text-[#94897E] mt-0.5"
+							className="text-[11px] font-JakartaMedium text-[#574F47] mt-0.5"
 							numberOfLines={1}
 						>
 							{type.intensity_hints[i]}
@@ -559,7 +559,7 @@ const NewWorkoutModal = ({
 						<Ionicons name="chevron-back" size={24} color={INK} />
 					</TouchableOpacity>
 					<TouchableOpacity onPress={onClose} hitSlop={10}>
-						<Ionicons name="close" size={24} color="#64748B" />
+						<Ionicons name="close" size={24} color="#334155" />
 					</TouchableOpacity>
 				</View>
 
@@ -588,7 +588,7 @@ const NewWorkoutModal = ({
 								>
 									<Text
 										className="text-xs font-JakartaSemiBold"
-										style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+										style={{ color: selected ? '#FFFFFF' : '#334155' }}
 									>
 										{option === 'distance' ? 'Distance' : 'Time'}
 									</Text>
@@ -602,7 +602,7 @@ const NewWorkoutModal = ({
 					<>
 						{/* Distance */}
 						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-7 mb-3"
+							className="text-[10px] font-JakartaSemiBold text-[#574F47] mt-7 mb-3"
 							style={eyebrowStyle}
 						>
 							Distance
@@ -627,11 +627,11 @@ const NewWorkoutModal = ({
 									value={distance}
 									onChangeText={text => setDistance(text.replace(/[^0-9.]/g, ''))}
 									placeholder="0"
-									placeholderTextColor="#C9BEB4"
+									placeholderTextColor="#857869"
 									keyboardType="decimal-pad"
 									className="font-JakartaExtraBold text-[44px] text-[#262135] text-center p-0 min-w-[64px]"
 								/>
-								<Text className="font-JakartaSemiBold text-base text-[#94897E] ml-1.5">
+								<Text className="font-JakartaSemiBold text-base text-[#574F47] ml-1.5">
 									{distanceUnit}
 								</Text>
 							</View>
@@ -651,7 +651,7 @@ const NewWorkoutModal = ({
 						{/* Time (optional) */}
 						<View className="flex-row items-center justify-between mt-7 mb-3">
 							<Text
-								className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+								className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 								style={eyebrowStyle}
 							>
 								Time
@@ -665,7 +665,7 @@ const NewWorkoutModal = ({
 						{timeKnown ? (
 							renderDurationControl()
 						) : (
-							<Text className="text-xs font-JakartaMedium text-[#94897E]">
+							<Text className="text-xs font-JakartaMedium text-[#574F47]">
 								We'll estimate it from your pace below.
 							</Text>
 						)}
@@ -675,7 +675,7 @@ const NewWorkoutModal = ({
 								<View className="flex-row items-center justify-between bg-[#F9F9F8] border-[1px] border-[#F0EBE6] rounded-2xl px-4 py-3 mt-6">
 									<View>
 										<Text
-											className="text-[10px] font-JakartaSemiBold text-[#94897E]"
+											className="text-[10px] font-JakartaSemiBold text-[#574F47]"
 											style={eyebrowStyle}
 										>
 											Pace
@@ -684,7 +684,7 @@ const NewWorkoutModal = ({
 											{pace}
 										</Text>
 									</View>
-									<Text className="text-xs font-JakartaSemiBold text-[#94897E]">
+									<Text className="text-xs font-JakartaSemiBold text-[#574F47]">
 										{selectedType.intensity_labels[intensityIndex]}
 									</Text>
 								</View>
@@ -692,7 +692,7 @@ const NewWorkoutModal = ({
 						) : (
 							<>
 								<Text
-									className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-7 mb-3"
+									className="text-[10px] font-JakartaSemiBold text-[#574F47] mt-7 mb-3"
 									style={eyebrowStyle}
 								>
 									{selectedType.met_from_speed ? 'Pace' : 'Intensity'}
@@ -709,14 +709,14 @@ const NewWorkoutModal = ({
 				) : (
 					<>
 						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-7 mb-3"
+							className="text-[10px] font-JakartaSemiBold text-[#574F47] mt-7 mb-3"
 							style={eyebrowStyle}
 						>
 							Duration
 						</Text>
 						{renderDurationControl()}
 						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-7 mb-3"
+							className="text-[10px] font-JakartaSemiBold text-[#574F47] mt-7 mb-3"
 							style={eyebrowStyle}
 						>
 							Intensity
@@ -733,9 +733,9 @@ const NewWorkoutModal = ({
 							<Text className="font-JakartaExtraBold text-[24px] text-[#262135]">
 								{previewCalories}
 							</Text>
-							<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">cal burned</Text>
+							<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">cal burned</Text>
 						</View>
-						<Text className="text-[11px] font-JakartaMedium text-[#94897E]">
+						<Text className="text-[11px] font-JakartaMedium text-[#574F47]">
 							{!byDistance
 								? `Estimated for ${formatWeight(weightLbs, unitSystem, 0)} at this intensity`
 								: !distanceEstimate
@@ -767,7 +767,7 @@ const NewWorkoutModal = ({
 				</TouchableOpacity>
 				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Other activity</Text>
 				<TouchableOpacity onPress={onClose}>
-					<Ionicons name="close" size={24} color="#64748B" />
+					<Ionicons name="close" size={24} color="#334155" />
 				</TouchableOpacity>
 			</View>
 
@@ -785,7 +785,7 @@ const NewWorkoutModal = ({
 								<Animated.Text
 									pointerEvents="none"
 									style={{ opacity: placeholderOpacity }}
-									className="absolute left-0 pb-1 text-sm text-[#94897E]"
+									className="absolute left-0 pb-1 text-sm text-[#574F47]"
 									numberOfLines={1}
 								>
 									{EXERCISE_PLACEHOLDERS[placeholderIndex].exercise}
@@ -802,7 +802,7 @@ const NewWorkoutModal = ({
 								<Animated.Text
 									pointerEvents="none"
 									style={{ opacity: placeholderOpacity }}
-									className="absolute left-0 pb-1 text-sm text-[#94897E]"
+									className="absolute left-0 pb-1 text-sm text-[#574F47]"
 									numberOfLines={1}
 								>
 									{EXERCISE_PLACEHOLDERS[placeholderIndex].amount}
@@ -817,7 +817,7 @@ const NewWorkoutModal = ({
 					</View>
 				))}
 				<TouchableOpacity onPress={() => setRows([...rows, emptyRow()])}>
-					<Text className="text-xs font-JakartaSemiBold text-[#64748B]">+ Add another</Text>
+					<Text className="text-xs font-JakartaSemiBold text-[#334155]">+ Add another</Text>
 				</TouchableOpacity>
 			</View>
 
@@ -829,7 +829,7 @@ const NewWorkoutModal = ({
 				className={`rounded-xl py-3 mt-4 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#E3BBA1]'}`}
 			>
 				<Text
-					className={`text-center font-JakartaSemiBold ${isSaving ? 'text-[#64748B]' : 'text-white'}`}
+					className={`text-center font-JakartaSemiBold ${isSaving ? 'text-[#334155]' : 'text-white'}`}
 				>
 					{isSaving ? 'Analyzing and saving…' : 'Save exercise'}
 				</Text>
@@ -844,28 +844,28 @@ const NewWorkoutModal = ({
 				<View className="flex-row justify-between items-center mb-5">
 					<Text className="text-xl font-JakartaExtraBold text-[#262135]">Saved</Text>
 					<TouchableOpacity onPress={onClose}>
-						<Ionicons name="close" size={24} color="#64748B" />
+						<Ionicons name="close" size={24} color="#334155" />
 					</TouchableOpacity>
 				</View>
 
-				<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+				<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 					Calories burned
 				</Text>
 				<View className="flex-row items-baseline">
 					<Text className="font-JakartaExtraBold text-[30px] text-[#262135]">{total}</Text>
-					<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">cal</Text>
+					<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">cal</Text>
 				</View>
 
 				<View className="mt-4">
 					{saved.map((entry, index) => (
 						<View key={index} className="flex-row items-center justify-between mt-2">
 							<Text
-								className="font-JakartaMedium text-xs text-[#64748B] flex-1 pr-3"
+								className="font-JakartaMedium text-xs text-[#334155] flex-1 pr-3"
 								numberOfLines={1}
 							>
 								{entry.name} · {entry.duration}
 							</Text>
-							<Text className="text-[11px] font-JakartaSemiBold text-[#94897E]">
+							<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]">
 								{renderCalories(entry.calories_burned)}
 							</Text>
 						</View>
@@ -914,7 +914,7 @@ const NewWorkoutModal = ({
 							>
 								<Text
 									className={`text-center font-JakartaSemiBold ${
-										isSaving || !canLog ? 'text-[#64748B]' : 'text-white'
+										isSaving || !canLog ? 'text-[#334155]' : 'text-white'
 									}`}
 								>
 									{isSaving

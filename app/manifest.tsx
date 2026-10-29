@@ -137,7 +137,7 @@ export default function ManifestPage() {
 
 				{/* Timer Section */}
 				<View className="mx-5 mt-5 p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
-					<Text className="text-base font-medium text-gray-600 text-center mb-3">
+					<Text className="text-base font-medium text-gray-700 text-center mb-3">
 						Manifestation Timer
 					</Text>
 					<Text className="text-5xl font-bold text-gray-800 text-center mb-5">
@@ -172,18 +172,18 @@ export default function ManifestPage() {
 						</Text>
 						<View className="flex flex-row items-center space-x-3">
 							<TouchableOpacity onPress={prevTechnique} className="p-2 bg-gray-100 rounded-lg">
-								<Ionicons name="chevron-back" size={20} color="#6B7280" />
+								<Ionicons name="chevron-back" size={20} color="#374151" />
 							</TouchableOpacity>
-							<Text className="text-sm text-gray-600 font-medium">
+							<Text className="text-sm text-gray-700 font-medium">
 								{currentTechnique + 1}/{techniques.length}
 							</Text>
 							<TouchableOpacity onPress={nextTechnique} className="p-2 bg-gray-100 rounded-lg">
-								<Ionicons name="chevron-forward" size={20} color="#6B7280" />
+								<Ionicons name="chevron-forward" size={20} color="#374151" />
 							</TouchableOpacity>
 						</View>
 					</View>
 
-					<Text className="text-base text-gray-600 leading-6 mb-5">
+					<Text className="text-base text-gray-700 leading-6 mb-5">
 						{techniques[currentTechnique].description}
 					</Text>
 
@@ -194,7 +194,7 @@ export default function ManifestPage() {
 								<View className="w-6 h-6 rounded-full bg-green-500 items-center justify-center mt-0.5">
 									<Text className="text-white text-xs font-semibold">{index + 1}</Text>
 								</View>
-								<Text className="flex-1 text-sm text-gray-600 leading-5">{step}</Text>
+								<Text className="flex-1 text-sm text-gray-700 leading-5">{step}</Text>
 							</View>
 						))}
 					</View>
@@ -205,25 +205,25 @@ export default function ManifestPage() {
 					<Text className="text-lg font-semibold text-gray-800 mb-4">✨ Manifestation Tips</Text>
 					<View className="flex flex-row items-center mb-3 space-x-3">
 						<Ionicons name="heart" size={16} color="#10B981" />
-						<Text className="flex-1 text-sm text-gray-600 leading-5">
+						<Text className="flex-1 text-sm text-gray-700 leading-5">
 							Feel the emotions of your desired outcome
 						</Text>
 					</View>
 					<View className="flex flex-row items-center mb-3 space-x-3">
 						<Ionicons name="eye" size={16} color="#10B981" />
-						<Text className="flex-1 text-sm text-gray-600 leading-5">
+						<Text className="flex-1 text-sm text-gray-700 leading-5">
 							Visualize with vivid detail and clarity
 						</Text>
 					</View>
 					<View className="flex flex-row items-center mb-3 space-x-3">
 						<Ionicons name="checkmark-circle" size={16} color="#10B981" />
-						<Text className="flex-1 text-sm text-gray-600 leading-5">
+						<Text className="flex-1 text-sm text-gray-700 leading-5">
 							Believe it's already yours
 						</Text>
 					</View>
 					<View className="flex flex-row items-center space-x-3">
 						<Ionicons name="leaf" size={16} color="#10B981" />
-						<Text className="flex-1 text-sm text-gray-600 leading-5">
+						<Text className="flex-1 text-sm text-gray-700 leading-5">
 							Let go and trust the universe
 						</Text>
 					</View>

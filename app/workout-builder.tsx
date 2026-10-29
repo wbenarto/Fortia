@@ -30,10 +30,10 @@ const EYEBROW_STYLE = { textTransform: 'uppercase', letterSpacing: 0.6 } as cons
 
 const SectionLabel = ({ children, hint }: { children: string; hint?: string }) => (
 	<View className="flex-row items-baseline justify-between mb-2 ml-1 mt-7">
-		<Text className="text-[11px] font-JakartaSemiBold text-[#94897E]" style={EYEBROW_STYLE}>
+		<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 			{children}
 		</Text>
-		{hint ? <Text className="text-[11px] font-JakartaMedium text-[#94897E]">{hint}</Text> : null}
+		{hint ? <Text className="text-[11px] font-JakartaMedium text-[#574F47]">{hint}</Text> : null}
 	</View>
 );
 
@@ -58,7 +58,7 @@ const Chip = ({
 	>
 		<Text
 			className="text-xs font-JakartaSemiBold"
-			style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+			style={{ color: selected ? '#FFFFFF' : '#334155' }}
 		>
 			{label}
 		</Text>
@@ -162,7 +162,7 @@ const WorkoutBuilder = () => {
 								>
 									<Text
 										className="text-xs font-JakartaSemiBold"
-										style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+										style={{ color: selected ? '#FFFFFF' : '#334155' }}
 									>
 										{minutes} min
 									</Text>
@@ -196,7 +196,7 @@ const WorkoutBuilder = () => {
 								>
 									<Text
 										className="text-xs font-JakartaSemiBold"
-										style={{ color: selected ? '#FFFFFF' : '#64748B' }}
+										style={{ color: selected ? '#FFFFFF' : '#334155' }}
 									>
 										{option.label}
 									</Text>
@@ -223,7 +223,7 @@ const WorkoutBuilder = () => {
 						</>
 					)}
 					{prefs.location === 'anywhere' && (
-						<Text className="text-xs font-JakartaMedium text-[#94897E] mt-2 ml-1">
+						<Text className="text-xs font-JakartaMedium text-[#574F47] mt-2 ml-1">
 							Bodyweight only — no equipment needed.
 						</Text>
 					)}
@@ -250,14 +250,14 @@ const WorkoutBuilder = () => {
 									</View>
 									<View className="flex-1 ml-3">
 										<Text className="text-sm font-JakartaBold text-[#262135]">{option.label}</Text>
-										<Text className="text-xs font-JakartaMedium text-[#94897E] mt-0.5">
+										<Text className="text-xs font-JakartaMedium text-[#574F47] mt-0.5">
 											{option.description}
 										</Text>
 									</View>
 									<Ionicons
 										name={selected ? 'checkmark-circle' : 'ellipse-outline'}
 										size={20}
-										color={selected ? ACCENT : '#C9BEB4'}
+										color={selected ? ACCENT : '#857869'}
 									/>
 								</TouchableOpacity>
 							);
@@ -276,7 +276,7 @@ const WorkoutBuilder = () => {
 						{isBuilding ? (
 							<View className="flex-row items-center justify-center">
 								<ActivityIndicator size="small" color={ACCENT} />
-								<Text className="text-[#94897E] font-JakartaSemiBold ml-2">
+								<Text className="text-[#574F47] font-JakartaSemiBold ml-2">
 									Building your workout…
 								</Text>
 							</View>

@@ -88,6 +88,12 @@ export const defaultMealType = (): MealType => {
 const roundValue = (value: unknown) => Math.round(Number(value) || 0);
 
 const eyebrowStyle = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
+// Slight shadow so white button text stays crisp on the #D4A07E button color
+const BUTTON_TEXT_SHADOW = {
+	textShadowColor: 'rgba(110,60,30,0.35)',
+	textShadowOffset: { width: 0, height: 1 },
+	textShadowRadius: 2,
+};
 
 const inputClass =
 	'text-sm font-JakartaMedium text-[#262135] border-b-[1px] border-[#E3BBA1] pb-2 mb-5';
@@ -313,7 +319,9 @@ const LogMealModal = ({
 	};
 
 	const updateIngredient = (index: number, field: keyof Ingredient, value: string) => {
-		setIngredients(ingredients.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+		setIngredients(
+			ingredients.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+		);
 	};
 
 	const removeIngredient = (index: number) => {
@@ -321,24 +329,31 @@ const LogMealModal = ({
 	};
 
 	const renderMealTypeChips = () => (
-		<View className="flex-row flex-wrap gap-2 mb-5">
-			{MEAL_TYPES.map(type => {
-				const selected = mealType === type;
-				return (
-					<TouchableOpacity
-						key={type}
-						onPress={() => setMealType(type)}
-						className={`px-3 py-2 rounded-full ${selected ? 'bg-[#262135]' : 'bg-[#F1F1F1]'}`}
-					>
-						<Text
-							className={`text-xs font-JakartaSemiBold ${selected ? 'text-white' : 'text-[#64748B]'}`}
+		<>
+			<Text className="mt-6 mb-2.5 text-[13px] font-JakartaSemiBold text-[#574F47]">
+				Please select one
+			</Text>
+			<View className="flex-row flex-wrap gap-2">
+				{MEAL_TYPES.map(type => {
+					const selected = mealType === type;
+					return (
+						<TouchableOpacity
+							key={type}
+							onPress={() => setMealType(type)}
+							className={`px-3 py-2 rounded-full ${selected ? 'bg-[#D4A07E]' : 'bg-[#F1F1F1]'}`}
 						>
-							{MEAL_LABELS[type]}
-						</Text>
-					</TouchableOpacity>
-				);
-			})}
-		</View>
+							<Text
+								className={`text-xs ${selected ? 'text-white font-JakartaBold' : 'text-[#334155] font-JakartaSemiBold'}`}
+								style={selected ? BUTTON_TEXT_SHADOW : undefined}
+							>
+								{MEAL_LABELS[type]}
+							</Text>
+						</TouchableOpacity>
+					);
+				})}
+			</View>
+			<View className="mb-12" />
+		</>
 	);
 
 	const renderEditableValue = (
@@ -360,7 +375,7 @@ const LogMealModal = ({
 						autoFocus
 						className={`${valueClass} text-[#262135] border-b-[1px] border-[#E3BBA1] p-0 min-w-[60px]`}
 					/>
-					<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">{unit}</Text>
+					<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">{unit}</Text>
 				</View>
 			);
 		}
@@ -371,7 +386,7 @@ const LogMealModal = ({
 				className="flex-row items-baseline"
 			>
 				<Text className={`${valueClass} text-[#262135]`}>{roundValue(meal[field])}</Text>
-				<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">{unit}</Text>
+				<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">{unit}</Text>
 			</TouchableOpacity>
 		);
 	};
@@ -391,7 +406,7 @@ const LogMealModal = ({
 			return (
 				<Text className="text-sm font-JakartaBold text-[#262135]" numberOfLines={2}>
 					{meal.food_name}
-					{portion ? <Text className="font-JakartaMedium text-[#94897E]"> {portion}</Text> : null}
+					{portion ? <Text className="font-JakartaMedium text-[#574F47]"> {portion}</Text> : null}
 				</Text>
 			);
 		}
@@ -401,7 +416,7 @@ const LogMealModal = ({
 					<Text key={index}>
 						{index > 0 ? ', ' : ''}
 						{name}
-						{amount ? <Text className="font-JakartaMedium text-[#94897E]"> {amount}</Text> : null}
+						{amount ? <Text className="font-JakartaMedium text-[#574F47]"> {amount}</Text> : null}
 					</Text>
 				))}
 			</Text>
@@ -413,29 +428,31 @@ const LogMealModal = ({
 			<View className="flex-row justify-between items-center mb-5">
 				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Log a meal</Text>
 				<TouchableOpacity onPress={onClose}>
-					<Ionicons name="close" size={24} color="#64748B" />
+					<Ionicons name="close" size={24} color="#334155" />
 				</TouchableOpacity>
 			</View>
 
 			{renderMealTypeChips()}
 
-			<TextInput
-				value={search}
-				onChangeText={setSearch}
-				placeholder="Search your meals"
-				placeholderTextColor="#94897E"
-				className={inputClass}
-			/>
+			{/* Same underline style as the other inputs, with a magnifier in front */}
+			<View className="flex-row items-center border-b-[1px] border-[#E3BBA1] pb-2 mb-5">
+				<Ionicons name="search" size={16} color="#574F47" />
+				<TextInput
+					value={search}
+					onChangeText={setSearch}
+					placeholder="Search your past meals"
+					placeholderTextColor="#574F47"
+					className="flex-1 ml-2 text-sm font-JakartaMedium text-[#262135]"
+					returnKeyType="search"
+				/>
+			</View>
 
-			<Text
-				className="text-[10px] font-JakartaSemiBold text-[#94897E] mb-1"
-				style={eyebrowStyle}
-			>
+			<Text className="text-[10px] font-JakartaSemiBold text-[#574F47] mb-1" style={eyebrowStyle}>
 				{trimmedSearch ? 'Results' : 'Recent'}
 			</Text>
 
 			{visibleMeals.length === 0 ? (
-				<Text className="text-sm text-[#94897E] py-3">
+				<Text className="text-sm text-[#574F47] py-3">
 					{trimmedSearch
 						? isSearching
 							? 'Searching…'
@@ -454,7 +471,7 @@ const LogMealModal = ({
 					>
 						<View className="flex-1 pr-3">
 							{renderMealWithAmounts(meal)}
-							<Text className="text-[11px] font-JakartaSemiBold text-[#94897E] mt-0.5">
+							<Text className="text-[11px] font-JakartaSemiBold text-[#574F47] mt-0.5">
 								{`${roundValue(meal.calories)} cal · P ${roundValue(meal.protein)} · C ${roundValue(meal.carbs)} · F ${roundValue(meal.fats)}`}
 							</Text>
 						</View>
@@ -482,7 +499,7 @@ const LogMealModal = ({
 				</TouchableOpacity>
 				<Text className="text-xl font-JakartaExtraBold text-[#262135]">New meal</Text>
 				<TouchableOpacity onPress={onClose}>
-					<Ionicons name="close" size={24} color="#64748B" />
+					<Ionicons name="close" size={24} color="#334155" />
 				</TouchableOpacity>
 			</View>
 
@@ -491,70 +508,58 @@ const LogMealModal = ({
 			<Text className="text-xs font-JakartaSemiBold text-black mb-1">Ingredients</Text>
 			<View className="mb-4">
 				{ingredients.map((item, index) => (
-						<View key={index} className="flex-row items-center gap-2 mb-3">
-							<View className="flex-1 justify-center">
-								<TextInput
-									value={item.ingredient}
-									onChangeText={value => updateIngredient(index, 'ingredient', value)}
-									placeholderTextColor="#94897E"
-									className="text-sm text-[#262135] border-b-[1px] border-[#F0EBE6] pb-1"
-								/>
-								{!item.ingredient && (
-									<Animated.Text
-										pointerEvents="none"
-										style={{ opacity: placeholderOpacity }}
-										className="absolute left-0 pb-1 text-sm text-[#94897E]"
-										numberOfLines={1}
-									>
-										{INGREDIENT_PLACEHOLDERS[placeholderIndex].ingredient}
-									</Animated.Text>
-								)}
-							</View>
-							<View className="w-24 justify-center">
-								<TextInput
-									value={item.amount}
-									onChangeText={value => updateIngredient(index, 'amount', value)}
-									placeholderTextColor="#94897E"
-									className="text-sm text-[#262135] border-b-[1px] border-[#F0EBE6] pb-1"
-								/>
-								{!item.amount && (
-									<Animated.Text
-										pointerEvents="none"
-										style={{ opacity: placeholderOpacity }}
-										className="absolute left-0 pb-1 text-sm text-[#94897E]"
-										numberOfLines={1}
-									>
-										{INGREDIENT_PLACEHOLDERS[placeholderIndex].amount}
-									</Animated.Text>
-								)}
-							</View>
-							{ingredients.length > 1 && (
-								<TouchableOpacity onPress={() => removeIngredient(index)}>
-									<Ionicons name="close-circle-outline" size={18} color="#94A3B8" />
-								</TouchableOpacity>
+					<View key={index} className="flex-row items-center gap-2 mb-3">
+						<View className="flex-1 justify-center">
+							<TextInput
+								value={item.ingredient}
+								onChangeText={value => updateIngredient(index, 'ingredient', value)}
+								placeholderTextColor="#574F47"
+								className="text-sm text-[#262135] border-b-[1px] border-[#F0EBE6] pb-1"
+							/>
+							{!item.ingredient && (
+								<Animated.Text
+									pointerEvents="none"
+									style={{ opacity: placeholderOpacity }}
+									className="absolute left-0 pb-1 text-sm text-[#574F47]"
+									numberOfLines={1}
+								>
+									{INGREDIENT_PLACEHOLDERS[placeholderIndex].ingredient}
+								</Animated.Text>
 							)}
 						</View>
-					))}
+						<View className="w-24 justify-center">
+							<TextInput
+								value={item.amount}
+								onChangeText={value => updateIngredient(index, 'amount', value)}
+								placeholderTextColor="#574F47"
+								className="text-sm text-[#262135] border-b-[1px] border-[#F0EBE6] pb-1"
+							/>
+							{!item.amount && (
+								<Animated.Text
+									pointerEvents="none"
+									style={{ opacity: placeholderOpacity }}
+									className="absolute left-0 pb-1 text-sm text-[#574F47]"
+									numberOfLines={1}
+								>
+									{INGREDIENT_PLACEHOLDERS[placeholderIndex].amount}
+								</Animated.Text>
+							)}
+						</View>
+						{ingredients.length > 1 && (
+							<TouchableOpacity onPress={() => removeIngredient(index)}>
+								<Ionicons name="close-circle-outline" size={18} color="#94A3B8" />
+							</TouchableOpacity>
+						)}
+					</View>
+				))}
 				<TouchableOpacity
 					onPress={() => setIngredients([...ingredients, { ingredient: '', amount: '' }])}
 				>
-					<Text className="text-xs font-JakartaSemiBold text-[#64748B]">+ Add another</Text>
+					<Text className="text-xs font-JakartaSemiBold text-[#334155]">+ Add another</Text>
 				</TouchableOpacity>
 			</View>
 
 			{renderErrorText()}
-
-			<TouchableOpacity
-				onPress={saveNewMeal}
-				disabled={isSaving}
-				className={`rounded-xl py-3 mt-4 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#E3BBA1]'}`}
-			>
-				<Text
-					className={`text-center font-JakartaSemiBold ${isSaving ? 'text-[#64748B]' : 'text-white'}`}
-				>
-					{isSaving ? 'Analyzing and saving…' : 'Save meal'}
-				</Text>
-			</TouchableOpacity>
 		</View>
 	);
 
@@ -563,11 +568,11 @@ const LogMealModal = ({
 			<View className="flex-row justify-between items-center mb-5">
 				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Saved</Text>
 				<TouchableOpacity onPress={onClose}>
-					<Ionicons name="close" size={24} color="#64748B" />
+					<Ionicons name="close" size={24} color="#334155" />
 				</TouchableOpacity>
 			</View>
 
-			<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+			<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 				{MEAL_LABELS[meal.meal_type] ?? 'Snack'}
 			</Text>
 
@@ -575,8 +580,8 @@ const LogMealModal = ({
 				<View className="mt-2">
 					{meal.ingredients.map((item, index) => (
 						<View key={index} className="flex-row items-center justify-between mt-2">
-							<Text className="font-JakartaMedium text-xs text-[#64748B]">{item[0]}</Text>
-							<Text className="text-[11px] font-JakartaSemiBold text-[#94897E]">
+							<Text className="font-JakartaMedium text-xs text-[#334155]">{item[0]}</Text>
+							<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]">
 								{'•'} {item[1]}
 							</Text>
 						</View>
@@ -585,7 +590,7 @@ const LogMealModal = ({
 			)}
 
 			<View className="mt-6">
-				<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+				<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 					Calories
 				</Text>
 				{renderEditableValue(meal, 'calories', 'font-JakartaExtraBold text-[30px]', 'cal')}
@@ -593,31 +598,30 @@ const LogMealModal = ({
 
 			<View className="flex-row justify-between mt-6">
 				<View>
-					<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 						Protein
 					</Text>
 					{renderEditableValue(meal, 'protein', 'font-JakartaExtraBold text-[18px]', 'g')}
 				</View>
 				<View>
-					<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 						Carbs
 					</Text>
 					{renderEditableValue(meal, 'carbs', 'font-JakartaExtraBold text-[18px]', 'g')}
 				</View>
 				<View>
-					<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 						Fat
 					</Text>
 					{renderEditableValue(meal, 'fats', 'font-JakartaExtraBold text-[18px]', 'g')}
 				</View>
 			</View>
 
-			<Text className="text-[11px] font-JakartaMedium text-[#94897E] mt-6">
+			<Text className="text-[11px] font-JakartaMedium text-[#574F47] mt-6">
 				Tap a number to edit it.
 			</Text>
 
 			<View className="mt-3">{renderErrorText()}</View>
-
 		</View>
 	);
 
@@ -629,10 +633,7 @@ const LogMealModal = ({
 			avoidKeyboard
 			className="m-0 w-full h-full"
 		>
-			<View
-				className="bg-white w-full"
-				style={{ flex: 1, paddingTop: insets.top }}
-			>
+			<View className="bg-white w-full" style={{ flex: 1, paddingTop: insets.top }}>
 				<ScrollView
 					className="px-6 pt-6"
 					contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}
@@ -645,20 +646,39 @@ const LogMealModal = ({
 					{view === 'result' && savedMeal && renderResult(savedMeal)}
 				</ScrollView>
 
-				{(view === 'list' || (view === 'result' && savedMeal)) && (
+				{/* Sticky footer: the main action stays on screen above the keyboard */}
+				{(view === 'list' || view === 'new' || (view === 'result' && savedMeal)) && (
 					<View
 						className="px-6 pt-3 border-t-[1px] border-[#F0EBE6]"
 						style={{ paddingBottom: 24 + insets.bottom }}
 					>
-						{view === 'list' ? (
+						{view === 'new' ? (
+							<TouchableOpacity
+								onPress={saveNewMeal}
+								disabled={isSaving}
+								className={`rounded-xl py-3 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#D4A07E]'}`}
+							>
+								<Text
+									className={`text-center font-JakartaBold text-[17px] ${isSaving ? 'text-[#334155]' : 'text-white'}`}
+									style={isSaving ? undefined : BUTTON_TEXT_SHADOW}
+								>
+									{isSaving ? 'Analyzing and saving…' : 'Save meal'}
+								</Text>
+							</TouchableOpacity>
+						) : view === 'list' ? (
 							<TouchableOpacity
 								onPress={() => {
 									setError('');
 									setView('new');
 								}}
-								className="bg-[#E3BBA1] rounded-xl py-3"
+								className="bg-[#D4A07E] rounded-xl py-3"
 							>
-								<Text className="text-white text-center font-JakartaSemiBold">New meal</Text>
+								<Text
+									className="text-white text-center font-JakartaBold text-[17px]"
+									style={BUTTON_TEXT_SHADOW}
+								>
+									New meal
+								</Text>
 							</TouchableOpacity>
 						) : (
 							<TouchableOpacity onPress={onClose} className="bg-[#E3BBA1] rounded-xl py-3">

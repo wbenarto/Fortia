@@ -5,7 +5,8 @@ import ReanimatedSwipeable, {
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuickLogStore } from '@/store';
-import { SCREEN_BG } from '@/lib/theme';
+import { MACRO_COLORS, SCREEN_BG } from '@/lib/theme';
+import MacroBar from '@/components/MacroBar';
 
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
@@ -52,37 +53,6 @@ export interface MacroGoals {
 
 const sumMacro = (meals: LoggedMeal[], key: keyof MacroGoals) =>
 	Math.round(meals.reduce((total, m) => total + (Number(m[key]) || 0), 0));
-
-const MacroStat = ({ label, eaten, goal }: { label: string; eaten: number; goal?: number }) => (
-	<View className="flex-1 justify-between">
-		<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle} numberOfLines={1}>
-			{label}
-		</Text>
-		<Text
-			className="font-JakartaBold text-[15px] text-[#262135] mt-1"
-			numberOfLines={1}
-			adjustsFontSizeToFit
-			minimumFontScale={0.8}
-		>
-			{eaten}
-			<Text className="font-JakartaMedium text-[11px] text-[#94897E]">
-				{goal ? ` / ${goal}g` : 'g'}
-			</Text>
-		</Text>
-		{/* Track always renders so all three columns share the same height */}
-		<View className="w-full h-[3px] bg-[#EEEEEE] rounded-full overflow-hidden mt-1.5">
-			{!!goal && (
-				<View
-					className="h-full rounded-full"
-					style={{
-						width: `${Math.min(100, (eaten / goal) * 100)}%`,
-						backgroundColor: eaten > goal ? '#cd9c99' : '#E3BBA1',
-					}}
-				/>
-			)}
-		</View>
-	</View>
-);
 
 const MealRow = ({
 	meal,
@@ -137,19 +107,19 @@ const MealRow = ({
 						<View className="flex-row items-center mt-0.5">
 							{ingredients.length > 0 && (
 								<>
-									<Text className="font-JakartaMedium text-[11px] text-[#cd9c99]">
+									<Text className="font-JakartaMedium text-[11px] text-[#A8603F]">
 										{ingredients.length} ingredient{ingredients.length === 1 ? '' : 's'}
 									</Text>
 									<Ionicons
 										name={expanded ? 'chevron-up' : 'chevron-down'}
 										size={12}
-										color="#cd9c99"
+										color="#A8603F"
 										style={{ marginLeft: 2 }}
 									/>
 								</>
 							)}
 							{time ? (
-								<Text className="font-JakartaMedium text-[11px] text-[#94897E]" numberOfLines={1}>
+								<Text className="font-JakartaMedium text-[11px] text-[#574F47]" numberOfLines={1}>
 									{ingredients.length > 0 ? '  ·  ' : ''}
 									{time}
 								</Text>
@@ -159,9 +129,9 @@ const MealRow = ({
 					<View className="items-end">
 						<Text className="font-JakartaBold text-[13px] text-[#262135]">
 							{Math.round(meal.calories).toLocaleString()}
-							<Text className="font-JakartaMedium text-[11px] text-[#94897E]"> cal</Text>
+							<Text className="font-JakartaMedium text-[11px] text-[#574F47]"> cal</Text>
 						</Text>
-						<Text className="font-JakartaMedium text-[11px] text-[#94897E] mt-0.5">
+						<Text className="font-JakartaMedium text-[11px] text-[#574F47] mt-0.5">
 							P {Math.round(meal.protein)} · C {Math.round(meal.carbs)} · F {Math.round(meal.fats)}
 						</Text>
 					</View>
@@ -171,10 +141,10 @@ const MealRow = ({
 					<View className="mt-2 rounded-xl bg-[#F9F9F8] px-3 py-2">
 						{ingredients.map(([name, amount], i) => (
 							<View key={i} className="flex-row justify-between py-0.5">
-								<Text className="font-JakartaMedium text-[11px] text-[#64748B] flex-1 pr-2">
+								<Text className="font-JakartaMedium text-[11px] text-[#334155] flex-1 pr-2">
 									{name}
 								</Text>
-								<Text className="font-JakartaMedium text-[11px] text-[#94897E]">{amount}</Text>
+								<Text className="font-JakartaMedium text-[11px] text-[#574F47]">{amount}</Text>
 							</View>
 						))}
 					</View>
@@ -208,7 +178,9 @@ const FoodLogCard = ({
 
 	const byType = (type: MealType) =>
 		meals
-			.filter(m => (MEAL_SECTIONS.some(s => s.type === m.meal_type) ? m.meal_type : 'snack') === type)
+			.filter(
+				m => (MEAL_SECTIONS.some(s => s.type === m.meal_type) ? m.meal_type : 'snack') === type
+			)
 			.sort((a, b) => a.created_at.localeCompare(b.created_at));
 
 	const totalCalories = sumCalories(meals);
@@ -221,7 +193,7 @@ const FoodLogCard = ({
 
 	return (
 		<View className="px-6 pt-2">
-			<Text className="text-[11px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
+			<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
 				{isToday
 					? `Today · ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`
 					: 'Food log'}
@@ -230,14 +202,17 @@ const FoodLogCard = ({
 
 			<View className="flex-row items-end justify-between mt-6">
 				<View>
-					<Text className="text-[10px] font-JakartaSemiBold text-[#94897E]" style={eyebrowStyle}>
-						Eaten{!isLoading && meals.length > 0 ? `  ·  ${meals.length} item${meals.length === 1 ? '' : 's'}` : ''}
+					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
+						Eaten
+						{!isLoading && meals.length > 0
+							? `  ·  ${meals.length} item${meals.length === 1 ? '' : 's'}`
+							: ''}
 					</Text>
 					<View className="flex-row items-baseline mt-1">
 						<Text className="font-JakartaExtraBold text-[36px] text-[#262135]">
 							{isLoading ? '...' : totalCalories.toLocaleString()}
 						</Text>
-						<Text className="font-JakartaMedium text-xs text-[#94897E] ml-1">
+						<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">
 							{hasGoal ? `/ ${goal.toLocaleString()} cal` : 'cal'}
 						</Text>
 					</View>
@@ -247,7 +222,10 @@ const FoodLogCard = ({
 						className="flex-row items-center rounded-full px-2.5 py-1"
 						style={{ backgroundColor: `${barColor}26` }}
 					>
-						<View className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: barColor }} />
+						<View
+							className="w-1.5 h-1.5 rounded-full mr-1.5"
+							style={{ backgroundColor: barColor }}
+						/>
 						<Text className="text-[10px] font-JakartaBold text-[#262135]">
 							{remaining >= 0
 								? `${remaining.toLocaleString()} left`
@@ -289,14 +267,32 @@ const FoodLogCard = ({
 			{/* columnGap, not NativeWind's gap-*: v2 fakes gap with a negative margin that shifts the box */}
 			{!isLoading && !error && (
 				<View className="flex-row items-stretch mt-6" style={{ columnGap: 20 }}>
-					<MacroStat label="Protein" eaten={sumMacro(meals, 'protein')} goal={macroGoals?.protein} />
-					<MacroStat label="Carbs" eaten={sumMacro(meals, 'carbs')} goal={macroGoals?.carbs} />
-					<MacroStat label="Fat" eaten={sumMacro(meals, 'fats')} goal={macroGoals?.fats} />
+					<MacroBar
+						label="Protein"
+						color={MACRO_COLORS.protein}
+						eaten={sumMacro(meals, 'protein')}
+						goal={macroGoals?.protein}
+					/>
+					<MacroBar
+						label="Carbs"
+						color={MACRO_COLORS.carbs}
+						eaten={sumMacro(meals, 'carbs')}
+						goal={macroGoals?.carbs}
+					/>
+					<MacroBar
+						label="Fat"
+						color={MACRO_COLORS.fats}
+						eaten={sumMacro(meals, 'fats')}
+						goal={macroGoals?.fats}
+					/>
 				</View>
 			)}
 
 			{!isLoading && !error && (
-				<Text className="text-[10px] font-JakartaSemiBold text-[#94897E] mt-10" style={eyebrowStyle}>
+				<Text
+					className="text-[10px] font-JakartaSemiBold text-[#574F47] mt-10"
+					style={eyebrowStyle}
+				>
 					Meals
 				</Text>
 			)}
@@ -307,7 +303,7 @@ const FoodLogCard = ({
 				</View>
 			) : error ? (
 				<View className="py-8 items-center">
-					<Text className="font-JakartaMedium text-[13px] text-[#64748B]">{error}</Text>
+					<Text className="font-JakartaMedium text-[13px] text-[#334155]">{error}</Text>
 					<TouchableOpacity onPress={onRetry} className="mt-3 bg-[#E3BBA1] rounded-xl px-5 py-2">
 						<Text className="font-JakartaSemiBold text-white text-[13px]">Retry</Text>
 					</TouchableOpacity>
@@ -326,28 +322,21 @@ const FoodLogCard = ({
 									className="w-9 h-9 rounded-full items-center justify-center"
 									style={{ backgroundColor: items.length ? '#E3BBA126' : '#F1F1F1' }}
 								>
-									<Ionicons name={icon} size={18} color={items.length ? '#cd9c99' : '#94897E'} />
+									<Ionicons name={icon} size={18} color={items.length ? '#A8603F' : '#3D3630'} />
 								</View>
 								<Text className="ml-3 flex-1 font-JakartaSemiBold text-[15px] text-[#262135]">
 									{label}
 								</Text>
-								{items.length > 0 ? (
-									<Text className="font-JakartaSemiBold text-[12px] text-[#94897E]">
-										{mealTotals[sectionIndex].toLocaleString()} cal
-										{hasGoal && (
-											<Text className="font-JakartaMedium text-[11px] text-[#94897E]">
-												{`  ${Math.round((mealTotals[sectionIndex] / goal) * 100)}%`}
-											</Text>
-										)}
-									</Text>
-								) : (
+								{items.length > 0 ? null : (
 									<TouchableOpacity
 										onPress={() => requestLog('meal')}
 										hitSlop={8}
 										className="flex-row items-center rounded-full border-[1px] border-[#E3BBA1] px-2.5 py-1"
 									>
-										<Ionicons name="add" size={12} color="#cd9c99" />
-										<Text className="ml-0.5 font-JakartaSemiBold text-[11px] text-[#cd9c99]">Add</Text>
+										<Ionicons name="add" size={12} color="#A8603F" />
+										<Text className="ml-0.5 font-JakartaSemiBold text-[11px] text-[#A8603F]">
+											Add
+										</Text>
 									</TouchableOpacity>
 								)}
 							</View>
