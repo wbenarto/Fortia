@@ -20,7 +20,7 @@ import ActivityTracking from '@/components/ActivityTracking';
 import HomeSliderComponent from '@/components/HomeSliderComponent';
 import FortiaPT from '@/components/FortiaPT';
 import ActivitiesSection from '@/components/ActivitiesSection';
-import HomeCalendar from '@/components/progress/HomeCalendar';
+import ChallengesPanel from '@/components/challenges/ChallengesPanel';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { images } from '@/constants/index';
@@ -266,7 +266,7 @@ export default function Page() {
 						contentContainerStyle={{ paddingBottom: 120, backgroundColor: SCREEN_BG }}
 					>
 						<HomeHeader />
-						<HomeCalendar />
+						{/* Date + streak row (components/progress/HomeCalendar.tsx) hidden for now */}
 						{/* Weekly recap card (components/progress/WeeklyRecapCard.tsx) hidden for now */}
 						<View className="w-full mt-1">
 							{/* Slider Component */}
@@ -301,6 +301,7 @@ export default function Page() {
 								onMealLogged={onMealLogged}
 								selectedDate={selectedDate}
 							/>
+							<ChallengesPanel variant="home" />
 							<WeightTracking
 								onWeightLogged={onWeightLogged}
 								onDietChanged={onWeightLogged}

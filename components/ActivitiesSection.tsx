@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '@clerk/clerk-expo';
 import { fetchAPI } from '@/lib/fetch';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
+import { getLocalDate, getTodayDate } from '@/lib/dateUtils';
 import type { UserWorkoutSummary } from '@/lib/workoutBuilder';
 import TodayWorkoutCard from '@/components/workout/TodayWorkoutCard';
 import SectionTitle from '@/components/progress/SectionTitle';
@@ -17,10 +18,9 @@ const STATUS_LABEL: Record<UserWorkoutSummary['status'], string> = {
 	completed: 'Done',
 };
 
-// Entry point to the workout builder plus recent workouts.
-// - 'home' (Home → Activities): the last 3 workouts, any status.
-// - 'activity' (Activity tab → Workouts): only planned / in-progress ones — finished
-//   workouts already show in that screen's exercise list as logged activities.
+// Entry point to the workout builder plus today's open workouts (planned / in progress).
+// Completed workouts are left out: they're logged as activities (exercise list,
+// calories burned, Progress), and older unfinished plans drop off the next day.
 const ActivitiesSection = ({ variant = 'home' }: { variant?: 'home' | 'activity' }) => {
 	const { user } = useUser();
 	const [workouts, setWorkouts] = useState<UserWorkoutSummary[]>([]);
@@ -28,12 +28,17 @@ const ActivitiesSection = ({ variant = 'home' }: { variant?: 'home' | 'activity'
 
 	const fetchWorkouts = useCallback(() => {
 		if (!user?.id) return;
-		fetchAPI(`/api/user-workouts?clerkId=${user.id}&limit=${openOnly ? 10 : 3}`, {
+		fetchAPI(`/api/user-workouts?clerkId=${user.id}&limit=10`, {
 			method: 'GET',
 		})
 			.then(response => {
 				const list: UserWorkoutSummary[] = response.success ? response.data : [];
-				setWorkouts(openOnly ? list.filter(w => w.status !== 'completed').slice(0, 3) : list);
+				const today = getTodayDate();
+				setWorkouts(
+					list
+						.filter(w => w.status !== 'completed' && getLocalDate(w.created_at) === today)
+						.slice(0, 3)
+				);
 			})
 			.catch(err => console.error('Failed to load workouts:', err));
 	}, [user?.id, openOnly]);

@@ -14,6 +14,7 @@ import { useIsFocused } from '@react-navigation/native';
 import ReactNativeModal from 'react-native-modal';
 import { fetchAPI, useFetch } from '@/lib/fetch';
 import WeightRuler from '@/components/WeightRuler';
+import LogWeightModal from '@/components/LogWeightModal';
 import CustomButton from '@/components/CustomButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LineChart } from 'react-native-gifted-charts';
@@ -50,8 +51,6 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 	const [rawWeights, setRawWeights] = useState<WeightEntry[]>([]);
 	const [userWeights, setUserWeights] = useState<ChartDataPoint[]>([]);
 	const [addWeightModal, setAddWeightModal] = useState(false);
-	// Weight picked on the ruler, in the user's unit
-	const [pendingWeight, setPendingWeight] = useState<number | null>(null);
 	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [focusedPoint, setFocusedPoint] = useState(null);
 	const [targetWeight, setTargetWeight] = useState<number | null>(null);
@@ -197,76 +196,10 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 		}
 	}, [quickLogPending, isFocused]);
 
-	const handleWeightSubmission = async () => {
-		// Handle weight form submission
-
-		// Validate weight input
-		if (pendingWeight === null || isNaN(pendingWeight)) {
-			console.error('Invalid weight input');
-			return;
-		}
-
-		try {
-			const dateString = viewDate;
-
-			await fetchAPI('/api/weight', {
-				method: 'POST',
-				body: JSON.stringify({
-					// Entered in the user's unit; stored in lbs
-					weight: Math.round(toStoredWeight(pendingWeight, unitSystem) * 10) / 10,
-					date: dateString,
-					clerkId: user?.id,
-				}),
-			});
-
-			// Add a small delay to ensure the database has been updated
-			await new Promise(resolve => setTimeout(resolve, 100));
-
-			const fetchData = async () => {
-				const token = await getToken();
-				const response = await fetchAPI(`/api/weight?clerkId=${user?.id}`, {
-					method: 'GET',
-					headers: {
-						Authorization: `Bearer ${token}`,
-						'Content-Type': 'application/json',
-					},
-				});
-
-				const data = response.data;
-
-				// Process weight data for chart (same logic as above)
-				if (!data) {
-					setRawWeights([]);
-					setUserWeights([]);
-					return;
-				}
-
-				setRawWeights(data);
-				applyWeightsForDate(data, viewDate);
-			};
-
-			fetchData();
-			setAddWeightModal(false);
-
-			// Trigger quest refresh callback
-			onWeightLogged?.();
-		} catch (error) {
-			console.error('Weight logging error:', error);
-		}
-	};
 	const weightValue = lastWeightEntry ? lastWeightEntry.value : null;
 	const displayWeight = weightValue !== null ? toDisplayWeight(weightValue, unitSystem) : null;
 	const profileWeight = weightValue ?? userProfile.weight ?? null;
 
-	// Start the ruler on the current weight (latest log, else profile, else a typical value)
-	useEffect(() => {
-		if (!addWeightModal) {
-			setPendingWeight(null);
-			return;
-		}
-		const currentLb = Number(profileWeight) || 150;
-		setPendingWeight(Math.round(toDisplayWeight(currentLb, unitSystem) * 10) / 10);
-	}, [addWeightModal]);
 	// Start the target ruler on the current target, else the current weight
 	useEffect(() => {
 		if (!targetModal) {
@@ -508,30 +441,13 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 					</TouchableOpacity>
 				</View>
 
-				<ReactNativeModal
+				<LogWeightModal
 					isVisible={addWeightModal}
-					onBackdropPress={() => setAddWeightModal(false)}
-				>
-					<View className="bg-white py-14 px-4 mx-0 rounded-md">
-						<View className="pb-4 ">
-							<Text className="text-xl text-center font-JakartaSemiBold">Log your weight</Text>
-						</View>
-
-						<View className="flex mx-auto  my-8 w-full justify-center">
-							{pendingWeight !== null && (
-								<WeightRuler
-									value={pendingWeight}
-									min={unitSystem === 'metric' ? 25 : 50}
-									max={unitSystem === 'metric' ? 230 : 500}
-									unit={weightUnit(unitSystem)}
-									onChange={setPendingWeight}
-								/>
-							)}
-						</View>
-
-						<CustomButton onPress={handleWeightSubmission} title="Save" />
-					</View>
-				</ReactNativeModal>
+					date={viewDate}
+					startWeightLb={profileWeight}
+					onClose={() => setAddWeightModal(false)}
+					onLogged={onWeightLogged}
+				/>
 
 				<ReactNativeModal isVisible={targetModal} onBackdropPress={() => setTargetModal(false)}>
 					<View className="bg-white py-14 px-4 mx-0 rounded-md">
