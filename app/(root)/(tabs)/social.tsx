@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import ScreenBackground from '@/components/ScreenBackground';
 import { Ionicons } from '@expo/vector-icons';
+import ChallengesPanel from '@/components/challenges/ChallengesPanel';
 
 type SocialTabType = 'challenges' | 'friends';
 
@@ -66,14 +67,7 @@ const Social = () => {
 
 				{/* Tab Content */}
 				<ScrollView className="flex-1 px-4 mt-4 bg-transparent">
-					{activeTab === 'challenges' && (
-						<View>
-							<Text className="text-lg font-JakartaSemiBold mb-4">Challenges</Text>
-							<View className="bg-gray-50 p-4 rounded-xl">
-								<Text className="text-gray-700 text-center">No active challenges yet</Text>
-							</View>
-						</View>
-					)}
+					{activeTab === 'challenges' && <ChallengesPanel />}
 
 					{activeTab === 'friends' && (
 						<View>

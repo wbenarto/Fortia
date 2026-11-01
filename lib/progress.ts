@@ -108,6 +108,7 @@ const toUTC = (d: string) =>
 export const addDays = (d: string, n: number) =>
 	new Date(toUTC(d) + n * 86_400_000).toISOString().slice(0, 10);
 export const weekday = (d: string) => new Date(toUTC(d)).getUTCDay(); // 0 = Sunday
+export const diffDays = (a: string, b: string) => Math.round((toUTC(b) - toUTC(a)) / 86_400_000);
 
 // Week = the current calendar week so far (Sunday → today); month / 3 months roll back
 // from today.

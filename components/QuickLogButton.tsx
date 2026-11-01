@@ -3,11 +3,13 @@ import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-nativ
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuickLogStore, type QuickLogType } from '@/store';
+import { type QuickLogType } from '@/store';
 import NewWorkoutModal from '@/components/NewWorkoutModal';
 import FoodLookupModal from '@/components/FoodLookupModal';
+import LogMealModal from '@/components/LogMealModal';
+import LogWeightModal from '@/components/LogWeightModal';
+import { getTodayDate } from '@/lib/dateUtils';
 
 // Round gradient + button
 const FAB_WIDTH = 60;
@@ -44,27 +46,17 @@ const QuickLogButton = () => {
 	const [open, setOpen] = useState(false);
 	const [activityModal, setActivityModal] = useState(false);
 	const [lookupModal, setLookupModal] = useState(false);
+	const [mealModal, setMealModal] = useState(false);
+	const [weightModal, setWeightModal] = useState(false);
 	const insets = useSafeAreaInsets();
-	const router = useRouter();
-	const requestLog = useQuickLogStore(s => s.requestLog);
 
+	// The menu hosts its own forms, so all three work on every tab. Saves bump the data
+	// version, so whichever screen is open refetches.
 	const handleOption = (key: QuickLogType) => {
 		setOpen(false);
-		if (key === 'meal') {
-			// Opens the meal modal on the current screen (home / meal both host it).
-			requestLog('meal');
-			// Drop the request if no screen picked it up (e.g. workout / social tab).
-			setTimeout(() => {
-				if (useQuickLogStore.getState().pending === 'meal') {
-					useQuickLogStore.getState().consume();
-				}
-			}, 600);
-		} else if (key === 'weight') {
-			requestLog('weight');
-			router.push('/(root)/(tabs)/home');
-		} else {
-			setActivityModal(true);
-		}
+		if (key === 'meal') setMealModal(true);
+		else if (key === 'weight') setWeightModal(true);
+		else setActivityModal(true);
 	};
 
 	return (
@@ -159,6 +151,8 @@ const QuickLogButton = () => {
 
 			<NewWorkoutModal isVisible={activityModal} onClose={() => setActivityModal(false)} />
 			<FoodLookupModal isVisible={lookupModal} onClose={() => setLookupModal(false)} />
+			<LogMealModal visible={mealModal} date={getTodayDate()} onClose={() => setMealModal(false)} />
+			<LogWeightModal isVisible={weightModal} onClose={() => setWeightModal(false)} />
 		</>
 	);
 };

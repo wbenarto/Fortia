@@ -49,6 +49,14 @@ interface RecentMeal {
 	ingredients: string[][] | null;
 }
 
+// Same identity the API uses for favorites and the Recent list's dedupe
+const favoriteKey = (meal: Pick<RecentMeal, 'food_name' | 'portion_size' | 'ingredients'>) =>
+	`${meal.food_name.trim().toLowerCase()}|${(meal.portion_size || '').trim().toLowerCase()}|${JSON.stringify(
+		Array.isArray(meal.ingredients) ? meal.ingredients : []
+	)}`;
+
+type ListTab = 'recent' | 'favorites';
+
 interface SavedMeal {
 	id: string;
 	food_name: string;
@@ -115,6 +123,8 @@ const LogMealModal = ({
 	const [mealType, setMealType] = useState<MealType>(defaultMealType());
 	const [search, setSearch] = useState('');
 	const [recents, setRecents] = useState<RecentMeal[]>([]);
+	const [listTab, setListTab] = useState<ListTab>('recent');
+	const [favorites, setFavorites] = useState<RecentMeal[]>([]);
 	const [searchResults, setSearchResults] = useState<RecentMeal[]>([]);
 	const [isSearching, setIsSearching] = useState(false);
 	const searchRequestRef = useRef(0);
@@ -140,9 +150,47 @@ const LogMealModal = ({
 		}
 	};
 
+	const fetchFavorites = async () => {
+		if (!user?.id) return;
+		try {
+			const response = await fetchAPI(`/api/favorite-meals?clerkId=${user.id}`, { method: 'GET' });
+			setFavorites(response.success ? response.data : []);
+		} catch (err) {
+			console.error('Failed to load favorite meals:', err);
+		}
+	};
+
+	const favoriteKeys = new Set(favorites.map(favoriteKey));
+
+	// Heart: save to / remove from favorites (optimistic; reverts if the request fails)
+	const toggleFavorite = async (meal: RecentMeal) => {
+		if (!user?.id) return;
+		const key = favoriteKey(meal);
+		const wasFavorite = favoriteKeys.has(key);
+		const previous = favorites;
+		setFavorites(
+			wasFavorite ? favorites.filter(f => favoriteKey(f) !== key) : [meal, ...favorites]
+		);
+		try {
+			const response = wasFavorite
+				? await fetchAPI(`/api/favorite-meals?clerkId=${user.id}&key=${encodeURIComponent(key)}`, {
+						method: 'DELETE',
+					})
+				: await fetchAPI('/api/favorite-meals', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ clerkId: user.id, ...meal }),
+					});
+			if (!response.success) setFavorites(previous);
+		} catch {
+			setFavorites(previous);
+		}
+	};
+
 	useEffect(() => {
 		if (!visible) return;
 		setView('list');
+		setListTab('recent');
 		setMealType(defaultMealType());
 		setSearch('');
 		setIngredients([{ ingredient: '', amount: '' }]);
@@ -150,6 +198,7 @@ const LogMealModal = ({
 		setSavedMeal(null);
 		setEditing(null);
 		fetchRecents();
+		fetchFavorites();
 	}, [visible]);
 
 	const trimmedSearch = search.trim();
@@ -185,7 +234,11 @@ const LogMealModal = ({
 		return () => clearTimeout(timer);
 	}, [trimmedSearch, visible, user?.id]);
 
-	const visibleMeals = trimmedSearch ? searchResults : recents;
+	const visibleMeals = trimmedSearch
+		? searchResults
+		: listTab === 'favorites'
+			? favorites
+			: recents;
 
 	const postMeal = (body: Record<string, unknown>) =>
 		fetchAPI('/api/meals', {
@@ -447,9 +500,47 @@ const LogMealModal = ({
 				/>
 			</View>
 
-			<Text className="text-[10px] font-JakartaSemiBold text-[#574F47] mb-1" style={eyebrowStyle}>
-				{trimmedSearch ? 'Results' : 'Recent'}
-			</Text>
+			{trimmedSearch ? (
+				<Text className="text-[10px] font-JakartaSemiBold text-[#574F47] mb-1" style={eyebrowStyle}>
+					Results
+				</Text>
+			) : (
+				<View className="flex-row self-start bg-[#F1F1F1] rounded-full p-1 mb-2">
+					{(
+						[
+							['recent', 'Recent'],
+							['favorites', 'Favorites'],
+						] as const
+					).map(([key, label]) => {
+						const active = listTab === key;
+						return (
+							<TouchableOpacity
+								key={key}
+								onPress={() => setListTab(key)}
+								className="flex-row items-center px-3.5 py-1.5 rounded-full"
+								style={{ backgroundColor: active ? '#D4A07E' : 'transparent' }}
+								accessibilityState={{ selected: active }}
+							>
+								{key === 'favorites' && (
+									<Ionicons
+										name="heart"
+										size={12}
+										color={active ? '#FFFFFF' : '#E5484D'}
+										style={{ marginRight: 4 }}
+									/>
+								)}
+								<Text
+									className={`text-[12px] ${active ? 'font-JakartaBold text-white' : 'font-JakartaSemiBold text-[#334155]'}`}
+									style={active ? BUTTON_TEXT_SHADOW : undefined}
+								>
+									{label}
+									{key === 'favorites' && favorites.length ? ` ${favorites.length}` : ''}
+								</Text>
+							</TouchableOpacity>
+						);
+					})}
+				</View>
+			)}
 
 			{visibleMeals.length === 0 ? (
 				<Text className="text-sm text-[#574F47] py-3">
@@ -457,12 +548,14 @@ const LogMealModal = ({
 						? isSearching
 							? 'Searching…'
 							: 'No matches. Try a new meal below.'
-						: 'No meals yet. Log your first one below.'}
+						: listTab === 'favorites'
+							? 'No favorites yet. Tap the heart on a meal to save it here.'
+							: 'No meals yet. Log your first one below.'}
 				</Text>
 			) : (
 				visibleMeals.map((meal, index) => (
 					<TouchableOpacity
-						key={meal.id}
+						key={trimmedSearch ? `s-${meal.id}` : `${listTab}-${favoriteKey(meal)}`}
 						onPress={() => logRecent(meal)}
 						activeOpacity={0.7}
 						className={`flex-row items-center justify-between py-3 ${
@@ -475,6 +568,24 @@ const LogMealModal = ({
 								{`${roundValue(meal.calories)} cal · P ${roundValue(meal.protein)} · C ${roundValue(meal.carbs)} · F ${roundValue(meal.fats)}`}
 							</Text>
 						</View>
+						{(() => {
+							const isFavorite = favoriteKeys.has(favoriteKey(meal));
+							return (
+								<TouchableOpacity
+									onPress={() => toggleFavorite(meal)}
+									hitSlop={10}
+									className="mr-3"
+									accessibilityRole="button"
+									accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Save to favorites'}
+								>
+									<Ionicons
+										name={isFavorite ? 'heart' : 'heart-outline'}
+										size={22}
+										color={isFavorite ? '#E5484D' : '#857869'}
+									/>
+								</TouchableOpacity>
+							);
+						})()}
 						<View className="w-7 h-7 rounded-full bg-[#F9F9F8] border-[1px] border-[#F0EBE6] items-center justify-center">
 							<Ionicons name="add" size={16} color="#262135" />
 						</View>

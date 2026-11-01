@@ -22,6 +22,8 @@ const NON_MUTATING_POSTS = [
 	'/api/recipe-breakdown',
 	'/api/meal-analysis',
 	'/api/steps',
+	// Favorites don't change any totals shown elsewhere
+	'/api/favorite-meals',
 ];
 
 const isMutation = (endpoint: string, options?: RequestInit) => {
