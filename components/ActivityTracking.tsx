@@ -1,4 +1,5 @@
 import { useUser } from '@clerk/clerk-expo';
+import DateNavigator from './DateNavigator';
 import { Ionicons, SimpleLineIcons } from '@expo/vector-icons';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -22,7 +23,6 @@ import {
 import CustomButton from './CustomButton';
 import InputField from './InputField';
 import ActivityRow from './ActivityRow';
-import ActivitiesSection from './ActivitiesSection';
 import MuscleHeatmap from './workout/MuscleHeatmap';
 import { iconForActivityName, useActivityTypes } from '@/lib/activityTypes';
 import { router } from 'expo-router';
@@ -31,11 +31,22 @@ import { SCREEN_BG } from '@/lib/theme';
 const eyebrowStyle = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
 
 interface ActivityTrackingProps {
+	date?: string; // day to show (e.g. from Home's Burned ring); user can change it after
 	refreshTrigger?: number;
 	onActivityLogged?: () => void;
 }
 
-const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrackingProps) => {
+const ActivityTracking = ({
+	date,
+	refreshTrigger = 0,
+	onActivityLogged,
+}: ActivityTrackingProps) => {
+	// Viewed day (‹ date › header). Device step sync always writes today.
+	const [viewDate, setViewDate] = useState(getTodayDate());
+	const isViewingToday = viewDate === getTodayDate();
+	useEffect(() => {
+		if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) setViewDate(date);
+	}, [date]);
 	const [nutritionGoals, setNutritionGoals] = useState<any>(null);
 	const [stepData, setStepData] = useState<any>(null);
 	// Step sync bookkeeping in a ref: the focus refetch callback is memoized, so state
@@ -58,8 +69,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 	const saveCompletionStatus = async (completedSet: Set<string>) => {
 		if (!user?.id) return;
 		try {
-			const today = getTodayDate();
-			const key = `completed_exercises_${user.id}_${today}`;
+			const key = `completed_exercises_${user.id}_${viewDate}`;
 			const completedArray = Array.from(completedSet);
 			await AsyncStorage.setItem(key, JSON.stringify(completedArray));
 		} catch (error) {
@@ -71,8 +81,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 	const loadCompletionStatus = async () => {
 		if (!user?.id) return;
 		try {
-			const today = getTodayDate();
-			const key = `completed_exercises_${user.id}_${today}`;
+			const key = `completed_exercises_${user.id}_${viewDate}`;
 			const savedData = await AsyncStorage.getItem(key);
 			if (savedData) {
 				const completedArray = JSON.parse(savedData);
@@ -114,13 +123,14 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 	const fetchStepDataFromBackend = async () => {
 		if (!user?.id) return;
 		try {
-			const today = getTodayDate();
-			const response = await fetchAPI(`/api/steps?clerkId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/api/steps?clerkId=${user.id}&date=${viewDate}`, {
 				method: 'GET',
 			});
 			if (response.success && response.data && response.data.length > 0) {
 				setStepData(response.data[0]);
-				stepsSync.current.syncedSteps = Number(response.data[0].steps) || 0;
+				// Sync compares against today's backend count only
+				if (viewDate === getTodayDate())
+					stepsSync.current.syncedSteps = Number(response.data[0].steps) || 0;
 			} else {
 				setStepData(null);
 			}
@@ -258,8 +268,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 		if (!user?.id) return;
 
 		try {
-			const today = getTodayDate();
-			const response = await fetchAPI(`/api/activities?clerkId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/api/activities?clerkId=${user.id}&date=${viewDate}`, {
 				method: 'GET',
 			});
 
@@ -280,8 +289,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 		if (!user?.id) return;
 
 		try {
-			const today = getTodayDate();
-			const response = await fetchAPI(`/api/workouts?clerkId=${user.id}&date=${today}`, {
+			const response = await fetchAPI(`/api/workouts?clerkId=${user.id}&date=${viewDate}`, {
 				method: 'GET',
 			});
 
@@ -436,8 +444,8 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 					fetchAndUploadDeviceSteps();
 				}
 			}
-		}, [user?.id, healthKitStatus?.isAuthorized]),
-		`${user?.id ?? ''}|${healthKitStatus?.isAuthorized ?? ''}`
+		}, [user?.id, healthKitStatus?.isAuthorized, viewDate]),
+		`${user?.id ?? ''}|${healthKitStatus?.isAuthorized ?? ''}|${viewDate}`
 	);
 
 	// Refresh scheduled exercises when refreshTrigger changes
@@ -641,7 +649,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 					clerkId: user.id,
 					activityDescription: `${exerciseName.trim()} for ${exerciseDuration.trim()}`,
 					estimatedCalories: estimatedCalories,
-					date: getTodayDate(), // Add user's local date for proper timezone handling
+					date: viewDate, // the viewed day (local date)
 				}),
 			});
 
@@ -801,12 +809,8 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 
 	return (
 		<View className="w-full px-6 pt-2">
-			<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
-				{`Today · ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`}
-			</Text>
+			<DateNavigator date={viewDate} onChange={setViewDate} />
 			<Text className="font-JakartaBold text-[28px] text-[#262135] mt-1">Activity</Text>
-
-			<MuscleHeatmap />
 
 			<View className="flex-row items-end justify-between mt-6">
 				<View>
@@ -918,7 +922,10 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 				))}
 			</View>
 
-			<ActivitiesSection variant="activity" />
+			{/* Muscles worked, below the calories burned summary */}
+			<View className="mt-10">
+				<MuscleHeatmap />
+			</View>
 
 			<View className="flex-row items-center justify-between mt-10 mb-1">
 				<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
@@ -943,7 +950,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 						<Ionicons name="barbell-outline" size={22} color="#cd9c99" />
 					</View>
 					<Text className="font-JakartaSemiBold text-[14px] text-[#262135] mt-3">
-						No exercises yet today
+						{isViewingToday ? 'No exercises yet today' : 'No exercises logged this day'}
 					</Text>
 					<Text className="font-JakartaMedium text-[12px] text-[#574F47] mt-1">
 						Log a workout to count it toward your burn.
@@ -1069,7 +1076,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 
 					<TouchableOpacity
 						onPress={() => setShowHealthKitInfo(false)}
-						className="bg-[#E3BBA1] py-3 rounded-xl mt-4 mb-20"
+						className="bg-[#262135] py-3 rounded-xl mt-4 mb-20"
 					>
 						<Text className="text-white text-center font-JakartaSemiBold">Got it</Text>
 					</TouchableOpacity>
@@ -1081,6 +1088,7 @@ const ActivityTracking = ({ refreshTrigger = 0, onActivityLogged }: ActivityTrac
 				isVisible={workoutModal}
 				onClose={() => setWorkoutModal(false)}
 				onSaved={fetchScheduledExercises}
+				date={viewDate}
 			/>
 		</View>
 	);

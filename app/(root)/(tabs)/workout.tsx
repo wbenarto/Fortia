@@ -1,4 +1,5 @@
 import { SignedIn } from '@clerk/clerk-expo';
+import { useLocalSearchParams } from 'expo-router';
 import { View, Text, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +11,8 @@ import NewWorkoutModal from '@/components/NewWorkoutModal';
 import { SCREEN_BG } from '@/lib/theme';
 
 const Workout = () => {
+	// Opened from Home's Burned ring with ?date= → show that day
+	const { date: dateParam } = useLocalSearchParams<{ date?: string }>();
 	const insets = useSafeAreaInsets();
 	const [workoutModal, setWorkoutModal] = useState(false);
 	const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -176,7 +179,7 @@ const Workout = () => {
 					style={{ backgroundColor: SCREEN_BG }}
 					contentContainerStyle={{ paddingTop: 16, paddingBottom: 120, backgroundColor: SCREEN_BG }}
 				>
-					<ActivityTracking refreshTrigger={refreshTrigger} />
+					<ActivityTracking refreshTrigger={refreshTrigger} date={dateParam} />
 				</ScrollView>
 
 				{/* New Workout Modal */}

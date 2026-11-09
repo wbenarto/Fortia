@@ -9,10 +9,10 @@ export default {
 		},
 		platforms: ['ios', 'web'],
 		entryPoint: 'app/index.tsx',
-		version: '1.0.4',
+		version: '1.0.5',
 		buildNumber: '61',
 		orientation: 'portrait',
-		icon: './assets/icons/fortia-white-icon.png',
+		icon: './assets/icons/fortia-icon-light.png',
 		scheme: ['fortia'],
 		userInterfaceStyle: 'automatic',
 		splash: {
@@ -25,11 +25,14 @@ export default {
 		updates: {
 			url: 'https://u.expo.dev/061a67d8-c8d4-4d24-b007-4c4b50e330ee',
 		},
-		runtimeVersion: '1.0.4',
+		runtimeVersion: '1.0.5',
 		ios: {
 			supportsTablet: true,
 			buildNumber: '61',
-			icon: './assets/icons/fortia-white-icon.png',
+			icon: {
+				light: './assets/icons/fortia-icon-light.png',
+				dark: './assets/icons/fortia-icon-dark.png',
+			},
 			entitlements: {
 				'com.apple.developer.healthkit': true,
 				'com.apple.developer.healthkit.access': [],
@@ -38,6 +41,10 @@ export default {
 				ITSAppUsesNonExemptEncryption: false,
 				NSMotionUsageDescription:
 					'Fortia uses Apple HealthKit and motion sensors to track your daily steps and physical activity for accurate fitness insights.',
+				NSCameraUsageDescription:
+					'Fortia uses the camera to scan barcodes and photograph meals so you can log food faster.',
+				NSPhotoLibraryUsageDescription:
+					'Fortia lets you pick a meal photo from your library to log what you ate.',
 				NSMicrophoneUsageDescription:
 					'Fortia needs access to your microphone for audio recording features.',
 				NSHealthShareUsageDescription:
@@ -75,6 +82,23 @@ export default {
 			[
 				'expo-av',
 				{
+					microphonePermission: false,
+				},
+			],
+			// Barcode scanning + meal photos (no microphone: we never record video)
+			[
+				'expo-camera',
+				{
+					cameraPermission: 'Fortia uses the camera to scan barcodes and photograph meals so you can log food faster.',
+					microphonePermission: false,
+					recordAudioAndroid: false,
+				},
+			],
+			[
+				'expo-image-picker',
+				{
+					photosPermission: 'Fortia lets you pick a meal photo from your library to log what you ate.',
+					cameraPermission: 'Fortia uses the camera to scan barcodes and photograph meals so you can log food faster.',
 					microphonePermission: false,
 				},
 			],

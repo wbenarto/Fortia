@@ -159,7 +159,7 @@ const ChangePassword = () => {
 								? `Your password is managed through your ${user.externalAccounts[0]?.provider} account. Please change your password there.`
 								: 'Password changes are not available for your account type.'}
 						</Text>
-						<TouchableOpacity onPress={handleBack} className="bg-[#E3BBA1] rounded-xl py-4">
+						<TouchableOpacity onPress={handleBack} className="bg-[#262135] rounded-xl py-4">
 							<Text className="text-white text-center font-JakartaSemiBold">Go Back</Text>
 						</TouchableOpacity>
 					</View>
@@ -256,7 +256,7 @@ const ChangePassword = () => {
 							title={isLoading ? 'Updating Password...' : 'Update Password'}
 							onPress={handleChangePassword}
 							disabled={isLoading}
-							className="bg-[#E3BBA1]"
+							className="bg-[#262135]"
 							width="100%"
 						/>
 					</View>

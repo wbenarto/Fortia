@@ -167,7 +167,7 @@ const RecipeBreakdownModal: React.FC<RecipeBreakdownModalProps> = ({ visible, on
 
 			{/* New Search Button */}
 			<TouchableOpacity
-				className="bg-[#E3BBA1] rounded-xl py-3 px-6 mb-6"
+				className="bg-[#262135] rounded-xl py-3 px-6 mb-6"
 				onPress={resetSearch}
 				activeOpacity={0.8}
 			>
@@ -189,7 +189,7 @@ const RecipeBreakdownModal: React.FC<RecipeBreakdownModalProps> = ({ visible, on
 			</Text>
 			<Text className="text-gray-700 text-center mb-6">{message}</Text>
 			<TouchableOpacity
-				className="bg-[#E3BBA1] rounded-xl py-3 px-6"
+				className="bg-[#262135] rounded-xl py-3 px-6"
 				onPress={resetSearch}
 				activeOpacity={0.8}
 			>

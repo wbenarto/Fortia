@@ -75,10 +75,12 @@ const NewWorkoutModal = ({
 	isVisible,
 	onClose,
 	onSaved,
+	date,
 }: {
 	isVisible: boolean;
 	onClose: () => void;
 	onSaved?: () => void;
+	date?: string; // day to log to (Activity page's viewed day); defaults to today
 }) => {
 	const { user } = useUser();
 	const insets = useSafeAreaInsets();
@@ -210,7 +212,7 @@ const NewWorkoutModal = ({
 				title: entry.name,
 				duration: entry.duration,
 				calories_burned: entry.calories_burned,
-				selectedDate: getTodayDate(),
+				selectedDate: date || getTodayDate(),
 			}),
 		});
 
@@ -826,7 +828,7 @@ const NewWorkoutModal = ({
 			<TouchableOpacity
 				onPress={saveNew}
 				disabled={isSaving}
-				className={`rounded-xl py-3 mt-4 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#E3BBA1]'}`}
+				className={`rounded-xl py-3 mt-4 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#262135]'}`}
 			>
 				<Text
 					className={`text-center font-JakartaSemiBold ${isSaving ? 'text-[#334155]' : 'text-white'}`}
@@ -925,7 +927,7 @@ const NewWorkoutModal = ({
 								</Text>
 							</TouchableOpacity>
 						) : (
-							<TouchableOpacity onPress={onClose} className="bg-[#E3BBA1] rounded-xl py-3">
+							<TouchableOpacity onPress={onClose} className="bg-[#262135] rounded-xl py-3">
 								<Text className="text-white text-center font-JakartaSemiBold">Done</Text>
 							</TouchableOpacity>
 						)}

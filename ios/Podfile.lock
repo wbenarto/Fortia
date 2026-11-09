@@ -10,6 +10,9 @@ PODS:
     - ReactCommon/turbomodule/core
   - EXConstants (17.1.7):
     - ExpoModulesCore
+  - EXImageLoader (5.1.0):
+    - ExpoModulesCore
+    - React-Core
   - EXJSONUtils (0.15.0)
   - EXManifests (0.16.6):
     - ExpoModulesCore
@@ -281,6 +284,10 @@ PODS:
     - ExpoModulesCore
   - ExpoBlur (14.1.5):
     - ExpoModulesCore
+  - ExpoCamera (16.1.11):
+    - ExpoModulesCore
+    - ZXingObjC/OneD
+    - ZXingObjC/PDF417
   - ExpoCrypto (14.1.5):
     - ExpoModulesCore
   - ExpoFileSystem (18.1.11):
@@ -290,6 +297,12 @@ PODS:
   - ExpoHaptics (14.1.4):
     - ExpoModulesCore
   - ExpoHead (5.1.7):
+    - ExpoModulesCore
+  - ExpoImageManipulator (13.1.7):
+    - EXImageLoader
+    - ExpoModulesCore
+    - SDWebImageWebPCoder
+  - ExpoImagePicker (16.1.4):
     - ExpoModulesCore
   - ExpoKeepAwake (14.1.4):
     - ExpoModulesCore
@@ -376,6 +389,18 @@ PODS:
   - hermes-engine (0.79.5):
     - hermes-engine/Pre-built (= 0.79.5)
   - hermes-engine/Pre-built (0.79.5)
+  - libwebp (1.6.0):
+    - libwebp/demux (= 1.6.0)
+    - libwebp/mux (= 1.6.0)
+    - libwebp/sharpyuv (= 1.6.0)
+    - libwebp/webp (= 1.6.0)
+  - libwebp/demux (1.6.0):
+    - libwebp/webp
+  - libwebp/mux (1.6.0):
+    - libwebp/demux
+  - libwebp/sharpyuv (1.6.0)
+  - libwebp/webp (1.6.0):
+    - libwebp/sharpyuv
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -1701,7 +1726,7 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
-  - react-native-pager-view (6.7.1):
+  - react-native-pager-view (6.9.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2470,8 +2495,17 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - SDWebImage/Core (5.21.7)
+  - SDWebImageWebPCoder (0.15.0):
+    - libwebp (~> 1.0)
+    - SDWebImage/Core (~> 5.17)
   - SocketRocket (0.7.1)
   - Yoga (0.0.0)
+  - ZXingObjC/Core (3.6.9)
+  - ZXingObjC/OneD (3.6.9):
+    - ZXingObjC/Core
+  - ZXingObjC/PDF417 (3.6.9):
+    - ZXingObjC/Core
 
 DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
@@ -2480,6 +2514,7 @@ DEPENDENCIES:
   - EXApplication (from `../node_modules/expo-application/ios`)
   - EXAV (from `../node_modules/expo-av/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
+  - EXImageLoader (from `../node_modules/expo-image-loader/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
   - EXManifests (from `../node_modules/expo-manifests/ios`)
   - Expo (from `../node_modules/expo`)
@@ -2490,11 +2525,14 @@ DEPENDENCIES:
   - ExpoAppleAuthentication (from `../node_modules/expo-apple-authentication/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
+  - ExpoCamera (from `../node_modules/expo-camera/ios`)
   - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoHaptics (from `../node_modules/expo-haptics/ios`)
   - ExpoHead (from `../node_modules/expo-router/ios`)
+  - ExpoImageManipulator (from `../node_modules/expo-image-manipulator/ios`)
+  - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinearGradient (from `../node_modules/expo-linear-gradient/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
@@ -2593,8 +2631,12 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - libwebp
     - ReachabilitySwift
+    - SDWebImage
+    - SDWebImageWebPCoder
     - SocketRocket
+    - ZXingObjC
 
 EXTERNAL SOURCES:
   boost:
@@ -2609,6 +2651,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-av/ios"
   EXConstants:
     :path: "../node_modules/expo-constants/ios"
+  EXImageLoader:
+    :path: "../node_modules/expo-image-loader/ios"
   EXJSONUtils:
     :path: "../node_modules/expo-json-utils/ios"
   EXManifests:
@@ -2629,6 +2673,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-asset/ios"
   ExpoBlur:
     :path: "../node_modules/expo-blur/ios"
+  ExpoCamera:
+    :path: "../node_modules/expo-camera/ios"
   ExpoCrypto:
     :path: "../node_modules/expo-crypto/ios"
   ExpoFileSystem:
@@ -2639,6 +2685,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-haptics/ios"
   ExpoHead:
     :path: "../node_modules/expo-router/ios"
+  ExpoImageManipulator:
+    :path: "../node_modules/expo-image-manipulator/ios"
+  ExpoImagePicker:
+    :path: "../node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoLinearGradient:
@@ -2834,6 +2884,7 @@ SPEC CHECKSUMS:
   EXApplication: 1e06972201838375ca1ec1ba34d586a98a5dc718
   EXAV: ae28256069c4cdde93d185c007d8f68d92902c2e
   EXConstants: 98bcf0f22b820f9b28f9fee55ff2daededadd2f8
+  EXImageLoader: 4d3d3284141f1a45006cc4d0844061c182daf7ee
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 691a779b04e4f2c96da46fb9bef4f86174fefcb5
   Expo: dd7f49380001a55ea776f905f8b3c1c540160b09
@@ -2844,11 +2895,14 @@ SPEC CHECKSUMS:
   ExpoAppleAuthentication: 4d2e0c88a4463229760f1fbb9a937a810efb6863
   ExpoAsset: ef06e880126c375f580d4923fdd1cdf4ee6ee7d6
   ExpoBlur: 3c8885b9bf9eef4309041ec87adec48b5f1986a9
+  ExpoCamera: e1879906d41184e84b57d7643119f8509414e318
   ExpoCrypto: a9f1d75baeea6ef8b03c1660621585196c382e85
   ExpoFileSystem: 7f92f7be2f5c5ed40a7c9efc8fa30821181d9d63
   ExpoFont: cf508bc2e6b70871e05386d71cab927c8524cc8e
   ExpoHaptics: 0ff6e0d83cd891178a306e548da1450249d54500
   ExpoHead: 520990db7d4e4a09a9142b2e03bcb08b85b97e0e
+  ExpoImageManipulator: 1e06e7a1e56f454e75d01b7032c1e44963bfc865
+  ExpoImagePicker: 0963da31800c906e01c03e25d7c849f16ebf02a2
   ExpoKeepAwake: bf0811570c8da182bfb879169437d4de298376e7
   ExpoLinearGradient: 7734c8059972fcf691fb4330bcdf3390960a152d
   ExpoLinking: d5c183998ca6ada66ff45e407e0f965b398a8902
@@ -2868,6 +2922,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: f03b0e06d3882d71e67e45b073bb827da1a21aae
+  libwebp: af5937a13536ef73f3784d69cc342b98961acf33
   RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
   RCTDeprecation: 5f638f65935e273753b1f31a365db6a8d6dc53b5
   RCTRequired: 8b46a520ea9071e2bc47d474aa9ca31b4a935bd8
@@ -2900,7 +2955,7 @@ SPEC CHECKSUMS:
   React-logger: 85fa3509931497c72ccd2547fcc91e7299d8591e
   React-Mapbuffer: 96a2f2a176268581733be182fa6eebab1c0193be
   React-microtasksnativemodule: bda561d2648e1e52bd9e5a87f8889836bdbde2e2
-  react-native-pager-view: f238ed7fb53458bd03366944a33686f067c83e9a
+  react-native-pager-view: f79b095ad2f207028f17626dd7aaf8411c42accc
   react-native-safe-area-context: 562163222d999b79a51577eda2ea8ad2c32b4d06
   react-native-skia: 5c086469906cf854e26126b5b88dcbb6c93eb90f
   react-native-webview: 520bcb79c3f2af91e157cdd695732a34ab5f25c8
@@ -2942,8 +2997,11 @@ SPEC CHECKSUMS:
   RNReanimated: 2313402fe27fecb7237619e9c6fcee3177f08a65
   RNScreens: 482e9707f9826230810c92e765751af53826d509
   RNSVG: 794f269526df9ddc1f79b3d1a202b619df0368e3
+  SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
+  SDWebImageWebPCoder: 0e06e365080397465cc73a7a9b472d8a3bd0f377
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: adb397651e1c00672c12e9495babca70777e411e
+  ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
 PODFILE CHECKSUM: 68e59bab6f3328217b0ac24cd96dd5e113ece2ad
 

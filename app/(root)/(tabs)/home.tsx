@@ -265,7 +265,7 @@ export default function Page() {
 						style={{ backgroundColor: SCREEN_BG }}
 						contentContainerStyle={{ paddingBottom: 120, backgroundColor: SCREEN_BG }}
 					>
-						<HomeHeader />
+						<HomeHeader date={selectedDate} onDateChange={setSelectedDate} />
 						{/* Date + streak row (components/progress/HomeCalendar.tsx) hidden for now */}
 						{/* Weekly recap card (components/progress/WeeklyRecapCard.tsx) hidden for now */}
 						<View className="w-full mt-1">
@@ -307,7 +307,8 @@ export default function Page() {
 								onDietChanged={onWeightLogged}
 								selectedDate={selectedDate}
 							/>
-							<ActivitiesSection />
+							{/* Workouts are about today (suggestion, in-progress) — hidden on past days */}
+							{selectedDate === getTodayDate() && <ActivitiesSection />}
 
 							{/* <ActivityTracking
 								refreshTrigger={dashboardRefreshTrigger}

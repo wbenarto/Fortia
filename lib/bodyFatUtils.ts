@@ -155,25 +155,25 @@ export function getBMICategory(bmi: number): {
 	if (bmi < 18.5) {
 		return {
 			category: 'Underweight',
-			description: 'Below normal weight range',
+			description: 'BMI below 18.5',
 			color: '#3B82F6', // Blue
 		};
 	} else if (bmi >= 18.5 && bmi < 25) {
 		return {
-			category: 'Normal',
-			description: 'Healthy weight range',
+			category: 'Healthy weight',
+			description: 'BMI 18.5 to 24.9',
 			color: '#10B981', // Green
 		};
 	} else if (bmi >= 25 && bmi < 30) {
 		return {
 			category: 'Overweight',
-			description: 'Above normal weight range',
+			description: 'BMI 25 to 29.9',
 			color: '#F59E0B', // Yellow
 		};
 	} else {
 		return {
-			category: 'Obese',
-			description: 'Significantly above normal weight',
+			category: 'Obesity',
+			description: 'BMI 30 or higher',
 			color: '#EF4444', // Red
 		};
 	}

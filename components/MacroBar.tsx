@@ -1,4 +1,5 @@
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 // One macro column: label, "eaten / goal g" and a thick bar in the macro's colour
 // (MACRO_COLORS in lib/theme.ts). Shared by Home (MacrosTracking) and the Food log
@@ -17,7 +18,9 @@ const MacroBar = ({
 	eaten,
 	goal,
 	isLoading = false,
+	onPress,
 }: {
+	onPress?: () => void; // e.g. open the meal guide for this macro
 	label: string;
 	color: string;
 	eaten: number;
@@ -26,14 +29,28 @@ const MacroBar = ({
 }) => {
 	const isOver = !isLoading && !!goal && eaten > goal;
 	return (
-		<View className="flex-1 justify-between">
-			<Text
-				className="text-[10px] font-JakartaSemiBold text-[#574F47]"
-				style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
-				numberOfLines={1}
-			>
-				{label}
-			</Text>
+		<TouchableOpacity
+			className="flex-1 justify-between"
+			activeOpacity={0.7}
+			onPress={onPress}
+			disabled={!onPress}
+			accessibilityRole={onPress ? 'button' : undefined}
+			accessibilityLabel={
+				onPress ? `${label}, ${Math.round(eaten)} grams. See foods that fit` : undefined
+			}
+		>
+			<View className="flex-row items-center">
+				<Text
+					className="text-[10px] font-JakartaSemiBold text-[#574F47]"
+					style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
+					numberOfLines={1}
+				>
+					{label}
+				</Text>
+				{onPress && (
+					<Ionicons name="chevron-forward" size={10} color="#857869" style={{ marginLeft: 2 }} />
+				)}
+			</View>
 			<Text
 				className="font-JakartaBold text-[15px] mt-1"
 				style={{ color: isOver ? OVER_COLOR : '#262135' }}
@@ -58,7 +75,7 @@ const MacroBar = ({
 					style={{ width: `${barFillPct(eaten, goal)}%`, backgroundColor: color }}
 				/>
 			</View>
-		</View>
+		</TouchableOpacity>
 	);
 };
 

@@ -22,6 +22,9 @@ import {
 	SECTION_LABELS,
 	capitalize,
 	estimateWorkoutCalories,
+	elapsedSeconds,
+	estimateCaloriesFromSets,
+	type SetCalorieEstimate,
 	formatPrescription,
 	formatSeconds,
 	type SetProgress,
@@ -47,7 +50,13 @@ const defaultSets = (block: WorkoutBlock): SetProgress[] =>
 // Guided player: one exercise at a time, set check-offs, rest timer, then save the
 // finished workout to activity (which feeds calories out).
 const TrainingPlayer = () => {
-	const { id } = useLocalSearchParams<{ id: string }>();
+	// index = open at this exercise (tapped on the plan) instead of where the user left off
+	// index = open at this exercise; finish = jump straight to the finish step (Stop workout)
+	const {
+		id,
+		index: startIndex,
+		finish: finishParam,
+	} = useLocalSearchParams<{ id: string; index?: string; finish?: string }>();
 	const { user } = useUser();
 	const insets = useSafeAreaInsets();
 	const unitSystem = useUnitSystem();
@@ -62,13 +71,20 @@ const TrainingPlayer = () => {
 	const [rest, setRest] = useState<{ endsAt: number; total: number } | null>(null);
 	const [timed, setTimed] = useState<{ set: number; endsAt: number } | null>(null);
 	const [phase, setPhase] = useState<'exercise' | 'finish'>('exercise');
-	const [showSteps, setShowSteps] = useState(false);
 	const [calories, setCalories] = useState('');
+	const [estimate, setEstimate] = useState<SetCalorieEstimate | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
 
 	// Latest progress for saves fired from timers / unmount
-	const progressRef = useRef({ sets, activeSeconds, index });
-	progressRef.current = { sets, activeSeconds, index };
+	// runningSince lets the clock keep counting while the user is on the workout list
+	const progressRef = useRef({ sets, activeSeconds, index, runningSince: null as number | null });
+	progressRef.current = {
+		sets,
+		activeSeconds,
+		index,
+		runningSince: paused || phase === 'finish' ? null : Date.now(),
+	};
+	const pendingFinish = useRef(finishParam === '1');
 	const pausedRef = useRef(paused);
 	pausedRef.current = paused;
 	const completedRef = useRef(false);
@@ -86,8 +102,10 @@ const TrainingPlayer = () => {
 				}
 				setWorkout(data);
 				setSets(data.progress?.sets || {});
-				setActiveSeconds(data.progress?.activeSeconds || 0);
-				setIndex(Math.min(data.progress?.index || 0, data.blocks.length - 1));
+				setActiveSeconds(elapsedSeconds(data.progress));
+				const requested = startIndex != null ? Number(startIndex) : NaN;
+				const resumeAt = Number.isInteger(requested) ? requested : data.progress?.index || 0;
+				setIndex(Math.min(Math.max(resumeAt, 0), data.blocks.length - 1));
 				if (data.status === 'planned') {
 					fetchAPI(`/api/user-workouts?id=${data.id}`, {
 						method: 'PUT',
@@ -113,7 +131,7 @@ const TrainingPlayer = () => {
 		if (!workout) return;
 		const timer = setTimeout(saveProgress, 1200);
 		return () => clearTimeout(timer);
-	}, [sets, index, workout, saveProgress]);
+	}, [sets, index, paused, workout, saveProgress]);
 	useEffect(() => () => void saveProgress(), [saveProgress]);
 
 	// One clock for the player: active time (unless paused), rest and timed sets
@@ -176,14 +194,22 @@ const TrainingPlayer = () => {
 		if (!workout) return;
 		setRest(null);
 		setTimed(null);
-		setShowSteps(false);
 		if (next >= workout.blocks.length) {
-			const minutes = activeMinutesFor(workout, activeSeconds);
+			const bodyWeight = Number(profile.weight) || 160;
+			const fromSets = estimateCaloriesFromSets(workout, sets, bodyWeight);
+			// Built from the ticked sets; time-based only when nothing was ticked
 			setCalories(
 				String(
-					estimateWorkoutCalories(workout.inputs.style, Number(profile.weight) || 160, minutes)
+					fromSets.setsDone > 0
+						? fromSets.calories
+						: estimateWorkoutCalories(
+								workout.inputs.style,
+								bodyWeight,
+								activeMinutesFor(workout, activeSeconds)
+							)
 				)
 			);
+			setEstimate(fromSets);
 			setPhase('finish');
 			return;
 		}
@@ -225,6 +251,14 @@ const TrainingPlayer = () => {
 			setIsSaving(false);
 		}
 	};
+
+	// Stop workout (from the workout list): go straight to the finish step once loaded
+	useEffect(() => {
+		if (workout && pendingFinish.current) {
+			pendingFinish.current = false;
+			goTo(workout.blocks.length);
+		}
+	}, [workout]);
 
 	if (!workout || !block) {
 		return (
@@ -290,8 +324,16 @@ const TrainingPlayer = () => {
 						</View>
 					</View>
 					<Text className="text-xs font-JakartaMedium text-[#574F47] mt-3 ml-1">
-						Estimated from your weight and active time. Tap to adjust — it's added to your calories
-						out.
+						{estimate && estimate.setsDone > 0
+							? `From ${estimate.reps.toLocaleString()} reps${
+									estimate.volumeLbs > 0
+										? ` and ${Math.round(
+												toDisplayWeight(estimate.volumeLbs, unitSystem)
+											).toLocaleString()} ${weightUnit(unitSystem)} lifted`
+										: ''
+								} across ${estimate.setsDone} sets, plus rest between them.`
+							: 'No sets ticked, so this is estimated from your active time.'}{' '}
+						Tap to adjust — it's added to your calories out.
 					</Text>
 
 					<View className="flex-1" />
@@ -299,7 +341,7 @@ const TrainingPlayer = () => {
 						<TouchableOpacity
 							onPress={finish}
 							disabled={isSaving}
-							className={`rounded-xl py-3.5 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#E3BBA1]'}`}
+							className={`rounded-xl py-3.5 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#262135]'}`}
 						>
 							{isSaving ? (
 								<ActivityIndicator size="small" color={ACCENT} />
@@ -481,23 +523,13 @@ const TrainingPlayer = () => {
 					{/* How to */}
 					{exercise && exercise.instructions.length > 0 && (
 						<View className="mt-6">
-							<TouchableOpacity
-								onPress={() => setShowSteps(s => !s)}
-								className="flex-row items-center justify-between mb-3"
+							<Text
+								className="text-[11px] font-JakartaSemiBold text-[#574F47] ml-1 mb-3"
+								style={EYEBROW_STYLE}
 							>
-								<Text
-									className="text-[11px] font-JakartaSemiBold text-[#574F47] ml-1"
-									style={EYEBROW_STYLE}
-								>
-									How to do it
-								</Text>
-								<Ionicons
-									name={showSteps ? 'chevron-up' : 'chevron-down'}
-									size={16}
-									color="#574F47"
-								/>
-							</TouchableOpacity>
-							{showSteps && <InstructionSteps steps={exercise.instructions} />}
+								How to do it
+							</Text>
+							<InstructionSteps steps={exercise.instructions} />
 						</View>
 					)}
 				</ScrollView>
@@ -519,7 +551,7 @@ const TrainingPlayer = () => {
 					<TouchableOpacity
 						onPress={() => goTo(index + 1)}
 						className="flex-1 rounded-xl py-3.5"
-						style={{ backgroundColor: allDone || isLast ? ACCENT : '#E3BBA1B3' }}
+						style={{ backgroundColor: allDone || isLast ? '#262135' : '#262135B3' }}
 					>
 						<Text className="text-white text-center font-JakartaSemiBold">
 							{isLast ? 'Finish workout' : allDone ? 'Next exercise' : 'Skip to next'}

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import DateNavigator from '@/components/DateNavigator';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import ReanimatedSwipeable, {
 	type SwipeableMethods,
@@ -6,6 +7,8 @@ import ReanimatedSwipeable, {
 import { Ionicons } from '@expo/vector-icons';
 import { useQuickLogStore } from '@/store';
 import { MACRO_COLORS, SCREEN_BG } from '@/lib/theme';
+import { router } from 'expo-router';
+import { getTodayDate } from '@/lib/dateUtils';
 import MacroBar from '@/components/MacroBar';
 
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -159,6 +162,8 @@ const FoodLogCard = ({
 	calorieGoal,
 	macroGoals,
 	isToday,
+	date,
+	onDateChange,
 	isLoading,
 	error,
 	onRetry,
@@ -168,6 +173,9 @@ const FoodLogCard = ({
 	calorieGoal?: number;
 	macroGoals?: MacroGoals;
 	isToday: boolean;
+	// When given, the header eyebrow becomes the ‹ date › switcher (tap for a calendar)
+	date?: string;
+	onDateChange?: (date: string) => void;
 	isLoading: boolean;
 	error?: string;
 	onRetry: () => void;
@@ -183,6 +191,10 @@ const FoodLogCard = ({
 			)
 			.sort((a, b) => a.created_at.localeCompare(b.created_at));
 
+	// Macro tapped → foods that help close that gap, for the day on screen
+	const openGuide = (macro: 'protein' | 'carbs' | 'fats') =>
+		router.push({ pathname: '/macro-guide', params: { macro, date: date ?? getTodayDate() } });
+
 	const totalCalories = sumCalories(meals);
 	const goal = calorieGoal ?? 0;
 	const hasGoal = goal > 0;
@@ -193,11 +205,15 @@ const FoodLogCard = ({
 
 	return (
 		<View className="px-6 pt-2">
-			<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
-				{isToday
-					? `Today · ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`
-					: 'Food log'}
-			</Text>
+			{date && onDateChange ? (
+				<DateNavigator date={date} onChange={onDateChange} />
+			) : (
+				<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
+					{isToday
+						? `Today · ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`
+						: 'Food log'}
+				</Text>
+			)}
 			<Text className="font-JakartaBold text-[28px] text-[#262135] mt-1">Food log</Text>
 
 			<View className="flex-row items-end justify-between mt-6">
@@ -270,18 +286,21 @@ const FoodLogCard = ({
 					<MacroBar
 						label="Protein"
 						color={MACRO_COLORS.protein}
+						onPress={() => openGuide('protein')}
 						eaten={sumMacro(meals, 'protein')}
 						goal={macroGoals?.protein}
 					/>
 					<MacroBar
 						label="Carbs"
 						color={MACRO_COLORS.carbs}
+						onPress={() => openGuide('carbs')}
 						eaten={sumMacro(meals, 'carbs')}
 						goal={macroGoals?.carbs}
 					/>
 					<MacroBar
 						label="Fat"
 						color={MACRO_COLORS.fats}
+						onPress={() => openGuide('fats')}
 						eaten={sumMacro(meals, 'fats')}
 						goal={macroGoals?.fats}
 					/>
@@ -304,7 +323,7 @@ const FoodLogCard = ({
 			) : error ? (
 				<View className="py-8 items-center">
 					<Text className="font-JakartaMedium text-[13px] text-[#334155]">{error}</Text>
-					<TouchableOpacity onPress={onRetry} className="mt-3 bg-[#E3BBA1] rounded-xl px-5 py-2">
+					<TouchableOpacity onPress={onRetry} className="mt-3 bg-[#262135] rounded-xl px-5 py-2">
 						<Text className="font-JakartaSemiBold text-white text-[13px]">Retry</Text>
 					</TouchableOpacity>
 				</View>

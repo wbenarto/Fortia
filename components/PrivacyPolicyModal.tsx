@@ -71,6 +71,10 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isVisible, onCl
 									• Activity data (steps, workouts, nutrition)
 								</Text>
 								<Text className="text-gray-700 text-sm">• HealthKit data (with your consent)</Text>
+								<Text className="text-gray-700 text-sm">
+									• Meal photos you choose to scan: sent to Google Gemini to identify the food, then
+									discarded. We don't store them.
+								</Text>
 							</View>
 						</View>
 
@@ -81,7 +85,7 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isVisible, onCl
 
 						<TouchableOpacity
 							onPress={handleOpenWebsite}
-							className="bg-[#E3BBA1] py-4 px-8 rounded-xl w-full"
+							className="bg-[#262135] py-4 px-8 rounded-xl w-full"
 						>
 							<Text className="text-white text-center font-JakartaSemiBold text-lg">
 								View Full Privacy Policy

@@ -7,7 +7,7 @@ const getBgVariantStyle = (variant: ButtonProps['bgVariant'], disabled?: boolean
 
 	switch (variant) {
 		case 'primary':
-			return 'bg-[#E3BBA1]';
+			return 'bg-[#262135]';
 		case 'secondary':
 			return 'bg-gray-500';
 		case 'danger':
@@ -17,7 +17,7 @@ const getBgVariantStyle = (variant: ButtonProps['bgVariant'], disabled?: boolean
 		case 'outline':
 			return 'bg-transparent border-neutral-300 border-[0.5px]';
 		default:
-			return 'bg-[#E3BBA1]';
+			return 'bg-[#262135]';
 	}
 };
 

@@ -19,7 +19,10 @@ interface Workout {
 // Same calculation ActivityTracking.tsx uses for "Calories Burned": BMR + steps +
 // logged activities + logged exercises. Kept here as the single source of truth so
 // any other widget showing calories burned stays in sync with it.
-export const useCaloriesBurnedToday = (userId: string | undefined, date: string = getTodayDate()) => {
+export const useCaloriesBurnedToday = (
+	userId: string | undefined,
+	date: string = getTodayDate()
+) => {
 	const [bmr, setBmr] = useState(0);
 	const [stepCalories, setStepCalories] = useState(0);
 	const [activitiesCalories, setActivitiesCalories] = useState(0);
@@ -37,7 +40,9 @@ export const useCaloriesBurnedToday = (userId: string | undefined, date: string 
 				fetchAPI(`/api/activities?clerkId=${userId}&date=${date}`, { method: 'GET' }).catch(
 					() => null
 				),
-				fetchAPI(`/api/workouts?clerkId=${userId}&date=${date}`, { method: 'GET' }).catch(() => null),
+				fetchAPI(`/api/workouts?clerkId=${userId}&date=${date}`, { method: 'GET' }).catch(
+					() => null
+				),
 			]);
 
 			setBmr(bmrValue || 0);
@@ -81,5 +86,15 @@ export const useCaloriesBurnedToday = (userId: string | undefined, date: string 
 		[bmr, stepCalories, activitiesCalories, exercisesCalories]
 	);
 
-	return { totalCaloriesBurned, isLoading, refresh };
+	// Per-source split, for segmented displays (Home burned ring, Activity bar)
+	const breakdown = useMemo(
+		() => ({
+			resting: bmr,
+			steps: stepCalories,
+			exercise: activitiesCalories + exercisesCalories,
+		}),
+		[bmr, stepCalories, activitiesCalories, exercisesCalories]
+	);
+
+	return { totalCaloriesBurned, breakdown, isLoading, refresh };
 };

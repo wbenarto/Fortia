@@ -4,6 +4,7 @@ import CalorieHero from './CalorieHero';
 import GoalSetupModal from './GoalSetupModal';
 import LogMealModal from './LogMealModal';
 import { fetchAPI } from '@/lib/fetch';
+import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { useIsFocused } from '@react-navigation/native';
@@ -86,6 +87,8 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 		const [addMealModal, setAddMealModal] = useState(false);
 		const [goalSetupModal, setGoalSetupModal] = useState(false);
 		const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
+		// Calories per meal type, for the sections of the Eaten ring
+		const [mealCalories, setMealCalories] = useState<Record<string, number>>({});
 		const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 		const [nutritionGoals, setNutritionGoals] = useState<NutritionGoals | null>(null);
 		const [isLoadingGoals, setIsLoadingGoals] = useState(false);
@@ -100,6 +103,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 		const viewDate = selectedDate || getTodayDate();
 		const {
 			totalCaloriesBurned,
+			breakdown: burnBreakdown,
 			isLoading: isLoadingOut,
 			refresh: refreshCaloriesOut,
 		} = useCaloriesBurnedToday(user?.id, viewDate);
@@ -171,8 +175,28 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			}
 		};
 
+		const fetchMealCalories = async () => {
+			if (!user?.id) return;
+			try {
+				const response = await fetchAPI(`/api/meals?clerkId=${user.id}&date=${viewDate}`, {
+					method: 'GET',
+				});
+				const totals: Record<string, number> = {};
+				for (const meal of response.success ? response.data || [] : []) {
+					const type = ['breakfast', 'lunch', 'dinner', 'snack'].includes(meal.meal_type)
+						? meal.meal_type
+						: 'snack';
+					totals[type] = (totals[type] || 0) + (Number(meal.calories) || 0);
+				}
+				setMealCalories(totals);
+			} catch (error) {
+				console.error('Failed to fetch meals for calorie ring:', error);
+			}
+		};
+
 		const fetchDailySummary = async () => {
 			if (!user?.id) return;
+			fetchMealCalories();
 
 			setIsLoadingSummary(true);
 			try {
@@ -283,6 +307,10 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 			return defaultGoals;
 		};
 
+		// Macro tapped → foods that help close that gap
+		const openGuide = (macro: 'protein' | 'carbs' | 'fats') =>
+			router.push({ pathname: '/macro-guide', params: { macro, date: viewDate } });
+
 		const currentData = getCurrentIntake();
 		const targetGoals = getTargetGoals();
 
@@ -295,6 +323,16 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 							eaten={currentData.calories}
 							burned={totalCaloriesBurned}
 							goal={targetGoals.calories}
+							burnTarget={Number(nutritionGoals?.tdee) || 0}
+							mealCalories={mealCalories}
+							burnBreakdown={burnBreakdown}
+							// Open the matching tab on the same day
+							onEatenPress={() =>
+								router.navigate({ pathname: '/(root)/(tabs)/meal', params: { date: viewDate } })
+							}
+							onBurnedPress={() =>
+								router.navigate({ pathname: '/(root)/(tabs)/workout', params: { date: viewDate } })
+							}
 							isLoading={isLoadingSummary || isLoadingOut}
 						/>
 					</View>
@@ -304,6 +342,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						<MacroBar
 							label="Protein"
 							color={MACRO_COLORS.protein}
+							onPress={() => openGuide('protein')}
 							eaten={currentData.protein}
 							goal={targetGoals.protein}
 							isLoading={isLoadingSummary}
@@ -311,6 +350,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						<MacroBar
 							label="Carbs"
 							color={MACRO_COLORS.carbs}
+							onPress={() => openGuide('carbs')}
 							eaten={currentData.carbs}
 							goal={targetGoals.carbs}
 							isLoading={isLoadingSummary}
@@ -318,6 +358,7 @@ const MacrosTracking = forwardRef<{ refresh: () => void }, MacrosTrackingProps>(
 						<MacroBar
 							label="Fat"
 							color={MACRO_COLORS.fats}
+							onPress={() => openGuide('fats')}
 							eaten={currentData.fats}
 							goal={targetGoals.fats}
 							isLoading={isLoadingSummary}

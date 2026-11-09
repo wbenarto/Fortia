@@ -126,7 +126,7 @@ const SignIn = () => {
 							</Text>
 						</View>
 						<View className="flex flex-row gap-2 mb-2 justify-between">
-							<TouchableOpacity className="w-[45%] rounded-xl h-12 bg-[#E3BBA1] flex justify-center items-center">
+							<TouchableOpacity className="w-[45%] rounded-xl h-12 bg-[#262135] flex justify-center items-center">
 								<Link href="/sign-in" className="text-white shadow-xl  font-JakartaSemiBold">
 									Login
 								</Link>

@@ -249,7 +249,7 @@ const EditDietModal = ({
 					<TouchableOpacity
 						onPress={save}
 						disabled={isSaving}
-						className={`rounded-xl py-3 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#E3BBA1]'}`}
+						className={`rounded-xl py-3 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#262135]'}`}
 					>
 						{isSaving ? (
 							<ActivityIndicator size="small" color={ACCENT} />

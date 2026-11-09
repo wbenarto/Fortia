@@ -1,6 +1,7 @@
 import { View, ScrollView } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { SignedIn, useUser } from '@clerk/clerk-expo';
+import { useLocalSearchParams } from 'expo-router';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,8 +19,13 @@ const Meal = () => {
 	const [calorieGoal, setCalorieGoal] = useState<number | undefined>();
 	const [macroGoals, setMacroGoals] = useState<MacroGoals | undefined>();
 	const [logMealModal, setLogMealModal] = useState(false);
-	// No date picker on this screen — always today, re-read on focus so it rolls over at midnight
-	const [today, setToday] = useState(getTodayDate());
+	// Viewed day: today by default, changed with the ‹ date › header (DateNavigator)
+	const [viewDate, setViewDate] = useState(getTodayDate());
+	// Opened from Home's Eaten ring with ?date= → show that day
+	const { date: dateParam } = useLocalSearchParams<{ date?: string }>();
+	useEffect(() => {
+		if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) setViewDate(dateParam);
+	}, [dateParam]);
 
 	const insets = useSafeAreaInsets();
 	const { user } = useUser();
@@ -27,31 +33,34 @@ const Meal = () => {
 	const quickLogPending = useQuickLogStore(s => s.pending);
 	const consumeQuickLog = useQuickLogStore(s => s.consume);
 
-	const fetchMeals = useCallback(async (date: string = today) => {
-		if (!user?.id) return;
+	const fetchMeals = useCallback(
+		async (date: string = viewDate) => {
+			if (!user?.id) return;
 
-		setIsLoadingMeals(true);
-		setError('');
+			setIsLoadingMeals(true);
+			setError('');
 
-		try {
-			const response = await fetchAPI(`/api/meals?clerkId=${user.id}&date=${date}`, {
-				method: 'GET',
-			});
+			try {
+				const response = await fetchAPI(`/api/meals?clerkId=${user.id}&date=${date}`, {
+					method: 'GET',
+				});
 
-			if (response.success) {
-				setMeals(response.data || []);
-			} else {
+				if (response.success) {
+					setMeals(response.data || []);
+				} else {
+					setError('Failed to fetch meals');
+					setMeals([]);
+				}
+			} catch (error) {
+				console.error('Failed to fetch meals:', error);
 				setError('Failed to fetch meals');
 				setMeals([]);
+			} finally {
+				setIsLoadingMeals(false);
 			}
-		} catch (error) {
-			console.error('Failed to fetch meals:', error);
-			setError('Failed to fetch meals');
-			setMeals([]);
-		} finally {
-			setIsLoadingMeals(false);
-		}
-	}, [user?.id, today]);
+		},
+		[user?.id, viewDate]
+	);
 
 	// daily_calories is recomputed server-side on every profile/goal write, so it's the
 	// same target the home screen shows. No goal → the card just hides the target UI.
@@ -78,12 +87,10 @@ const Meal = () => {
 
 	useRefetchOnFocus(
 		useCallback(() => {
-			const date = getTodayDate();
-			setToday(date);
-			fetchMeals(date);
+			fetchMeals(viewDate);
 			fetchGoals();
-		}, [fetchMeals, fetchGoals]),
-		user?.id ?? ''
+		}, [fetchMeals, fetchGoals, viewDate]),
+		`${user?.id ?? ''}|${viewDate}`
 	);
 
 	// Open the meal modal when the quick-log FAB (or the card's "Add" buttons) request it
@@ -112,7 +119,10 @@ const Meal = () => {
 	};
 
 	return (
-		<View className="flex-1" style={{ flex: 1, backgroundColor: SCREEN_BG, paddingTop: insets.top }}>
+		<View
+			className="flex-1"
+			style={{ flex: 1, backgroundColor: SCREEN_BG, paddingTop: insets.top }}
+		>
 			<SignedIn>
 				<ScrollView
 					className="w-full h-full"
@@ -123,7 +133,9 @@ const Meal = () => {
 						meals={meals}
 						calorieGoal={calorieGoal}
 						macroGoals={macroGoals}
-						isToday
+						isToday={viewDate === getTodayDate()}
+						date={viewDate}
+						onDateChange={setViewDate}
 						isLoading={isLoadingMeals}
 						error={error}
 						onRetry={fetchMeals}
@@ -132,7 +144,7 @@ const Meal = () => {
 				</ScrollView>
 				<LogMealModal
 					visible={logMealModal}
-					date={today}
+					date={viewDate}
 					onClose={() => setLogMealModal(false)}
 					onMealLogged={fetchMeals}
 				/>

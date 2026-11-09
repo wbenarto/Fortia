@@ -1,6 +1,5 @@
 import { useUser } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
@@ -18,7 +17,7 @@ import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 // - 'tab' (Challenges tab): the card plus past challenges.
 
 const EYEBROW = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
-const ON_DARK_SOFT = 'rgba(255,255,255,0.75)';
+const CHALLENGE_GREEN = '#30A14E'; // same green as the start card's trophy
 const BUTTON_TEXT_SHADOW = {
 	textShadowColor: 'rgba(110,60,30,0.35)',
 	textShadowOffset: { width: 0, height: 1 },
@@ -60,9 +59,6 @@ const ChallengesPanel = ({ variant = 'tab' }: { variant?: 'home' | 'tab' }) => {
 
 	return (
 		<View className={isHome ? 'px-6 mt-12' : 'pb-32'}>
-			{isHome && (
-				<Text className="font-JakartaBold text-[18px] text-[#262135] mb-4">Challenge</Text>
-			)}
 			{active ? (
 				<TouchableOpacity
 					activeOpacity={0.9}
@@ -71,66 +67,63 @@ const ChallengesPanel = ({ variant = 'tab' }: { variant?: 'home' | 'tab' }) => {
 					}
 					accessibilityLabel="Open your challenge"
 				>
-					{/* Green hero card: the challenge as the day's main goal */}
-					<LinearGradient
-						colors={['#2F9E52', '#1E6B39']}
-						start={{ x: 0, y: 0 }}
-						end={{ x: 1, y: 1 }}
-						style={{ borderRadius: 24, padding: 16 }}
+					{/* Plain white card, like the other Home cards */}
+					<View
+						className="rounded-3xl border-[1px] border-[#F0EBE6] overflow-hidden"
+						style={{ backgroundColor: '#FFFFFF' }}
 					>
-						<View className="flex-row items-center justify-between">
-							<Text
-								className="text-[11px] font-JakartaSemiBold"
-								style={[EYEBROW, { color: ON_DARK_SOFT }]}
-							>
-								Active challenge
+						<View style={{ padding: 16 }}>
+							<View className="flex-row items-center justify-between">
+								<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW}>
+									Active challenge
+								</Text>
+								<Ionicons name="chevron-forward" size={18} color="#857869" />
+							</View>
+							<Text className="font-JakartaExtraBold text-[24px] text-[#262135] mt-1">
+								{active.stats.dayNumber === 0
+									? `Starts ${shortDate(active.challenge.start_date)}`
+									: `Day ${active.stats.dayNumber} of ${active.stats.totalDays}`}
 							</Text>
-							<Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
-						</View>
-						<Text className="font-JakartaExtraBold text-[24px] text-white mt-1">
-							{active.stats.dayNumber === 0
-								? `Starts ${shortDate(active.challenge.start_date)}`
-								: `Day ${active.stats.dayNumber} of ${active.stats.totalDays}`}
-						</Text>
-						<Text
-							className="font-JakartaMedium text-[13px] mt-0.5"
-							style={{ color: 'rgba(255,255,255,0.88)' }}
-						>
-							{DIET_INFO[resolveDietType(active.challenge.diet_type)].label} ·{' '}
-							{shortDate(active.challenge.start_date)} – {shortDate(active.challenge.end_date)}
-						</Text>
-						<View
-							className="h-2 rounded-full mt-3 overflow-hidden"
-							style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}
-						>
+							<Text className="font-JakartaMedium text-[13px] text-[#574F47] mt-0.5">
+								{DIET_INFO[resolveDietType(active.challenge.diet_type)].label} ·{' '}
+								{shortDate(active.challenge.start_date)} – {shortDate(active.challenge.end_date)}
+							</Text>
 							<View
-								className="h-full rounded-full bg-white"
-								style={{ width: `${(active.stats.completedDays / active.stats.totalDays) * 100}%` }}
-							/>
+								className="h-2 rounded-full mt-3 overflow-hidden"
+								style={{ backgroundColor: `${CHALLENGE_GREEN}2E` }}
+							>
+								<View
+									className="h-full rounded-full"
+									style={{
+										backgroundColor: CHALLENGE_GREEN,
+										width: `${(active.stats.completedDays / active.stats.totalDays) * 100}%`,
+									}}
+								/>
+							</View>
+							<View className="mt-3">
+								<ChallengeCalendar days={active.days} />
+							</View>
+							<View className="flex-row mt-3">
+								{[
+									['Completed', `${active.stats.completedDays}/${active.stats.totalDays}`],
+									['Missed', `${active.stats.missedDays}`],
+									['Workouts', currentWeek ? `${currentWeek.workouts}/${currentWeek.goal}` : '–'],
+								].map(([label, value]) => (
+									<View key={label} style={{ flex: 1 }}>
+										<Text
+											className="text-[10px] font-JakartaSemiBold text-[#574F47]"
+											style={EYEBROW}
+										>
+											{label}
+										</Text>
+										<Text className="font-JakartaExtraBold text-[17px] text-[#262135] mt-0.5">
+											{value}
+										</Text>
+									</View>
+								))}
+							</View>
 						</View>
-						<View className="mt-3">
-							<ChallengeCalendar days={active.days} palette="onDark" />
-						</View>
-						<View className="flex-row mt-3">
-							{[
-								['Completed', `${active.stats.completedDays}/${active.stats.totalDays}`],
-								['Missed', `${active.stats.missedDays}`],
-								['Workouts', currentWeek ? `${currentWeek.workouts}/${currentWeek.goal}` : '–'],
-							].map(([label, value]) => (
-								<View key={label} style={{ flex: 1 }}>
-									<Text
-										className="text-[10px] font-JakartaSemiBold"
-										style={[EYEBROW, { color: ON_DARK_SOFT }]}
-									>
-										{label}
-									</Text>
-									<Text className="font-JakartaExtraBold text-[17px] text-white mt-0.5">
-										{value}
-									</Text>
-								</View>
-							))}
-						</View>
-					</LinearGradient>
+					</View>
 				</TouchableOpacity>
 			) : (
 				<View className="bg-white rounded-3xl border-[1px] border-[#F0EBE6] p-5">
@@ -146,7 +139,7 @@ const ChallengesPanel = ({ variant = 'tab' }: { variant?: 'home' | 'tab' }) => {
 					</Text>
 					<TouchableOpacity
 						onPress={() => router.push('/challenge-setup')}
-						className="bg-[#D4A07E] rounded-xl py-3 mt-4 items-center"
+						className="bg-[#262135] rounded-xl py-3 mt-4 items-center"
 					>
 						<Text className="text-white font-JakartaBold text-[17px]" style={BUTTON_TEXT_SHADOW}>
 							Start a challenge

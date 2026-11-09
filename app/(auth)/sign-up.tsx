@@ -174,7 +174,7 @@ const SignUp = () => {
 									Login
 								</Link>
 							</TouchableOpacity>
-							<TouchableOpacity className="w-[45%] rounded-xl h-12 bg-[#E3BBA1] flex justify-center items-center">
+							<TouchableOpacity className="w-[45%] rounded-xl h-12 bg-[#262135] flex justify-center items-center">
 								<Link href="/sign-up" className="text-white  font-JakartaSemiBold">
 									Sign Up
 								</Link>

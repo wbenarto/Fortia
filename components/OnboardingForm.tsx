@@ -19,11 +19,14 @@ import { fetchAPI } from '@/lib/fetch';
 import { useUser } from '@clerk/clerk-expo';
 import { useGoalsStore } from '@/store';
 import { useRouter } from 'expo-router';
-import { getActivityLevelDescription } from '@/lib/bmrUtils';
 import { calculateNutritionTargets } from '@/lib/nutritionTargets';
 import { calculateBodyFatPercentage } from '@/lib/bodyFatUtils';
 import { getTodayDate } from '@/lib/dateUtils';
 import { fetchDataConsent, storeDataConsent, hasDataCollectionConsent } from '@/lib/consentUtils';
+
+// Activity level isn't asked any more: eating targets come from BMR × goal, and
+// it only sets TDEE (the Burned goal), so everyone gets the moderate default.
+const DEFAULT_ACTIVITY_LEVEL = 'moderate';
 
 interface OnboardingFormProps {
 	onComplete: () => void;
@@ -38,7 +41,6 @@ interface FormData {
 	heightFeet: string;
 	heightInches: string;
 	gender: string;
-	activityLevel: string;
 	fitnessGoal: string;
 	targetWeight: string;
 }
@@ -53,7 +55,6 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 		heightFeet: '',
 		heightInches: '',
 		gender: '',
-		activityLevel: '',
 		fitnessGoal: '',
 		targetWeight: '',
 	});
@@ -149,22 +150,6 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 		{ key: 'male', label: 'Male' },
 		{ key: 'female', label: 'Female' },
 		{ key: 'other', label: 'Other' },
-	];
-
-	const activityLevels = [
-		{ key: 'sedentary', title: 'Sedentary', description: getActivityLevelDescription('sedentary') },
-		{ key: 'light', title: 'Lightly Active', description: getActivityLevelDescription('light') },
-		{
-			key: 'moderate',
-			title: 'Moderately Active',
-			description: getActivityLevelDescription('moderate'),
-		},
-		{ key: 'active', title: 'Very Active', description: getActivityLevelDescription('active') },
-		{
-			key: 'very_active',
-			title: 'Extremely Active',
-			description: getActivityLevelDescription('very_active'),
-		},
 	];
 
 	const updateFormData = (field: keyof FormData, value: any) => {
@@ -403,12 +388,6 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 			return false;
 		}
 
-		// Validate activity level
-		if (!formData.activityLevel) {
-			Alert.alert('Error', 'Please select your activity level');
-			return false;
-		}
-
 		// Validate fitness goal
 		if (!formData.fitnessGoal) {
 			Alert.alert('Error', 'Please select your fitness goal');
@@ -490,7 +469,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 					height: heightCm,
 					age,
 					gender: formData.gender,
-					activityLevel: formData.activityLevel,
+					activityLevel: DEFAULT_ACTIVITY_LEVEL,
 					fitnessGoal: formData.fitnessGoal,
 				});
 
@@ -519,7 +498,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 				targetWeight,
 				height: heightCm,
 				gender: formData.gender,
-				activityLevel: formData.activityLevel,
+				activityLevel: DEFAULT_ACTIVITY_LEVEL,
 				fitnessGoal: formData.fitnessGoal,
 				dailyCalories,
 				dailyProtein,
@@ -784,39 +763,6 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
 											}`}
 										>
 											{gender.label}
-										</Text>
-									</TouchableOpacity>
-								))}
-							</View>
-						</View>
-
-						{/* Activity Level */}
-						<View className="mb-6">
-							<Text className="text-black text-lg font-JakartaSemiBold mb-3">Activity Level</Text>
-							<View style={{ gap: 8 }}>
-								{activityLevels.map(level => (
-									<TouchableOpacity
-										key={level.key}
-										onPress={() => updateFormData('activityLevel', level.key)}
-										className={`p-4 rounded-lg border ${
-											formData.activityLevel === level.key
-												? 'bg-[#E3BBA1] border-[#E3BBA1]'
-												: 'bg-white border-gray-200'
-										}`}
-									>
-										<Text
-											className={`font-JakartaSemiBold ${
-												formData.activityLevel === level.key ? 'text-black' : 'text-gray-700'
-											}`}
-										>
-											{level.title}
-										</Text>
-										<Text
-											className={`text-sm ${
-												formData.activityLevel === level.key ? 'text-black' : 'text-gray-700'
-											}`}
-										>
-											{level.description}
 										</Text>
 									</TouchableOpacity>
 								))}
