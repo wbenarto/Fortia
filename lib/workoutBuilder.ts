@@ -15,7 +15,17 @@ export type FocusKey =
 	| 'arms'
 	| 'legs'
 	| 'glutes'
-	| 'core';
+	| 'core'
+	| 'biceps'
+	| 'triceps'
+	| 'forearms'
+	| 'lats'
+	| 'traps'
+	| 'lower_back'
+	| 'abs'
+	| 'quads'
+	| 'hamstrings'
+	| 'calves';
 export type StyleKey = 'strength' | 'muscle' | 'hiit' | 'cardio' | 'mobility';
 export type LocationKey = 'gym' | 'home' | 'anywhere';
 export type EquipmentKey =
@@ -48,7 +58,41 @@ export const FOCUS_OPTIONS: { key: FocusKey; label: string }[] = [
 	{ key: 'legs', label: 'Legs' },
 	{ key: 'glutes', label: 'Glutes' },
 	{ key: 'core', label: 'Core' },
+	// Specific muscles — the API matches these on each exercise's primary muscle
+	{ key: 'biceps', label: 'Biceps' },
+	{ key: 'triceps', label: 'Triceps' },
+	{ key: 'forearms', label: 'Forearms' },
+	{ key: 'lats', label: 'Lats' },
+	{ key: 'traps', label: 'Traps' },
+	{ key: 'lower_back', label: 'Lower back' },
+	{ key: 'abs', label: 'Abs' },
+	{ key: 'quads', label: 'Quads' },
+	{ key: 'hamstrings', label: 'Hamstrings' },
+	{ key: 'calves', label: 'Calves' },
 ];
+
+// How the Focus step lays the options out: broad areas first, then muscles by region
+export const FOCUS_GROUPS: { title: string; keys: FocusKey[] }[] = [
+	{ title: 'Areas', keys: ['full_body', 'upper', 'lower', 'push', 'pull'] },
+	{
+		title: 'Upper body',
+		keys: ['chest', 'back', 'shoulders', 'arms', 'biceps', 'triceps', 'forearms', 'lats', 'traps'],
+	},
+	{ title: 'Core', keys: ['core', 'abs', 'lower_back'] },
+	{ title: 'Lower body', keys: ['legs', 'glutes', 'quads', 'hamstrings', 'calves'] },
+];
+
+// Muscles with no bodyweight exercises in the library — with no equipment the
+// API widens to other moves, so the builder warns about it
+export const NEEDS_EQUIPMENT_FOCUS: FocusKey[] = [
+	'biceps',
+	'forearms',
+	'lats',
+	'traps',
+	'lower_back',
+	'calves',
+];
+
 export const MAX_FOCUS = 4;
 
 export const STYLE_OPTIONS: {
@@ -201,7 +245,14 @@ export interface UserWorkout {
 		style: StyleKey;
 	};
 	blocks: WorkoutBlock[];
-	progress: { sets?: Record<string, SetProgress[]>; activeSeconds?: number; index?: number };
+	progress: {
+		sets?: Record<string, SetProgress[]>;
+		activeSeconds?: number;
+		index?: number;
+		// Epoch ms the clock was last saved while running (null = paused / not running).
+		// Lets the timer keep going while the user is off the player screen.
+		runningSince?: number | null;
+	};
 	status: 'planned' | 'in_progress' | 'completed';
 	active_minutes: number | null;
 	calories: number | null;
@@ -257,3 +308,74 @@ const STYLE_MET: Record<StyleKey, number> = {
 };
 export const estimateWorkoutCalories = (style: StyleKey, weightLbs: number, minutes: number) =>
 	Math.max(0, Math.round((STYLE_MET[style] - 1) * (weightLbs / 2.20462) * (minutes / 60)));
+
+// --- Calories from the sets actually done ---------------------------------------
+// Each completed set = work time × the exercise's intensity (net MET, BMR already
+// counted) + the rest after it at a light intensity + the work of moving the load.
+// Unticked sets add nothing. Falls back to the time-based estimate when no set is ticked.
+
+const SECONDS_PER_REP = 3;
+const REST_NET_MET = 1.5; // heart rate stays up between sets (~MET 2.5)
+const LIFT_HEIGHT_M = 0.5; // typical range of motion
+const MUSCLE_EFFICIENCY = 0.25; // only ~25% of the energy used becomes mechanical work
+
+const workMet = (exercise: LibraryExercise | undefined) => {
+	switch (exercise?.category) {
+		case 'plyometrics':
+			return 9;
+		case 'cardio':
+			return 7;
+		case 'stretching':
+			return 2.3;
+		case 'strength':
+		case 'powerlifting':
+			return exercise.mechanic === 'compound' ? 8 : exercise.mechanic === 'isolation' ? 5 : 6;
+		default:
+			return 5;
+	}
+};
+
+export interface SetCalorieEstimate {
+	calories: number;
+	reps: number;
+	volumeLbs: number; // total weight × reps lifted
+	setsDone: number;
+}
+
+export const estimateCaloriesFromSets = (
+	workout: UserWorkout,
+	sets: Record<string, SetProgress[]>,
+	bodyWeightLbs: number
+): SetCalorieEstimate => {
+	const bodyKg = bodyWeightLbs / 2.20462;
+	let kcal = 0;
+	let reps = 0;
+	let volumeLbs = 0;
+	let setsDone = 0;
+
+	workout.blocks.forEach((block, index) => {
+		const exercise = workout.exercises[block.slug];
+		const netMet = Math.max(0, workMet(exercise) - 1);
+		for (const set of sets[index] ?? []) {
+			if (!set?.done) continue;
+			setsDone += 1;
+			const setReps = block.reps === null ? 0 : (set.reps ?? block.reps ?? 0);
+			const workSeconds = block.reps === null ? (block.seconds ?? 0) : setReps * SECONDS_PER_REP;
+			kcal += netMet * bodyKg * (workSeconds / 3600);
+			kcal += REST_NET_MET * bodyKg * ((block.rest || 0) / 3600);
+			if (set.weight && setReps) {
+				const loadKg = set.weight / 2.20462;
+				kcal += (loadKg * 9.81 * LIFT_HEIGHT_M * setReps) / MUSCLE_EFFICIENCY / 4184;
+				volumeLbs += set.weight * setReps;
+			}
+			reps += setReps;
+		}
+	});
+
+	return { calories: Math.round(kcal), reps, volumeLbs: Math.round(volumeLbs), setsDone };
+};
+
+// Active seconds so far: the saved total plus time since it was saved, if still running
+export const elapsedSeconds = (progress: UserWorkout['progress'] | undefined, now = Date.now()) =>
+	(progress?.activeSeconds || 0) +
+	(progress?.runningSince ? Math.max(0, Math.floor((now - progress.runningSince) / 1000)) : 0);

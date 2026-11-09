@@ -286,7 +286,7 @@ const FoodLookupModal = ({ isVisible, onClose }: { isVisible: boolean; onClose: 
 						<TouchableOpacity
 							onPress={logResult}
 							disabled={isLogging || logged}
-							className="flex-1 bg-[#E3BBA1] rounded-xl py-3"
+							className="flex-1 bg-[#262135] rounded-xl py-3"
 						>
 							{isLogging ? (
 								<ActivityIndicator size="small" color="#FFFFFF" />

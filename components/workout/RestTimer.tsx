@@ -53,7 +53,7 @@ const RestTimer = ({
 						<TouchableOpacity onPress={onAdd} className="bg-white/10 rounded-xl px-4 py-2.5">
 							<Text className="text-white font-JakartaSemiBold">+15s</Text>
 						</TouchableOpacity>
-						<TouchableOpacity onPress={onSkip} className="bg-[#E3BBA1] rounded-xl px-4 py-2.5">
+						<TouchableOpacity onPress={onSkip} className="bg-[#262135] rounded-xl px-4 py-2.5">
 							<Text className="text-white font-JakartaSemiBold">Skip</Text>
 						</TouchableOpacity>
 					</View>

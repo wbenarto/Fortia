@@ -14,7 +14,13 @@ import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '@clerk/clerk-expo';
-import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import Svg, {
+	Path,
+	Circle,
+	Defs,
+	LinearGradient as SvgLinearGradient,
+	Stop,
+} from 'react-native-svg';
 import { fetchAPI } from '@/lib/fetch';
 import {
 	calculateBMI,
@@ -45,13 +51,13 @@ interface WeightEntry {
 
 const GAUGE_MIN = 15;
 const GAUGE_MAX = 45;
+// Standard adult BMI categories (CDC); colours match getBMICategory
 const BANDS = [
-	{ from: 15, to: 18.5, color: '#3B82F6' },
-	{ from: 18.5, to: 25, color: '#10B981' },
-	{ from: 25, to: 30, color: '#F59E0B' },
-	{ from: 30, to: 45, color: '#EF4444' },
+	{ from: 15, to: 18.5, color: '#3B82F6', label: 'Underweight', range: 'Below 18.5' },
+	{ from: 18.5, to: 25, color: '#10B981', label: 'Healthy weight', range: '18.5 – 24.9' },
+	{ from: 25, to: 30, color: '#F59E0B', label: 'Overweight', range: '25 – 29.9' },
+	{ from: 30, to: 45, color: '#EF4444', label: 'Obesity', range: '30 or higher' },
 ];
-
 const CX = 130;
 const CY = 140;
 const R = 100;
@@ -213,7 +219,7 @@ const BmiCalculator = () => {
 					</Text>
 					<TouchableOpacity
 						onPress={() => router.push('/edit-profile')}
-						className="bg-[#E3BBA1] px-6 py-3 rounded-xl mt-5"
+						className="bg-[#262135] px-6 py-3 rounded-xl mt-5"
 					>
 						<Text className="text-white font-JakartaSemiBold">Complete profile</Text>
 					</TouchableOpacity>
@@ -238,7 +244,9 @@ const BmiCalculator = () => {
 				contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
 				showsVerticalScrollIndicator={false}
 			>
-				<View className="items-center">
+				{/* Tall enough for the BMI number + category pill that sit over the gauge's base,
+				    so the legend below never covers the pill */}
+				<View className="items-center" style={{ height: CY + 56 }}>
 					<Svg width={CX * 2} height={CY + 20}>
 						{BANDS.map((band, i) => (
 							<Path
@@ -254,7 +262,9 @@ const BmiCalculator = () => {
 						<Circle cx={marker.x} cy={marker.y} r={9} fill="#FFFFFF" />
 						<Circle cx={marker.x} cy={marker.y} r={6} fill="#262135" />
 					</Svg>
-					<View style={{ position: 'absolute', top: CY - 34, left: 0, right: 0, alignItems: 'center' }}>
+					<View
+						style={{ position: 'absolute', top: CY - 34, left: 0, right: 0, alignItems: 'center' }}
+					>
 						<Text className="font-JakartaExtraBold text-[#262135]" style={{ fontSize: 40 }}>
 							{bmi ? bmi.toFixed(1) : '--'}
 						</Text>
@@ -269,6 +279,36 @@ const BmiCalculator = () => {
 							</View>
 						)}
 					</View>
+				</View>
+
+				{/* Legend: the categories behind the gauge colours */}
+				<View className="flex-row flex-wrap mt-3 mb-4" style={{ rowGap: 8 }}>
+					{BANDS.map(band => {
+						const current = category?.color === band.color;
+						return (
+							<View
+								key={band.label}
+								style={{ width: '50%' }}
+								className="flex-row items-center px-1"
+							>
+								<View
+									className="w-2.5 h-2.5 rounded-full mr-2"
+									style={{ backgroundColor: band.color, opacity: current || !category ? 1 : 0.6 }}
+								/>
+								<View>
+									<Text
+										className={`text-[12px] ${current ? 'font-JakartaBold' : 'font-JakartaSemiBold'}`}
+										style={{ color: current ? band.color : '#262135' }}
+									>
+										{band.label}
+									</Text>
+									<Text className="text-[11px] font-JakartaMedium text-[#574F47]">
+										BMI {band.range}
+									</Text>
+								</View>
+							</View>
+						);
+					})}
 				</View>
 
 				{/* What-if weight control */}

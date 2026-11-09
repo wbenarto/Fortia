@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '@clerk/clerk-expo';
@@ -18,6 +19,9 @@ import {
 	type WorkoutBlock,
 } from '@/lib/workoutBuilder';
 
+// Banner fallback when the suggested workout has no exercise image yet
+const PLACEHOLDER_IMAGE = require('@/assets/images/back-exercise.png');
+
 const ACCENT = '#E3BBA1';
 const INK = '#262135';
 const EYEBROW_STYLE = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
@@ -27,6 +31,7 @@ interface Suggestion {
 	title: string;
 	reason: string;
 	kind: 'strength' | 'cardio' | 'recovery' | 'starter';
+	image: string | null; // first main exercise's photo, when the workout is already cached
 }
 
 interface SuggestionData {
@@ -106,6 +111,12 @@ const TodayWorkoutCard = () => {
 
 	const preview = previews[previewKey(suggestion.inputs)];
 
+	// Once the exercises are loaded, show the first main one (matches what Start builds)
+	const previewBlock =
+		preview && (preview.blocks.find(b => b.section === 'main') ?? preview.blocks[0]);
+	const imageUrl =
+		(previewBlock && preview.exercises[previewBlock.slug]?.images[0]) || suggestion.image;
+
 	const somethingElse = () => {
 		const next = (index + 1) % data.suggestions.length;
 		setIndex(next);
@@ -159,18 +170,7 @@ const TodayWorkoutCard = () => {
 		}
 	};
 
-	if (data.inProgress) {
-		return (
-			<StatusCard
-				icon="play"
-				tint={ACCENT}
-				eyebrow="In progress"
-				title={data.inProgress.title}
-				action="Resume"
-				onPress={() => router.push(`/training/${data.inProgress!.id}/play`)}
-			/>
-		);
-	}
+	// A started workout has its own card (InProgressWorkoutCard) — the recommendation stays
 
 	if (data.completedToday && !showAnother) {
 		return (
@@ -192,6 +192,18 @@ const TodayWorkoutCard = () => {
 
 	return (
 		<View className="bg-white rounded-3xl border-[1px] border-[#F0EBE6] p-4 mb-3">
+			<View className="rounded-2xl overflow-hidden mb-3" style={{ height: 200 }}>
+				<Image
+					source={imageUrl ? { uri: imageUrl } : PLACEHOLDER_IMAGE}
+					style={{ width: '100%', height: '100%' }}
+					resizeMode="cover"
+					accessibilityIgnoresInvertColors
+				/>
+				<LinearGradient
+					colors={['rgba(38,33,53,0)', 'rgba(38,33,53,0.45)']}
+					style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 100 }}
+				/>
+			</View>
 			<View className="flex-row items-center justify-between">
 				<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW_STYLE}>
 					Today's recommended workout
@@ -288,7 +300,7 @@ const TodayWorkoutCard = () => {
 				<TouchableOpacity
 					onPress={start}
 					disabled={starting}
-					className="flex-1 bg-[#E3BBA1] rounded-xl py-3 items-center justify-center"
+					className="flex-1 bg-[#262135] rounded-xl py-3 items-center justify-center"
 				>
 					{starting ? (
 						<ActivityIndicator size="small" color="#FFFFFF" />

@@ -1,15 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import {
+	View,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	ScrollView,
+	Animated,
+	ActivityIndicator,
+	Linking,
+	StyleSheet,
+} from 'react-native';
 import ReactNativeModal from 'react-native-modal';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '@clerk/clerk-expo';
 import { fetchAPI } from '@/lib/fetch';
 import { useCyclingPlaceholder } from '@/lib/useCyclingPlaceholder';
+import { getLocalDate, getTodayDate } from '@/lib/dateUtils';
+import { MACRO_COLORS } from '@/lib/theme';
+import MealImpact, { type Macros } from '@/components/MealImpact';
+import { addDays, diffDays } from '@/lib/progress';
+import CameraSheet, { type CameraMode } from '@/components/camera/CameraSheet';
 
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 type MacroField = 'calories' | 'protein' | 'carbs' | 'fats';
-type ModalView = 'list' | 'new' | 'result';
+type ModalView = 'list' | 'new' | 'barcode' | 'result';
 
 export const INGREDIENT_PLACEHOLDERS = [
 	{ ingredient: 'In-N-Out Double-Double', amount: '1 burger' },
@@ -85,12 +101,76 @@ interface Ingredient {
 	amount: string;
 }
 
+// GET /api/food-barcode (fortia-api src/lib/foodBarcode.ts): values per 100 g
+interface BarcodeProduct {
+	code: string;
+	source: 'openfoodfacts' | 'usda';
+	name: string;
+	brand: string | null;
+	servingLabel: string | null;
+	servingG: number | null;
+	per100g: {
+		calories: number;
+		protein: number;
+		carbs: number;
+		fats: number;
+		fiber: number;
+		sugar: number;
+		sodiumMg: number;
+	};
+}
+
+// POST /api/meal-photo-analysis: one AI call returns foods, portions and macros
+interface PhotoEstimate {
+	mealName: string;
+	items: Ingredient[]; // as returned, to tell whether the user edited the rows
+	totals: {
+		calories: number;
+		protein: number;
+		carbs: number;
+		fats: number;
+		fiber: number;
+		sugar: number;
+		sodium: number;
+	};
+	confidence: number;
+	mode: 'photo' | 'label';
+}
+
+const SOURCE_CREDIT: Record<BarcodeProduct['source'], string> = {
+	openfoodfacts: 'Data from Open Food Facts (ODbL)',
+	usda: 'Data from USDA FoodData Central',
+};
+
+const sameIngredients = (a: Ingredient[], b: Ingredient[]) =>
+	a.length === b.length &&
+	a.every(
+		(item, i) =>
+			item.ingredient.trim() === b[i].ingredient.trim() && item.amount.trim() === b[i].amount.trim()
+	);
+
+const formatServings = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
 export const defaultMealType = (): MealType => {
 	const hour = new Date().getHours();
 	if (hour < 11) return 'breakfast';
 	if (hour < 16) return 'lunch';
 	if (hour < 21) return 'dinner';
 	return 'snack';
+};
+
+// Noon so the picker never shifts the day across time zones
+const toPickerDate = (iso: string) => new Date(`${iso}T12:00:00`);
+
+const formatLogDate = (iso: string) => {
+	const ago = diffDays(iso, getTodayDate());
+	if (ago === 0) return 'Today';
+	if (ago === 1) return 'Yesterday';
+	return toPickerDate(iso).toLocaleDateString('en-US', {
+		weekday: 'short',
+		month: 'short',
+		day: 'numeric',
+	});
 };
 
 const roundValue = (value: unknown) => Math.round(Number(value) || 0);
@@ -121,6 +201,9 @@ const LogMealModal = ({
 	const insets = useSafeAreaInsets();
 	const [view, setView] = useState<ModalView>('list');
 	const [mealType, setMealType] = useState<MealType>(defaultMealType());
+	// Day the meal is logged to — starts at the screen's date, can be moved back for a missed day
+	const [logDate, setLogDate] = useState(date);
+	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [search, setSearch] = useState('');
 	const [recents, setRecents] = useState<RecentMeal[]>([]);
 	const [listTab, setListTab] = useState<ListTab>('recent');
@@ -132,7 +215,19 @@ const LogMealModal = ({
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState('');
 	const [savedMeal, setSavedMeal] = useState<SavedMeal | null>(null);
+	// Day totals without this meal + targets, for the "how it moves your day" bars
+	const [impact, setImpact] = useState<{ before: Macros; targets: Macros } | null>(null);
 	const [editing, setEditing] = useState<{ field: MacroField; value: string } | null>(null);
+	// Camera: which mode is open (null = closed)
+	const [camera, setCamera] = useState<CameraMode | null>(null);
+	// Barcode: the scanned code, what it found, how many servings
+	const [scannedCode, setScannedCode] = useState<string | null>(null);
+	const [product, setProduct] = useState<BarcodeProduct | null>(null);
+	const [isLookingUp, setIsLookingUp] = useState(false);
+	const [servings, setServings] = useState(1);
+	// Photo: the AI estimate the ingredient rows were filled from
+	const [photoEstimate, setPhotoEstimate] = useState<PhotoEstimate | null>(null);
+	const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
 	const { index: placeholderIndex, opacity: placeholderOpacity } = useCyclingPlaceholder(
 		INGREDIENT_PLACEHOLDERS.length
 	);
@@ -192,11 +287,21 @@ const LogMealModal = ({
 		setView('list');
 		setListTab('recent');
 		setMealType(defaultMealType());
+		setLogDate(date > getTodayDate() ? getTodayDate() : date);
+		setShowDatePicker(false);
 		setSearch('');
 		setIngredients([{ ingredient: '', amount: '' }]);
 		setError('');
 		setSavedMeal(null);
+		setImpact(null);
 		setEditing(null);
+		setCamera(null);
+		setScannedCode(null);
+		setProduct(null);
+		setIsLookingUp(false);
+		setServings(1);
+		setPhotoEstimate(null);
+		setIsAnalyzingPhoto(false);
 		fetchRecents();
 		fetchFavorites();
 	}, [visible]);
@@ -264,15 +369,18 @@ const LogMealModal = ({
 				sodium: Number(meal.sodium),
 				confidenceScore: Number(meal.confidence_score) || 0.5,
 				mealType,
-				date,
+				date: logDate,
 				ingredients: meal.ingredients || [],
 			});
 			if (!response.success) {
 				setError(response.error || 'Failed to log meal');
 				return;
 			}
+			// Same saved step as a new meal: macros (editable) + how it moves the day
+			setSavedMeal(response.data);
+			setView('result');
 			onMealLogged?.();
-			onClose();
+			loadImpact(response.data);
 		} catch (err) {
 			console.error('Log recent meal error:', err);
 			setError('Failed to log meal. Please try again.');
@@ -286,6 +394,176 @@ const LogMealModal = ({
 		});
 		if (response.success && response.data) return response.data;
 		throw new Error(response.error || 'Failed to analyze ingredients');
+	};
+
+	const loadImpact = async (meal: SavedMeal) => {
+		if (!user?.id) return;
+		try {
+			const [summary, goals] = await Promise.all([
+				fetchAPI(`/api/meals?clerkId=${user.id}&date=${logDate}&summary=true`, { method: 'GET' }),
+				fetchAPI(`/api/user?clerkId=${user.id}`, { method: 'GET' }),
+			]);
+			const day = summary.success ? summary.data : null;
+			// The summary already includes this meal — take it out to get "before"
+			const before = (total: unknown, own: unknown) =>
+				Math.max(0, (Number(total) || 0) - (Number(own) || 0));
+			const g = goals.success ? goals.data : null;
+			setImpact({
+				before: {
+					calories: before(day?.total_calories, meal.calories),
+					protein: before(day?.total_protein, meal.protein),
+					carbs: before(day?.total_carbs, meal.carbs),
+					fats: before(day?.total_fats, meal.fats),
+				},
+				// Same fallback as the Home nutrition card when no goals are set
+				targets: {
+					calories: Math.round(Number(g?.daily_calories) || 2000),
+					protein: Math.round(Number(g?.daily_protein) || 125),
+					carbs: Math.round(Number(g?.daily_carbs) || 225),
+					fats: Math.round(Number(g?.daily_fats) || 67),
+				},
+			});
+		} catch (err) {
+			console.error('Load meal impact error:', err);
+		}
+	};
+
+	// ── Barcode ──────────────────────────────────────────────────────────
+
+	const handleBarcode = async (code: string) => {
+		if (!user?.id) return;
+		setCamera(null);
+		setError('');
+		setScannedCode(code);
+		setProduct(null);
+		setServings(1);
+		setView('barcode');
+		setIsLookingUp(true);
+		try {
+			const response = await fetchAPI(
+				`/api/food-barcode?clerkId=${user.id}&code=${encodeURIComponent(code)}`,
+				{ method: 'GET' }
+			);
+			setProduct(response.success ? response.data : null);
+			if (!response.success) setError(response.error || 'Lookup failed');
+		} catch (err) {
+			console.error('Barcode lookup error:', err);
+			setError("Couldn't look that up. Check your connection and try again.");
+		} finally {
+			setIsLookingUp(false);
+		}
+	};
+
+	// One "unit" is the label's serving, or 100 g when the label has none
+	const productUnitG = (p: BarcodeProduct) => p.servingG ?? 100;
+	const productMacros = (p: BarcodeProduct, count: number) => {
+		const factor = (productUnitG(p) / 100) * count;
+		const v = (n: number) => Math.round(n * factor * 10) / 10;
+		return {
+			calories: Math.round(p.per100g.calories * factor),
+			protein: v(p.per100g.protein),
+			carbs: v(p.per100g.carbs),
+			fats: v(p.per100g.fats),
+			fiber: v(p.per100g.fiber),
+			sugar: v(p.per100g.sugar),
+			sodium: Math.round(p.per100g.sodiumMg * factor),
+		};
+	};
+	const productPortion = (p: BarcodeProduct, count: number) =>
+		p.servingG
+			? `${formatServings(count)} serving${count === 1 ? '' : 's'} (${Math.round(p.servingG * count)} g)`
+			: `${Math.round(100 * count)} g`;
+
+	const logProduct = async () => {
+		if (!user?.id || !product) return;
+		setIsSaving(true);
+		setError('');
+		try {
+			const macros = productMacros(product, servings);
+			const portion = productPortion(product, servings);
+			const name =
+				product.brand && !product.name.toLowerCase().includes(product.brand.toLowerCase())
+					? `${product.brand} ${product.name}`
+					: product.name;
+			const response = await postMeal({
+				clerkId: user.id,
+				foodName: name,
+				portionSize: portion,
+				...macros,
+				confidenceScore: 0.95,
+				mealType,
+				date: logDate,
+				ingredients: [[name, portion]],
+			});
+			if (!response.success) {
+				setError(response.error || 'Failed to log');
+				return;
+			}
+			setSavedMeal(response.data);
+			setView('result');
+			onMealLogged?.();
+			loadImpact(response.data);
+		} catch (err) {
+			console.error('Log scanned product error:', err);
+			setError('Failed to log. Please try again.');
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	// ── Photo / label ────────────────────────────────────────────────────
+
+	const handlePhoto = async (base64: string, mode: 'photo' | 'label') => {
+		if (!user?.id || !base64) return;
+		setCamera(null);
+		setError('');
+		setPhotoEstimate(null);
+		setView('new');
+		setIsAnalyzingPhoto(true);
+		try {
+			const response = await fetchAPI('/api/meal-photo-analysis', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					clerkId: user.id,
+					image: base64,
+					mimeType: 'image/jpeg',
+					mode: mode === 'label' ? 'label' : 'meal',
+				}),
+			});
+			if (!response.success) {
+				setError(response.error || "Couldn't read that photo.");
+				return;
+			}
+			const data = response.data;
+			if (data.notFood) {
+				setError(
+					mode === 'label'
+						? "Couldn't read a nutrition label. Try again closer, or type it in."
+						: "Couldn't spot any food in that photo. Retake it, or type the meal in."
+				);
+				return;
+			}
+			const items: Ingredient[] = (data.items || []).map(
+				(it: { ingredient: string; amount: string }) => ({
+					ingredient: it.ingredient,
+					amount: it.amount,
+				})
+			);
+			setIngredients(items.length ? items : [{ ingredient: '', amount: '' }]);
+			setPhotoEstimate({
+				mealName: data.mealName,
+				items,
+				totals: data.totals,
+				confidence: Number(data.confidence) || 0,
+				mode,
+			});
+		} catch (err) {
+			console.error('Meal photo analysis error:', err);
+			setError("Couldn't read that photo. Try again, or type the meal in.");
+		} finally {
+			setIsAnalyzingPhoto(false);
+		}
 	};
 
 	const saveNewMeal = async () => {
@@ -310,8 +588,17 @@ const LogMealModal = ({
 				return;
 			}
 
-			const nutrition = await runAnalysis(validIngredients);
-			const derivedName = validIngredients.map(item => item.ingredient.trim()).join(', ');
+			// Photo rows left as they came back: use the photo's numbers (no second AI call).
+			// Edited rows: recalculate from the ingredients.
+			const fromPhoto =
+				photoEstimate && sameIngredients(validIngredients, photoEstimate.items)
+					? photoEstimate
+					: null;
+			const nutrition: NutritionResult = fromPhoto
+				? { ...fromPhoto.totals, confidence: fromPhoto.confidence }
+				: await runAnalysis(validIngredients);
+			const derivedName =
+				fromPhoto?.mealName || validIngredients.map(item => item.ingredient.trim()).join(', ');
 			const response = await postMeal({
 				clerkId: user.id,
 				foodName: derivedName,
@@ -325,7 +612,7 @@ const LogMealModal = ({
 				sodium: Math.max(0, Number(nutrition.sodium) || 0),
 				confidenceScore: Math.min(1, Math.max(0, Number(nutrition.confidence) || 0.5)),
 				mealType,
-				date,
+				date: logDate,
 				ingredients: validIngredients.map(item => [item.ingredient.trim(), item.amount.trim()]),
 			});
 
@@ -337,6 +624,7 @@ const LogMealModal = ({
 			setSavedMeal(response.data);
 			setView('result');
 			onMealLogged?.();
+			loadImpact(response.data);
 		} catch (err) {
 			console.error('Save meal error:', err);
 			setError(err instanceof Error ? err.message : 'Failed to save meal. Please try again.');
@@ -381,23 +669,84 @@ const LogMealModal = ({
 		setIngredients(ingredients.filter((_, i) => i !== index));
 	};
 
+	const renderFieldLabel = (label: string) => (
+		<Text className="mb-2 text-[11px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
+			{label}
+		</Text>
+	);
+
+	// Day stepper: full-width pill, arrows at the ends, tap the date for a calendar
+	const renderDatePicker = () => {
+		const today = getTodayDate();
+		const atToday = logDate >= today;
+		return (
+			<>
+				{renderFieldLabel('Day')}
+				<View className="flex-row items-center bg-[#F1F1F1] rounded-full p-1">
+					<TouchableOpacity
+						onPress={() => setLogDate(addDays(logDate, -1))}
+						className="w-9 h-9 rounded-full items-center justify-center"
+						accessibilityLabel="Previous day"
+					>
+						<Ionicons name="chevron-back" size={18} color="#262135" />
+					</TouchableOpacity>
+					<TouchableOpacity
+						onPress={() => setShowDatePicker(open => !open)}
+						className="flex-1 flex-row items-center justify-center h-9"
+						accessibilityLabel="Change the day this meal is logged to"
+					>
+						<Ionicons name="calendar-outline" size={15} color="#262135" />
+						<Text className="ml-1.5 text-[13px] font-JakartaSemiBold text-[#262135]">
+							{formatLogDate(logDate)}
+						</Text>
+					</TouchableOpacity>
+					<TouchableOpacity
+						onPress={() => setLogDate(addDays(logDate, 1))}
+						disabled={atToday}
+						className="w-9 h-9 rounded-full items-center justify-center"
+						style={{ opacity: atToday ? 0.3 : 1 }}
+						accessibilityLabel="Next day"
+					>
+						<Ionicons name="chevron-forward" size={18} color="#262135" />
+					</TouchableOpacity>
+				</View>
+				{showDatePicker && (
+					<DateTimePicker
+						value={toPickerDate(logDate)}
+						mode="date"
+						display="inline"
+						maximumDate={toPickerDate(today)}
+						accentColor="#D4A07E"
+						onChange={(_, picked) => {
+							if (picked) setLogDate(getLocalDate(picked));
+							setShowDatePicker(false);
+						}}
+					/>
+				)}
+			</>
+		);
+	};
+
+	// Day + meal type, as two labelled full-width pills with even spacing
 	const renderMealTypeChips = () => (
-		<>
-			<Text className="mt-6 mb-2.5 text-[13px] font-JakartaSemiBold text-[#574F47]">
-				Please select one
-			</Text>
-			<View className="flex-row flex-wrap gap-2">
+		<View className="mb-8">
+			{renderDatePicker()}
+			<View className="h-5" />
+			{renderFieldLabel('Meal')}
+			<View className="flex-row bg-[#F1F1F1] rounded-full p-1">
 				{MEAL_TYPES.map(type => {
 					const selected = mealType === type;
 					return (
 						<TouchableOpacity
 							key={type}
 							onPress={() => setMealType(type)}
-							className={`px-3 py-2 rounded-full ${selected ? 'bg-[#D4A07E]' : 'bg-[#F1F1F1]'}`}
+							className={`flex-1 h-9 rounded-full items-center justify-center ${selected ? 'bg-[#D4A07E]' : ''}`}
+							accessibilityState={{ selected }}
 						>
 							<Text
-								className={`text-xs ${selected ? 'text-white font-JakartaBold' : 'text-[#334155] font-JakartaSemiBold'}`}
+								className={`text-[13px] ${selected ? 'text-white font-JakartaBold' : 'text-[#475569] font-JakartaSemiBold'}`}
 								style={selected ? BUTTON_TEXT_SHADOW : undefined}
+								numberOfLines={1}
 							>
 								{MEAL_LABELS[type]}
 							</Text>
@@ -405,8 +754,7 @@ const LogMealModal = ({
 					);
 				})}
 			</View>
-			<View className="mb-12" />
-		</>
+		</View>
 	);
 
 	const renderEditableValue = (
@@ -478,7 +826,7 @@ const LogMealModal = ({
 
 	const renderList = () => (
 		<View>
-			<View className="flex-row justify-between items-center mb-5">
+			<View className="flex-row justify-between items-center mb-6">
 				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Log a meal</Text>
 				<TouchableOpacity onPress={onClose}>
 					<Ionicons name="close" size={24} color="#334155" />
@@ -486,6 +834,39 @@ const LogMealModal = ({
 			</View>
 
 			{renderMealTypeChips()}
+
+			{/* Camera shortcuts: barcode (free database) and meal photo (AI) */}
+			<View className="flex-row mb-6" style={{ columnGap: 10 }}>
+				{(
+					[
+						['barcode', 'barcode-outline', 'Scan barcode', 'Packaged food'],
+						['photo', 'camera-outline', 'Snap a photo', 'We list what we see'],
+					] as const
+				).map(([mode, icon, title, subtitle]) => (
+					<TouchableOpacity
+						key={mode}
+						onPress={() => {
+							setError('');
+							setCamera(mode);
+						}}
+						activeOpacity={0.75}
+						className="flex-1 flex-row items-center bg-[#F9F9F8] rounded-2xl border-[1px] border-[#F0EBE6] px-3 py-3"
+						accessibilityRole="button"
+					>
+						<View className="w-9 h-9 rounded-full bg-white border-[1px] border-[#F0EBE6] items-center justify-center">
+							<Ionicons name={icon} size={18} color="#262135" />
+						</View>
+						<View className="flex-1 ml-2.5">
+							<Text className="font-JakartaBold text-[13px] text-[#262135]" numberOfLines={1}>
+								{title}
+							</Text>
+							<Text className="font-JakartaMedium text-[11px] text-[#574F47]" numberOfLines={1}>
+								{subtitle}
+							</Text>
+						</View>
+					</TouchableOpacity>
+				))}
+			</View>
 
 			{/* Same underline style as the other inputs, with a magnifier in front */}
 			<View className="flex-row items-center border-b-[1px] border-[#E3BBA1] pb-2 mb-5">
@@ -599,7 +980,7 @@ const LogMealModal = ({
 
 	const renderNew = () => (
 		<View>
-			<View className="flex-row justify-between items-center mb-5">
+			<View className="flex-row justify-between items-center mb-6">
 				<TouchableOpacity
 					onPress={() => {
 						setError('');
@@ -615,6 +996,45 @@ const LogMealModal = ({
 			</View>
 
 			{renderMealTypeChips()}
+
+			{isAnalyzingPhoto && (
+				<View className="flex-row items-center bg-[#F9F9F8] rounded-2xl border-[1px] border-[#F0EBE6] px-4 py-4 mb-5">
+					<ActivityIndicator color="#D4A07E" />
+					<Text className="ml-3 font-JakartaSemiBold text-[14px] text-[#262135]">
+						Looking at your meal…
+					</Text>
+				</View>
+			)}
+
+			{photoEstimate && !isAnalyzingPhoto && (
+				<View className="bg-[#F9F9F8] rounded-2xl border-[1px] border-[#F0EBE6] px-4 py-3.5 mb-5">
+					<View className="flex-row items-center">
+						<Ionicons
+							name={photoEstimate.mode === 'label' ? 'reader-outline' : 'camera-outline'}
+							size={15}
+							color="#574F47"
+						/>
+						<Text
+							className="ml-1.5 text-[11px] font-JakartaSemiBold text-[#574F47]"
+							style={eyebrowStyle}
+						>
+							{photoEstimate.mode === 'label' ? 'From the label' : 'Photo estimate'}
+						</Text>
+					</View>
+					<Text className="font-JakartaBold text-[15px] text-[#262135] mt-1" numberOfLines={1}>
+						{photoEstimate.mealName}
+					</Text>
+					<Text className="text-[12px] font-JakartaSemiBold text-[#574F47] mt-0.5">
+						{`${roundValue(photoEstimate.totals.calories)} cal · P ${roundValue(photoEstimate.totals.protein)} · C ${roundValue(photoEstimate.totals.carbs)} · F ${roundValue(photoEstimate.totals.fats)}`}
+					</Text>
+					<Text className="text-[12px] font-JakartaMedium text-[#574F47] mt-2 leading-[17px]">
+						{photoEstimate.confidence < 0.5
+							? 'The photo was hard to read, so check the portions below. '
+							: 'Check the portions below. '}
+						Edit any row and we'll recalculate when you save.
+					</Text>
+				</View>
+			)}
 
 			<Text className="text-xs font-JakartaSemiBold text-black mb-1">Ingredients</Text>
 			<View className="mb-4">
@@ -674,67 +1094,276 @@ const LogMealModal = ({
 		</View>
 	);
 
-	const renderResult = (meal: SavedMeal) => (
-		<View>
-			<View className="flex-row justify-between items-center mb-5">
-				<Text className="text-xl font-JakartaExtraBold text-[#262135]">Saved</Text>
-				<TouchableOpacity onPress={onClose}>
-					<Ionicons name="close" size={24} color="#334155" />
-				</TouchableOpacity>
-			</View>
+	const renderBarcode = () => {
+		const macros = product ? productMacros(product, servings) : null;
+		return (
+			<View>
+				<View className="flex-row justify-between items-center mb-6">
+					<TouchableOpacity
+						onPress={() => {
+							setError('');
+							setView('list');
+						}}
+						accessibilityLabel="Back"
+					>
+						<Ionicons name="chevron-back" size={24} color="#262135" />
+					</TouchableOpacity>
+					<Text className="text-xl font-JakartaExtraBold text-[#262135]">Scanned food</Text>
+					<TouchableOpacity onPress={onClose} accessibilityLabel="Close">
+						<Ionicons name="close" size={24} color="#334155" />
+					</TouchableOpacity>
+				</View>
 
-			<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
-				{MEAL_LABELS[meal.meal_type] ?? 'Snack'}
-			</Text>
+				{isLookingUp ? (
+					<View className="items-center py-16">
+						<ActivityIndicator color="#D4A07E" />
+						<Text className="mt-3 font-JakartaMedium text-[13px] text-[#574F47]">
+							Looking up {scannedCode}…
+						</Text>
+					</View>
+				) : product && macros ? (
+					<>
+						{renderMealTypeChips()}
 
-			{meal.ingredients && meal.ingredients.length > 0 && (
-				<View className="mt-2">
-					{meal.ingredients.map((item, index) => (
-						<View key={index} className="flex-row items-center justify-between mt-2">
-							<Text className="font-JakartaMedium text-xs text-[#334155]">{item[0]}</Text>
-							<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]">
-								{'•'} {item[1]}
+						<View className="bg-white rounded-3xl border-[1px] border-[#F0EBE6] p-4">
+							{product.brand ? (
+								<Text
+									className="text-[11px] font-JakartaSemiBold text-[#574F47]"
+									style={eyebrowStyle}
+									numberOfLines={1}
+								>
+									{product.brand}
+								</Text>
+							) : null}
+							<Text
+								className="font-JakartaExtraBold text-[18px] text-[#262135] mt-0.5"
+								numberOfLines={2}
+							>
+								{product.name}
 							</Text>
+							<Text className="font-JakartaMedium text-[12px] text-[#574F47] mt-1">
+								{product.servingG
+									? `1 serving = ${product.servingLabel || `${product.servingG} g`}`
+									: 'No serving size on file, so amounts are per 100 g'}
+							</Text>
+
+							{/* Servings stepper */}
+							<View className="flex-row items-center justify-between mt-4 bg-[#F1F1F1] rounded-full p-1">
+								<TouchableOpacity
+									onPress={() => setServings(n => Math.max(0.5, n - 0.5))}
+									disabled={servings <= 0.5}
+									className="w-10 h-10 rounded-full bg-white items-center justify-center"
+									style={{ opacity: servings <= 0.5 ? 0.4 : 1 }}
+									accessibilityLabel="Less"
+								>
+									<Ionicons name="remove" size={20} color="#262135" />
+								</TouchableOpacity>
+								<Text className="font-JakartaBold text-[15px] text-[#262135]">
+									{productPortion(product, servings)}
+								</Text>
+								<TouchableOpacity
+									onPress={() => setServings(n => Math.min(20, n + 0.5))}
+									className="w-10 h-10 rounded-full bg-white items-center justify-center"
+									accessibilityLabel="More"
+								>
+									<Ionicons name="add" size={20} color="#262135" />
+								</TouchableOpacity>
+							</View>
+
+							<View className="flex-row items-baseline mt-5">
+								<Text className="font-JakartaExtraBold text-[36px] text-[#262135]">
+									{macros.calories}
+								</Text>
+								<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">cal</Text>
+							</View>
+							<View className="flex-row mt-3" style={{ columnGap: 8 }}>
+								{(
+									[
+										['protein', 'Protein', MACRO_COLORS.protein],
+										['carbs', 'Carbs', MACRO_COLORS.carbs],
+										['fats', 'Fat', MACRO_COLORS.fats],
+									] as const
+								).map(([key, label, color]) => (
+									<View
+										key={key}
+										className="flex-1 rounded-2xl px-3 py-3"
+										style={{ backgroundColor: `${color}1A` }}
+									>
+										<View className="flex-row items-center mb-1">
+											<View className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+											<Text
+												className="ml-1.5 text-[11px] font-JakartaSemiBold text-[#574F47]"
+												style={eyebrowStyle}
+											>
+												{label}
+											</Text>
+										</View>
+										<Text className="font-JakartaExtraBold text-[20px] text-[#262135]">
+											{roundValue(macros[key])}
+											<Text className="font-JakartaMedium text-xs text-[#574F47]"> g</Text>
+										</Text>
+									</View>
+								))}
+							</View>
 						</View>
-					))}
-				</View>
-			)}
 
-			<View className="mt-6">
-				<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
-					Calories
+						{/* Attribution (Open Food Facts is ODbL: credit it wherever its data shows) */}
+						<TouchableOpacity
+							onPress={() =>
+								Linking.openURL(
+									product.source === 'openfoodfacts'
+										? `https://world.openfoodfacts.org/product/${product.code}`
+										: 'https://fdc.nal.usda.gov/'
+								).catch(() => {})
+							}
+							className="mt-3 self-center"
+						>
+							<Text className="text-[11px] font-JakartaMedium text-[#857869] underline">
+								{SOURCE_CREDIT[product.source]}
+							</Text>
+						</TouchableOpacity>
+					</>
+				) : (
+					// Not in either database
+					<View className="items-center pt-6">
+						<View className="w-14 h-14 rounded-full bg-[#F9F9F8] border-[1px] border-[#F0EBE6] items-center justify-center">
+							<Ionicons name="barcode-outline" size={26} color="#574F47" />
+						</View>
+						<Text className="font-JakartaExtraBold text-[18px] text-[#262135] mt-4">
+							Not in the database yet
+						</Text>
+						<Text className="font-JakartaMedium text-[13px] text-[#574F47] mt-1 text-center px-4">
+							We couldn't find {scannedCode}. Snap the Nutrition Facts label instead, or type it in.
+						</Text>
+						<TouchableOpacity
+							onPress={() => setCamera('label')}
+							className="w-full bg-[#262135] rounded-xl py-3 mt-6 flex-row items-center justify-center"
+						>
+							<Ionicons name="reader-outline" size={18} color="#FFFFFF" />
+							<Text className="ml-2 text-white font-JakartaBold text-[15px]">Snap the label</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							onPress={() => setCamera('barcode')}
+							className="w-full bg-[#F1F1F1] rounded-xl py-3 mt-3"
+						>
+							<Text className="text-center font-JakartaSemiBold text-[15px] text-[#262135]">
+								Scan again
+							</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							onPress={() => {
+								setError('');
+								setView('new');
+							}}
+							className="mt-4 py-2"
+						>
+							<Text className="font-JakartaSemiBold text-[14px] text-[#334155]">
+								Enter it manually
+							</Text>
+						</TouchableOpacity>
+					</View>
+				)}
+
+				<View className="mt-3">{renderErrorText()}</View>
+			</View>
+		);
+	};
+
+	const renderMacroTile = (meal: SavedMeal, field: MacroField, label: string, color: string) => (
+		<View className="flex-1 rounded-2xl px-3 py-3" style={{ backgroundColor: `${color}1A` }}>
+			<View className="flex-row items-center mb-1">
+				<View className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+				<Text
+					className="ml-1.5 text-[11px] font-JakartaSemiBold text-[#574F47]"
+					style={eyebrowStyle}
+				>
+					{label}
 				</Text>
-				{renderEditableValue(meal, 'calories', 'font-JakartaExtraBold text-[30px]', 'cal')}
 			</View>
-
-			<View className="flex-row justify-between mt-6">
-				<View>
-					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
-						Protein
-					</Text>
-					{renderEditableValue(meal, 'protein', 'font-JakartaExtraBold text-[18px]', 'g')}
-				</View>
-				<View>
-					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
-						Carbs
-					</Text>
-					{renderEditableValue(meal, 'carbs', 'font-JakartaExtraBold text-[18px]', 'g')}
-				</View>
-				<View>
-					<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
-						Fat
-					</Text>
-					{renderEditableValue(meal, 'fats', 'font-JakartaExtraBold text-[18px]', 'g')}
-				</View>
-			</View>
-
-			<Text className="text-[11px] font-JakartaMedium text-[#574F47] mt-6">
-				Tap a number to edit it.
-			</Text>
-
-			<View className="mt-3">{renderErrorText()}</View>
+			{renderEditableValue(meal, field, 'font-JakartaExtraBold text-[20px]', 'g')}
 		</View>
 	);
+
+	const renderResult = (meal: SavedMeal) => {
+		const ingredients = (meal.ingredients ?? []).filter(item => Array.isArray(item) && item[0]);
+		return (
+			<View>
+				{/* Success header: what was saved and where it went */}
+				<View className="flex-row items-center mb-6">
+					<View
+						className="w-11 h-11 rounded-full items-center justify-center"
+						style={{ backgroundColor: '#7DB88A33' }}
+					>
+						<Ionicons name="checkmark" size={24} color="#4F8A5E" />
+					</View>
+					<View className="flex-1 ml-3">
+						<Text className="text-xl font-JakartaExtraBold text-[#262135]">Meal saved</Text>
+						<Text className="text-[13px] font-JakartaMedium text-[#574F47] mt-0.5">
+							{MEAL_LABELS[meal.meal_type] ?? 'Snack'} · {formatLogDate(logDate)}
+						</Text>
+					</View>
+					<TouchableOpacity onPress={onClose} accessibilityLabel="Close">
+						<Ionicons name="close" size={24} color="#334155" />
+					</TouchableOpacity>
+				</View>
+
+				{ingredients.length > 0 && (
+					<View className="bg-[#F9F9F8] rounded-2xl border-[1px] border-[#F0EBE6] px-4 mb-5">
+						{ingredients.map((item, index) => (
+							<View
+								key={index}
+								className={`flex-row items-center justify-between py-3 ${index < ingredients.length - 1 ? 'border-b-[1px] border-[#F0EBE6]' : ''}`}
+							>
+								<Text
+									className="flex-1 mr-3 font-JakartaSemiBold text-[14px] text-[#262135]"
+									numberOfLines={2}
+								>
+									{item[0]}
+								</Text>
+								<Text className="text-[13px] font-JakartaMedium text-[#574F47]">{item[1]}</Text>
+							</View>
+						))}
+					</View>
+				)}
+
+				<View className="bg-white rounded-3xl border-[1px] border-[#F0EBE6] p-4">
+					<Text className="text-[11px] font-JakartaSemiBold text-[#574F47]" style={eyebrowStyle}>
+						Calories
+					</Text>
+					{renderEditableValue(meal, 'calories', 'font-JakartaExtraBold text-[36px]', 'cal')}
+
+					<View className="flex-row mt-4" style={{ columnGap: 8 }}>
+						{renderMacroTile(meal, 'protein', 'Protein', MACRO_COLORS.protein)}
+						{renderMacroTile(meal, 'carbs', 'Carbs', MACRO_COLORS.carbs)}
+						{renderMacroTile(meal, 'fats', 'Fat', MACRO_COLORS.fats)}
+					</View>
+				</View>
+
+				<View className="flex-row items-center justify-center mt-4">
+					<Ionicons name="pencil" size={12} color="#574F47" />
+					<Text className="ml-1.5 text-[12px] font-JakartaMedium text-[#574F47]">
+						Tap any number to adjust it
+					</Text>
+				</View>
+
+				{impact && (
+					<MealImpact
+						before={impact.before}
+						meal={{
+							calories: Number(meal.calories) || 0,
+							protein: Number(meal.protein) || 0,
+							carbs: Number(meal.carbs) || 0,
+							fats: Number(meal.fats) || 0,
+						}}
+						targets={impact.targets}
+						dayLabel={formatLogDate(logDate)}
+					/>
+				)}
+
+				<View className="mt-3">{renderErrorText()}</View>
+			</View>
+		);
+	};
 
 	return (
 		<ReactNativeModal
@@ -754,26 +1383,46 @@ const LogMealModal = ({
 				>
 					{view === 'list' && renderList()}
 					{view === 'new' && renderNew()}
+					{view === 'barcode' && renderBarcode()}
 					{view === 'result' && savedMeal && renderResult(savedMeal)}
 				</ScrollView>
 
 				{/* Sticky footer: the main action stays on screen above the keyboard */}
-				{(view === 'list' || view === 'new' || (view === 'result' && savedMeal)) && (
+				{(view === 'list' ||
+					view === 'new' ||
+					(view === 'barcode' && !!product && !isLookingUp) ||
+					(view === 'result' && savedMeal)) && (
 					<View
 						className="px-6 pt-3 border-t-[1px] border-[#F0EBE6]"
 						style={{ paddingBottom: 24 + insets.bottom }}
 					>
-						{view === 'new' ? (
+						{view === 'barcode' ? (
+							<TouchableOpacity
+								onPress={logProduct}
+								disabled={isSaving}
+								className={`rounded-xl py-3 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#262135]'}`}
+							>
+								<Text
+									className={`text-center font-JakartaBold text-[17px] ${isSaving ? 'text-[#334155]' : 'text-white'}`}
+								>
+									{isSaving ? 'Saving…' : 'Log it'}
+								</Text>
+							</TouchableOpacity>
+						) : view === 'new' ? (
 							<TouchableOpacity
 								onPress={saveNewMeal}
-								disabled={isSaving}
-								className={`rounded-xl py-3 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#D4A07E]'}`}
+								disabled={isSaving || isAnalyzingPhoto}
+								className={`rounded-xl py-3 ${isSaving ? 'bg-[#F1F1F1]' : 'bg-[#262135]'}`}
 							>
 								<Text
 									className={`text-center font-JakartaBold text-[17px] ${isSaving ? 'text-[#334155]' : 'text-white'}`}
 									style={isSaving ? undefined : BUTTON_TEXT_SHADOW}
 								>
-									{isSaving ? 'Analyzing and saving…' : 'Save meal'}
+									{isSaving
+										? photoEstimate && sameIngredients(ingredients, photoEstimate.items)
+											? 'Saving…'
+											: 'Analyzing and saving…'
+										: 'Save meal'}
 								</Text>
 							</TouchableOpacity>
 						) : view === 'list' ? (
@@ -782,7 +1431,7 @@ const LogMealModal = ({
 									setError('');
 									setView('new');
 								}}
-								className="bg-[#D4A07E] rounded-xl py-3"
+								className="bg-[#262135] rounded-xl py-3"
 							>
 								<Text
 									className="text-white text-center font-JakartaBold text-[17px]"
@@ -792,10 +1441,27 @@ const LogMealModal = ({
 								</Text>
 							</TouchableOpacity>
 						) : (
-							<TouchableOpacity onPress={onClose} className="bg-[#E3BBA1] rounded-xl py-3">
-								<Text className="text-white text-center font-JakartaSemiBold">Done</Text>
+							<TouchableOpacity onPress={onClose} className="bg-[#262135] rounded-xl py-3">
+								<Text
+									className="text-white text-center font-JakartaBold text-[17px]"
+									style={BUTTON_TEXT_SHADOW}
+								>
+									Done
+								</Text>
 							</TouchableOpacity>
 						)}
+					</View>
+				)}
+
+				{/* Camera on top of the sheet (same modal, so no nested-modal issues) */}
+				{camera && (
+					<View style={StyleSheet.absoluteFillObject}>
+						<CameraSheet
+							mode={camera}
+							onClose={() => setCamera(null)}
+							onBarcode={handleBarcode}
+							onPhoto={base64 => handlePhoto(base64, camera === 'label' ? 'label' : 'photo')}
+						/>
 					</View>
 				)}
 			</View>

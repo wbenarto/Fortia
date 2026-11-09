@@ -305,7 +305,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
 				</ScrollView>
 
 				{/* Close Button */}
-				<TouchableOpacity onPress={onClose} className="bg-[#E3BBA1] py-3 px-6 rounded-xl">
+				<TouchableOpacity onPress={onClose} className="bg-[#262135] py-3 px-6 rounded-xl">
 					<Text className="text-white font-JakartaSemiBold text-center">Close</Text>
 				</TouchableOpacity>
 			</View>

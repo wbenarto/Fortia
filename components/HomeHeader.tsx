@@ -1,25 +1,27 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import DateNavigator from '@/components/DateNavigator';
 import { useUserProfile, getUserDisplayName, getUserInitials } from '@/lib/userUtils';
 
 const capitalize = (value: string) =>
 	value.length ? value[0].toUpperCase() + value.slice(1) : value;
 
-// Same header as the Food log (and Activity) screens: "Today · date" eyebrow over a
-// 28px title. The avatar stays as Home's way into Account settings.
-const HomeHeader = () => {
+// Day eyebrow (‹ Today · date ›, tap for a calendar) over the greeting, plus the avatar
+// (Account settings).
+const HomeHeader = ({
+	date,
+	onDateChange,
+}: {
+	date: string;
+	onDateChange: (date: string) => void;
+}) => {
 	const userProfile = useUserProfile();
 
 	return (
 		<View className="flex-row items-center justify-between px-6 pt-6">
 			<View className="flex-1 pr-4">
-				<Text
-					className="text-[11px] font-JakartaSemiBold text-[#574F47]"
-					style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
-				>
-					{`Today · ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`}
-				</Text>
-				<Text className="font-JakartaBold text-[28px] text-[#262135] mt-1" numberOfLines={1}>
+				<DateNavigator date={date} onChange={onDateChange} />
+				<Text className="font-JakartaBold text-[22px] text-[#262135] mt-1" numberOfLines={1}>
 					Hi, {capitalize(getUserDisplayName(userProfile))}
 				</Text>
 			</View>

@@ -17,7 +17,6 @@ import WeightRuler from '@/components/WeightRuler';
 import LogWeightModal from '@/components/LogWeightModal';
 import CustomButton from '@/components/CustomButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { LineChart } from 'react-native-gifted-charts';
 import { getLocalDate, getTodayDate, parseLocalDate } from '@/lib/dateUtils';
 import { Ionicons } from '@expo/vector-icons';
 import EditDietModal from '@/components/EditDietModal';
@@ -25,7 +24,6 @@ import { formatDietLabel, resolveDietType, resolveFastingSchedule } from '@/lib/
 import { useGoalsStore, useQuickLogStore } from '@/store';
 import { triggerUserProfileRefresh, useUserProfile } from '@/lib/userUtils';
 import { calculateBMI, getBMICategory } from '@/lib/bodyFatUtils';
-import { SCREEN_BG } from '@/lib/theme';
 import SectionTitle from '@/components/progress/SectionTitle';
 
 interface WeightEntry {
@@ -39,20 +37,31 @@ interface ChartDataPoint {
 	dataPointText: string;
 }
 
+const EYEBROW = { textTransform: 'uppercase', letterSpacing: 0.6 } as const;
+
+// BMI bar: 15–40 split at the standard cut-offs, colours from getBMICategory
+const BMI_MIN = 15;
+const BMI_MAX = 40;
+const BMI_SEGMENTS = [
+	{ from: 15, to: 18.5, color: '#3B82F6' },
+	{ from: 18.5, to: 25, color: '#10B981' },
+	{ from: 25, to: 30, color: '#F59E0B' },
+	{ from: 30, to: 40, color: '#EF4444' },
+];
+const bmiPosition = (value: number) =>
+	Math.min(1, Math.max(0, (value - BMI_MIN) / (BMI_MAX - BMI_MIN)));
+
 interface WeightTrackingProps {
 	onWeightLogged?: () => void;
 	onDietChanged?: () => void;
 	selectedDate?: string;
 }
 
-const CHART_WIDTH = 260;
-
 const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightTrackingProps) => {
 	const [rawWeights, setRawWeights] = useState<WeightEntry[]>([]);
 	const [userWeights, setUserWeights] = useState<ChartDataPoint[]>([]);
 	const [addWeightModal, setAddWeightModal] = useState(false);
 	const [showDatePicker, setShowDatePicker] = useState(false);
-	const [focusedPoint, setFocusedPoint] = useState(null);
 	const [targetWeight, setTargetWeight] = useState<number | null>(null);
 	const [startingWeight, setStartingWeight] = useState<number | null>(null);
 	const unitSystem = useUnitSystem();
@@ -65,19 +74,6 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 	const { user } = useUser();
 	const userProfile = useUserProfile();
 	const { goalsUpdated, resetGoalsUpdate } = useGoalsStore();
-
-	// Calculate yAxisOffset based on data range
-	const calculateYAxisOffset = (data: ChartDataPoint[]) => {
-		if (data.length === 0) return 140;
-
-		const range = data[data.length - 1].value;
-
-		// Adjust offset based on data range
-		if (range < 100) return 60; // Small range
-		if (range < 140) return 100; // Medium range
-		if (range < 180) return 140; // Large range
-		return 170; // Very large range
-	};
 
 	const { getToken } = useAuth();
 	const viewDate = selectedDate || getTodayDate();
@@ -255,6 +251,7 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 				? weightValue - Number(targetWeight)
 				: Number(targetWeight) - weightValue
 			: null;
+
 	const toGoLabel =
 		remainingLbs === null
 			? null
@@ -266,178 +263,186 @@ const WeightTracking = ({ onWeightLogged, onDietChanged, selectedDate }: WeightT
 		<View className="w-full">
 			<View className="px-6 mt-12 mb-2">
 				<SectionTitle title="Body" tab="weight" />
-				<View className="flex-row items-stretch">
-					<View className="flex-1">
-						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#574F47]"
-							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
-						>
-							Weight
-						</Text>
-						<View className="flex-row items-baseline mt-1">
-							<Text className="font-JakartaExtraBold text-[30px] text-[#262135]">
-								{displayWeight !== null ? displayWeight.toFixed(1) : '--'}
-							</Text>
-							<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">
-								{weightUnit(unitSystem)}
-							</Text>
+				<View className="bg-white rounded-3xl border-[1px] border-[#F0EBE6] overflow-hidden">
+					<View className="p-4">
+						{/* Weight | BMI */}
+						<View className="flex-row items-start justify-between">
+							<View>
+								<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW}>
+									Weight
+								</Text>
+								<View className="flex-row items-baseline mt-1">
+									<Text className="font-JakartaExtraBold text-[30px] text-[#262135]">
+										{displayWeight !== null ? displayWeight.toFixed(1) : '--'}
+									</Text>
+									<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">
+										{weightUnit(unitSystem)}
+									</Text>
+								</View>
+							</View>
+
+							<TouchableOpacity
+								className="items-end"
+								activeOpacity={0.85}
+								onPress={() => router.push(bmi !== null ? '/bmi-calculator' : '/edit-profile')}
+								accessibilityRole="button"
+								accessibilityLabel="Open BMI"
+							>
+								<View className="flex-row items-center">
+									<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW}>
+										BMI
+									</Text>
+									<Ionicons
+										name="chevron-forward"
+										size={12}
+										color="#857869"
+										style={{ marginLeft: 2 }}
+									/>
+								</View>
+								<Text className="font-JakartaExtraBold text-[30px] text-[#262135] mt-1">
+									{bmi !== null ? bmi.toFixed(1) : '--'}
+								</Text>
+							</TouchableOpacity>
 						</View>
-						{toGoLabel && (
-							<Text className="text-xs font-JakartaSemiBold text-[#574F47] mt-1">{toGoLabel}</Text>
+
+						{bmiCategory && (
+							<View className="flex-row justify-end -mt-0.5">
+								<View
+									className="flex-row items-center px-2 py-0.5 rounded-full"
+									style={{ backgroundColor: `${bmiCategory.color}1A` }}
+								>
+									<View
+										className="w-1.5 h-1.5 rounded-full mr-1.5"
+										style={{ backgroundColor: bmiCategory.color }}
+									/>
+									<Text
+										className="text-[11px] font-JakartaSemiBold"
+										style={{ color: bmiCategory.color }}
+									>
+										{bmiCategory.category}
+									</Text>
+								</View>
+							</View>
 						)}
+
+						{/* BMI along the standard ranges (marker-on-bar) */}
+						{bmi !== null && (
+							<View className="mt-4">
+								<View className="flex-row h-1.5 rounded-full overflow-hidden">
+									{BMI_SEGMENTS.map(seg => (
+										<View
+											key={seg.from}
+											style={{
+												flex: seg.to - seg.from,
+												backgroundColor: seg.color,
+												opacity: bmiCategory?.color === seg.color ? 1 : 0.35,
+											}}
+										/>
+									))}
+								</View>
+								<View
+									style={{
+										position: 'absolute',
+										left: `${bmiPosition(bmi) * 100}%`,
+										top: -3,
+										marginLeft: -6,
+										width: 12,
+										height: 12,
+										borderRadius: 6,
+										backgroundColor: '#262135',
+										borderWidth: 2,
+										borderColor: '#FFFFFF',
+									}}
+								/>
+								{/* Range boundaries under the bar */}
+								<View className="h-4 mt-1">
+									{BMI_SEGMENTS.slice(1).map(seg => (
+										<Text
+											key={seg.from}
+											className="text-[10px] font-JakartaMedium text-[#574F47]"
+											style={{
+												position: 'absolute',
+												left: `${bmiPosition(seg.from) * 100}%`,
+												width: 32,
+												marginLeft: -16,
+												textAlign: 'center',
+											}}
+										>
+											{seg.from}
+										</Text>
+									))}
+								</View>
+							</View>
+						)}
+
+						<View
+							className={`flex-row items-end justify-between ${bmi !== null ? 'mt-2' : 'mt-4'}`}
+						>
+							<View style={{ flex: 1 }}>
+								{startingWeight ? (
+									<>
+										<Text
+											className="text-[10px] font-JakartaSemiBold text-[#574F47]"
+											style={EYEBROW}
+										>
+											Start
+										</Text>
+										<Text className="text-sm font-JakartaBold text-[#262135] mt-1">
+											{formatWeight(Number(startingWeight), unitSystem)}
+										</Text>
+									</>
+								) : null}
+							</View>
+							<View style={{ flex: 1 }} className="items-center">
+								{toGoLabel && (
+									<Text className="text-xs font-JakartaSemiBold text-[#574F47]">{toGoLabel}</Text>
+								)}
+							</View>
+							<TouchableOpacity
+								style={{ flex: 1 }}
+								className="items-end"
+								activeOpacity={0.7}
+								onPress={() => setTargetModal(true)}
+								accessibilityRole="button"
+								accessibilityLabel="Set target weight"
+							>
+								<Text className="text-[10px] font-JakartaSemiBold text-[#574F47]" style={EYEBROW}>
+									Target
+								</Text>
+								<View className="flex-row items-center mt-1">
+									<Text className="text-sm font-JakartaBold text-[#262135]">
+										{targetWeight ? formatWeight(Number(targetWeight), unitSystem) : 'Set target'}
+									</Text>
+									<Ionicons
+										name="chevron-forward"
+										size={14}
+										color="#857869"
+										style={{ marginLeft: 2 }}
+									/>
+								</View>
+							</TouchableOpacity>
+						</View>
 					</View>
 
-					<View className="w-px bg-[#F0EBE6] mx-4" />
-
+					{/* Diet row */}
 					<TouchableOpacity
-						className="flex-1 items-end"
-						activeOpacity={0.85}
-						onPress={() => router.push(bmi !== null ? '/bmi-calculator' : '/edit-profile')}
-					>
-						<View className="flex-row items-center">
-							<Text
-								className="text-[10px] font-JakartaSemiBold text-[#574F47]"
-								style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
-							>
-								BMI
-							</Text>
-							<Ionicons
-								name="chevron-forward"
-								size={12}
-								color="#857869"
-								style={{ marginLeft: 2 }}
-							/>
-						</View>
-						<Text className="font-JakartaExtraBold text-[30px] text-[#262135] mt-1">
-							{bmi !== null ? bmi.toFixed(1) : '--'}
-						</Text>
-						{bmiCategory && (
-							<Text
-								className="text-xs font-JakartaSemiBold mt-1"
-								style={{ color: bmiCategory.color }}
-							>
-								{bmiCategory.category}
-							</Text>
-						)}
-					</TouchableOpacity>
-				</View>
-
-				<View className="h-[1px] bg-[#F0EBE6] my-4" />
-
-				<View className="h-24 flex-row items-center justify-center">
-					{userWeights.length > 0 ? (
-						<>
-							<View className="overflow-hidden" style={{ width: CHART_WIDTH }}>
-								<LineChart
-									color={'#E3BBA1'}
-									data={userWeights.map((point, index) =>
-										index === userWeights.length - 1
-											? {
-													...point,
-													customDataPoint: () => (
-														<View
-															style={{
-																width: 10,
-																height: 10,
-																borderRadius: 5,
-																backgroundColor: '#E3BBA1',
-																borderWidth: 2,
-																borderColor: SCREEN_BG,
-															}}
-														/>
-													),
-												}
-											: point
-									)}
-									height={80}
-									width={CHART_WIDTH}
-									curved
-									textColor={'transparent'}
-									spacing={30}
-									thickness={3}
-									xAxisLabelTextStyle={{ color: 'transparent', fontSize: 12 }}
-									yAxisTextStyle={{ color: 'transparent', fontSize: 12 }}
-									hideYAxisText
-									hideAxesAndRules
-									focusEnabled
-									showDataPointOnFocus
-									focusedDataPointShape="circle"
-									focusedDataPointWidth={15}
-									focusedDataPointHeight={15}
-									focusedDataPointColor="#E3BBA1"
-									focusedDataPointRadius={6}
-									onFocus={(item: any) => {
-										setFocusedPoint(item);
-									}}
-									yAxisOffset={calculateYAxisOffset(userWeights)}
-								/>
-							</View>
-							<View className="ml-2 items-start">
-								<Text
-									className="text-[10px] font-JakartaSemiBold text-[#574F47]"
-									style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
-								>
-									Now
-								</Text>
-								<Text className="text-xs font-JakartaBold text-[#262135]">
-									{displayWeight !== null ? displayWeight.toFixed(1) : '--'}
-								</Text>
-							</View>
-						</>
-					) : (
-						<View className="h-[100px] flex justify-center items-center">
-							<Text className="text-gray-700 text-sm">No weight data available</Text>
-						</View>
-					)}
-				</View>
-
-				<View className="flex-row justify-between items-end mt-1">
-					<TouchableOpacity
-						activeOpacity={0.7}
-						onPress={() => setTargetModal(true)}
-						accessibilityRole="button"
-						accessibilityLabel="Set target weight"
-					>
-						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#574F47]"
-							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
-						>
-							Target
-						</Text>
-						<View className="flex-row items-center mt-1">
-							<Text className="text-sm font-JakartaBold text-[#262135]">
-								{targetWeight ? formatWeight(Number(targetWeight), unitSystem) : 'Set target'}
-							</Text>
-							<Ionicons
-								name="chevron-forward"
-								size={14}
-								color="#857869"
-								style={{ marginLeft: 2 }}
-							/>
-						</View>
-					</TouchableOpacity>
-					<TouchableOpacity
-						className="items-end"
+						className="flex-row items-center px-4 py-3.5 border-t-[1px] border-[#F0EBE6]"
 						activeOpacity={0.7}
 						onPress={() => setDietModal(true)}
 						accessibilityRole="button"
 						accessibilityLabel="Edit diet program"
 					>
-						<Text
-							className="text-[10px] font-JakartaSemiBold text-[#574F47]"
-							style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}
-						>
-							Diet
-						</Text>
-						<View className="flex-row items-center mt-1">
-							<Text className="text-sm font-JakartaBold text-[#262135]">{dietLabel}</Text>
-							<Ionicons
-								name="chevron-forward"
-								size={14}
-								color="#857869"
-								style={{ marginLeft: 2 }}
-							/>
+						<View className="w-9 h-9 rounded-full items-center justify-center bg-[#F9F9F8] border-[1px] border-[#F0EBE6]">
+							<Ionicons name="restaurant-outline" size={16} color="#262135" />
 						</View>
+						<Text className="font-JakartaMedium text-[13px] text-[#574F47] ml-3">Diet</Text>
+						<Text
+							className="flex-1 text-right font-JakartaSemiBold text-[14px] text-[#262135]"
+							numberOfLines={1}
+						>
+							{dietLabel}
+						</Text>
+						<Ionicons name="chevron-forward" size={16} color="#857869" style={{ marginLeft: 4 }} />
 					</TouchableOpacity>
 				</View>
 

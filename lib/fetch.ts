@@ -21,6 +21,7 @@ const NON_MUTATING_POSTS = [
 	'/api/recipe-analysis',
 	'/api/recipe-breakdown',
 	'/api/meal-analysis',
+	'/api/meal-photo-analysis',
 	'/api/steps',
 	// Favorites don't change any totals shown elsewhere
 	'/api/favorite-meals',
@@ -43,9 +44,10 @@ export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
 		if (!response.ok) {
 			const errorText = await response.text();
 
-			// For 400/404 errors, return the error response instead of throwing
-			// This allows calling code to handle these cases gracefully
-			if (response.status === 400 || response.status === 404) {
+			// For 400/404/429 errors, return the error response instead of throwing
+			// This allows calling code to handle these cases gracefully (e.g. show a
+			// daily-limit message)
+			if (response.status === 400 || response.status === 404 || response.status === 429) {
 				try {
 					const errorData = JSON.parse(errorText);
 					return { success: false, error: errorData.error || errorText };

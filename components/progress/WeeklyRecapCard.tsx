@@ -93,7 +93,7 @@ const WeeklyRecapCard = () => {
 						dismissRecap();
 						router.push('/progress');
 					}}
-					className="mt-3 bg-[#E3BBA1] rounded-xl py-2.5"
+					className="mt-3 bg-[#262135] rounded-xl py-2.5"
 				>
 					<Text className="text-white text-center font-JakartaSemiBold text-[13px]">
 						See progress

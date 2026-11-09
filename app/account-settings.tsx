@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, Stack } from 'expo-router';
 import ReactNativeModal from 'react-native-modal';
 import GoalSetupModal from '../components/GoalSetupModal';
+import BodyInfoModal from '../components/BodyInfoModal';
 import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
 import TermsAndConditionsModal from '../components/TermsAndConditionsModal';
 import { fetchAPI } from '../lib/fetch';
@@ -173,6 +174,7 @@ const AccountSettings = () => {
 	const [nutritionGoals, setNutritionGoals] = useState<NutritionGoals | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [goalSetupModal, setGoalSetupModal] = useState(false);
+	const [bodyInfoModal, setBodyInfoModal] = useState(false);
 	const [dietModal, setDietModal] = useState(false);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [deleteAccountModal, setDeleteAccountModal] = useState(false);
@@ -386,25 +388,24 @@ const AccountSettings = () => {
 		setPasswordError('');
 	};
 
-	const getActivityLevelLabel = (level: string) => {
-		const levels = {
-			sedentary: 'Sedentary',
-			light: 'Lightly Active',
-			moderate: 'Moderately Active',
-			active: 'Very Active',
-			very_active: 'Extremely Active',
-		};
-		return levels[level as keyof typeof levels] || level;
-	};
-
 	const getFitnessGoalLabel = (goal: string) => {
-		const goals = {
-			weight_loss: 'Weight Loss',
-			weight_gain: 'Weight Gain',
-			maintenance: 'Maintenance',
-			muscle_gain: 'Muscle Gain',
+		const goals: Record<string, string> = {
+			// Current keys (GoalSetupModal / lib/nutritionTargets.ts)
+			lose_weight: 'Lose weight',
+			gain_muscle: 'Gain muscle',
+			maintain: 'Maintain weight',
+			improve_fitness: 'Improve fitness',
+			// Older keys
+			weight_loss: 'Lose weight',
+			weight_gain: 'Gain weight',
+			maintenance: 'Maintain weight',
+			muscle_gain: 'Gain muscle',
 		};
-		return goals[goal as keyof typeof goals] || goal;
+		if (!goal) return '—';
+		if (goals[goal]) return goals[goal];
+		// Unknown key: "some_goal" → "Some goal"
+		const words = goal.replace(/_/g, ' ').trim();
+		return words.charAt(0).toUpperCase() + words.slice(1);
 	};
 
 	const formatDate = (dateString: string) => {
@@ -489,8 +490,8 @@ const AccountSettings = () => {
 						</View>
 					</View>
 
-					{/* Nutrition Goals */}
-					<SectionLabel>Nutrition Goals</SectionLabel>
+					{/* Body & goals */}
+					<SectionLabel>Body & Goals</SectionLabel>
 					{!nutritionGoals ? (
 						<View className={CARD_CLASS}>
 							<Text className="text-sm font-JakartaMedium text-[#574F47] text-center mb-4">
@@ -498,77 +499,102 @@ const AccountSettings = () => {
 							</Text>
 							<TouchableOpacity
 								onPress={() => setGoalSetupModal(true)}
-								className="bg-[#E3BBA1] rounded-xl py-3"
+								className="bg-[#262135] rounded-xl py-3"
 							>
 								<Text className="text-white text-center font-JakartaSemiBold">Set Up Goals</Text>
 							</TouchableOpacity>
 						</View>
 					) : (
-						<View className={CARD_CLASS}>
-							<View className="flex-row justify-between items-center mb-1">
-								<Text className="font-JakartaBold text-[15px] text-[#262135]">Current Goals</Text>
-								<TouchableOpacity
-									onPress={() => setGoalSetupModal(true)}
-									hitSlop={10}
-									className="flex-row items-center"
+						<>
+							{/* Body basics, kept apart from the goal settings */}
+							<View className={CARD_CLASS.replace('mb-8', 'mb-4')}>
+								<View className="flex-row justify-between items-center mb-1">
+									<Text className="font-JakartaBold text-[15px] text-[#262135]">About You</Text>
+									<TouchableOpacity
+										onPress={() => setBodyInfoModal(true)}
+										hitSlop={10}
+										className="flex-row items-center"
+									>
+										<Ionicons name="pencil-outline" size={14} color="#C98B67" />
+										<Text
+											className="text-xs font-JakartaSemiBold ml-1"
+											style={{ color: '#C98B67' }}
+										>
+											Edit
+										</Text>
+									</TouchableOpacity>
+								</View>
+								<DetailRow label="Age" value={`${calculateCurrentAge(nutritionGoals.dob)} years`} />
+								<DetailRow
+									label="Weight"
+									value={formatWeight(nutritionGoals.weight, unitSystem, 0)}
+								/>
+								<DetailRow
+									label="Height"
+									value={formatHeight(nutritionGoals.height, unitSystem)}
+									last
+								/>
+							</View>
+
+							<View className={CARD_CLASS}>
+								<View className="flex-row justify-between items-center mb-1">
+									<Text className="font-JakartaBold text-[15px] text-[#262135]">Current Goals</Text>
+									<TouchableOpacity
+										onPress={() => setGoalSetupModal(true)}
+										hitSlop={10}
+										className="flex-row items-center"
+									>
+										<Ionicons name="pencil-outline" size={14} color="#C98B67" />
+										<Text
+											className="text-xs font-JakartaSemiBold ml-1"
+											style={{ color: '#C98B67' }}
+										>
+											Edit
+										</Text>
+									</TouchableOpacity>
+								</View>
+
+								<DetailRow
+									label="Target Weight"
+									value={formatWeight(nutritionGoals.target_weight, unitSystem, 0)}
+								/>
+								<DetailRow
+									label="Fitness Goal"
+									value={getFitnessGoalLabel(nutritionGoals.fitness_goal)}
+								/>
+								<DetailRow
+									label="Diet"
+									value={DIET_INFO[resolveDietType(nutritionGoals.diet_type)].label}
+									onPress={() => setDietModal(true)}
+								/>
+								<DetailRow
+									label="Fasting"
+									value={formatFasting(nutritionGoals)}
+									onPress={() => setDietModal(true)}
+									last
+								/>
+
+								<View className="h-[1px] bg-[#F0EBE6] my-4" />
+
+								<Text
+									className="text-[10px] font-JakartaSemiBold text-[#574F47]"
+									style={EYEBROW_STYLE}
 								>
-									<Ionicons name="pencil-outline" size={14} color="#C98B67" />
-									<Text className="text-xs font-JakartaSemiBold ml-1" style={{ color: '#C98B67' }}>
-										Edit
-									</Text>
-								</TouchableOpacity>
-							</View>
-
-							<DetailRow label="Age" value={`${calculateCurrentAge(nutritionGoals.dob)} years`} />
-							<DetailRow
-								label="Weight"
-								value={formatWeight(nutritionGoals.weight, unitSystem, 0)}
-							/>
-							<DetailRow label="Height" value={formatHeight(nutritionGoals.height, unitSystem)} />
-							<DetailRow
-								label="Target Weight"
-								value={formatWeight(nutritionGoals.target_weight, unitSystem, 0)}
-							/>
-							<DetailRow
-								label="Activity Level"
-								value={getActivityLevelLabel(nutritionGoals.activity_level)}
-							/>
-							<DetailRow
-								label="Fitness Goal"
-								value={getFitnessGoalLabel(nutritionGoals.fitness_goal)}
-							/>
-							<DetailRow
-								label="Diet"
-								value={DIET_INFO[resolveDietType(nutritionGoals.diet_type)].label}
-								onPress={() => setDietModal(true)}
-							/>
-							<DetailRow
-								label="Fasting"
-								value={formatFasting(nutritionGoals)}
-								onPress={() => setDietModal(true)}
-								last
-							/>
-
-							<View className="h-[1px] bg-[#F0EBE6] my-4" />
-
-							<Text
-								className="text-[10px] font-JakartaSemiBold text-[#574F47]"
-								style={EYEBROW_STYLE}
-							>
-								Daily Targets
-							</Text>
-							<View className="flex-row items-baseline mt-1">
-								<Text className="font-JakartaExtraBold text-[28px] text-[#262135]">
-									{nutritionGoals.daily_calories}
+									Daily Targets
 								</Text>
-								<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">kcal</Text>
+								<View className="flex-row items-baseline mt-1">
+									<Text className="font-JakartaExtraBold text-[28px] text-[#262135]">
+										{nutritionGoals.daily_calories}
+									</Text>
+									<Text className="font-JakartaMedium text-xs text-[#574F47] ml-1">kcal</Text>
+								</View>
+								<View className="flex-row justify-between mt-4">
+									<MacroStat label="Protein" grams={nutritionGoals.daily_protein} />
+									<MacroStat label="Carbs" grams={nutritionGoals.daily_carbs} />
+									<MacroStat label="Fats" grams={nutritionGoals.daily_fats} />
+								</View>
 							</View>
-							<View className="flex-row justify-between mt-4">
-								<MacroStat label="Protein" grams={nutritionGoals.daily_protein} />
-								<MacroStat label="Carbs" grams={nutritionGoals.daily_carbs} />
-								<MacroStat label="Fats" grams={nutritionGoals.daily_fats} />
-							</View>
-						</View>
+						</>
 					)}
 
 					{/* App Settings */}
@@ -682,6 +708,15 @@ const AccountSettings = () => {
 					isVisible={goalSetupModal}
 					onClose={() => setGoalSetupModal(false)}
 					onGoalsSet={handleGoalsUpdated}
+				/>
+
+				<BodyInfoModal
+					isVisible={bodyInfoModal}
+					onClose={() => setBodyInfoModal(false)}
+					onSaved={fetchNutritionGoals}
+					dob={nutritionGoals?.dob}
+					weight={nutritionGoals?.weight}
+					height={nutritionGoals?.height}
 				/>
 
 				<PrivacyPolicyModal

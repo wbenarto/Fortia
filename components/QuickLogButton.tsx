@@ -29,7 +29,9 @@ const RADIUS = 150;
 const ANGLES = [8, 44, 80];
 
 // The + button and the three log options share this warm terracotta gradient
-const BUTTON_GRADIENT = ['#E9A27E', '#C9754F'] as const;
+// Deep ink FAB: high contrast on the warm paper background, white "+" on top
+const FAB_GRADIENT = ['#3B3352', '#262135'] as const;
+const INK = '#262135';
 
 const OPTIONS: {
 	key: QuickLogType;
@@ -39,7 +41,7 @@ const OPTIONS: {
 }[] = [
 	{ key: 'meal', icon: 'restaurant', label: 'Meal' },
 	{ key: 'weight', icon: 'scale-outline', label: 'Weight', nudgeX: 8 },
-	{ key: 'activity', icon: 'barbell', label: 'Exercise' },
+	{ key: 'activity', icon: 'barbell', label: 'Workout' },
 ];
 
 const QuickLogButton = () => {
@@ -96,14 +98,9 @@ const QuickLogButton = () => {
 									accessibilityRole="button"
 									accessibilityLabel={`Log ${opt.label.toLowerCase()}`}
 								>
-									<LinearGradient
-										colors={BUTTON_GRADIENT}
-										start={{ x: 0, y: 0 }}
-										end={{ x: 1, y: 1 }}
-										style={styles.badgeFill}
-									>
-										<Ionicons name={opt.icon} size={24} color="#FFFFFF" />
-									</LinearGradient>
+									<View style={styles.badgeFill}>
+										<Ionicons name={opt.icon} size={24} color={INK} />
+									</View>
 								</TouchableOpacity>
 								{/* Positioned under the badge so it doesn't shift the fan layout */}
 								<Text pointerEvents="none" style={styles.badgeLabel} numberOfLines={1}>
@@ -139,7 +136,7 @@ const QuickLogButton = () => {
 					accessibilityLabel={open ? 'Close log menu' : 'Log'}
 				>
 					<LinearGradient
-						colors={BUTTON_GRADIENT}
+						colors={FAB_GRADIENT}
 						start={{ x: 0, y: 0 }}
 						end={{ x: 1, y: 1 }}
 						style={styles.fabFill}
@@ -176,15 +173,17 @@ const styles = StyleSheet.create({
 		width: FAB_WIDTH,
 		height: FAB_HEIGHT,
 		borderRadius: FAB_HEIGHT / 2,
-		shadowColor: '#96502D',
+		shadowColor: '#262135',
 		shadowOffset: { width: 0, height: 8 },
-		shadowOpacity: 0.4,
-		shadowRadius: 12,
+		shadowOpacity: 0.3,
+		shadowRadius: 14,
 		elevation: 8,
 	},
 	fabFill: {
 		flex: 1,
 		borderRadius: FAB_HEIGHT / 2,
+		borderWidth: 1,
+		borderColor: 'rgba(255,255,255,0.12)',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
@@ -227,6 +226,7 @@ const styles = StyleSheet.create({
 	badgeFill: {
 		flex: 1,
 		borderRadius: BADGE_SIZE / 2,
+		backgroundColor: '#FFFFFF',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
